@@ -1,0 +1,69 @@
+tables:
+  sample_fact_sales:
+    source_table: main.sales.fact_sales
+    target_table: your-gcp-project.analytics.fact_sales
+    source:
+      - {name: sale_id, data_type: BIGINT, nullable: false, description: Sale identifier}
+      - {name: sales_amount, data_type: DECIMAL, nullable: true, description: Posted sales revenue amount}
+      - {name: cost_amount, data_type: DECIMAL, nullable: true, description: Product cost amount}
+      - {name: sales_date, data_type: DATE, nullable: false, description: Sales business date}
+      - {name: brand_id, data_type: BIGINT, nullable: true, description: Brand identifier}
+      - {name: market_id, data_type: BIGINT, nullable: true, description: Market identifier}
+      - {name: source_system, data_type: STRING, nullable: false, description: Originating source system}
+      - {name: transaction_status, data_type: STRING, nullable: false, description: Processing status}
+    target:
+      - {name: sale_id, data_type: INT64, nullable: false, description: Sale identifier}
+      - {name: sales_amount, data_type: NUMERIC, nullable: true, description: Posted sales revenue amount}
+      - {name: cost_amount, data_type: NUMERIC, nullable: true, description: Product cost amount}
+      - {name: sales_date, data_type: DATE, nullable: false, description: Sales business date}
+      - {name: brand_sid, data_type: INT64, nullable: true, description: Brand surrogate identifier}
+      - {name: market_sid, data_type: INT64, nullable: true, description: Market surrogate identifier}
+      - {name: source_system, data_type: STRING, nullable: false, description: Originating source system}
+      - {name: transaction_status, data_type: STRING, nullable: false, description: Processing status}
+
+  sample_fact_orders:
+    source_table: main.sales.fact_orders
+    target_table: your-gcp-project.analytics.fact_orders
+    source:
+      - {name: order_id, data_type: BIGINT, nullable: false, description: Order identifier}
+      - {name: units_sold, data_type: BIGINT, nullable: true, description: Quantity of units sold}
+      - {name: profit_margin, data_type: DECIMAL, nullable: true, description: Profit margin percentage KPI}
+      - {name: channel_id, data_type: BIGINT, nullable: true, description: Channel identifier}
+    target:
+      - {name: order_id, data_type: INT64, nullable: false, description: Order identifier}
+      - {name: units_sold, data_type: INT64, nullable: true, description: Quantity of units sold}
+      - {name: profit_margin, data_type: NUMERIC, nullable: true, description: Profit margin percentage KPI}
+      - {name: channel_sid, data_type: INT64, nullable: true, description: Channel surrogate identifier}
+
+profiles:
+  sample_fact_sales|sales_amount: {row_count: 1000, null_count: 0, distinct_count: 850, minimum_value: 1.25, maximum_value: 9000.00}
+  sample_fact_sales|cost_amount: {row_count: 1000, null_count: 0, distinct_count: 710, minimum_value: 0.50, maximum_value: 6000.00}
+  sample_fact_orders|units_sold: {row_count: 600, null_count: 2, distinct_count: 24, minimum_value: 1, maximum_value: 80}
+  sample_fact_orders|profit_margin: {row_count: 600, null_count: 4, distinct_count: 180, minimum_value: -12.5, maximum_value: 75.0}
+
+reconciliation_results:
+  sample_fact_sales|total_sales|overall|source:
+    - {measure_value: 125000.00, row_count: 1000}
+  sample_fact_sales|total_sales|overall|target:
+    - {measure_value: 123500.00, row_count: 990}
+  sample_fact_sales|total_sales|configured|source:
+    - {group_1: 10, group_2: 100, measure_value: 75000.00, row_count: 600}
+    - {group_1: 20, group_2: 200, measure_value: 50000.00, row_count: 400}
+  sample_fact_sales|total_sales|configured|target:
+    - {group_1: 10, group_2: 100, measure_value: 75000.00, row_count: 600}
+    - {group_1: 20, group_2: 200, measure_value: 48500.00, row_count: 390}
+  sample_fact_orders|units_sold|overall|source:
+    - {measure_value: 1800, row_count: 600}
+  sample_fact_orders|units_sold|overall|target:
+    - {measure_value: 1800, row_count: 600}
+
+diagnostic_results:
+  sample_fact_sales|total_sales|date_distribution|source:
+    - {group_1: 2025, measure_value: 100000.00, row_count: 800}
+    - {group_1: 2026, measure_value: 25000.00, row_count: 200}
+  sample_fact_sales|total_sales|date_distribution|target:
+    - {group_1: 2025, measure_value: 100000.00, row_count: 800}
+  sample_fact_sales|total_sales|null_distribution|source:
+    - {row_count: 1000, null_count: 0}
+  sample_fact_sales|total_sales|null_distribution|target:
+    - {row_count: 990, null_count: 0}

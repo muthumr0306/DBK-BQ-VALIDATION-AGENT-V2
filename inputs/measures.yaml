@@ -1,0 +1,64 @@
+settings:
+  inference_enabled: true
+  profile_values: true
+  propose_inferred_for_reuse: true
+  max_inferred_per_table: 8
+  max_groupings_per_measure: 6
+  maximum_group_cardinality: 500
+
+diagnostics:
+  maximum_steps_per_failure: 3
+  maximum_llm_calls_per_failure: 1
+  maximum_failed_samples: 50
+  allowed_types:
+    - date_distribution
+    - aggregate_by_dimension
+    - null_distribution
+
+measures:
+  - measure_id: total_sales
+    definition_type: measure
+    pair_id: sample_fact_sales
+    source_table: main.sales.fact_sales
+    target_table: your-gcp-project.analytics.fact_sales
+    source_expression: sales_amount
+    target_expression: sales_amount
+    business_name: Total Sales
+    description: Total posted sales amount.
+    aggregation: sum
+    tolerance_absolute: 0.01
+    tolerance_percentage: 0.5
+    currency: USD
+    date_column:
+      source: sales_date
+      target: sales_date
+    group_by:
+      source: [brand_id, market_id]
+      target: [brand_sid, market_sid]
+    source_filters:
+      - {column: transaction_status, operator: eq, value: POSTED}
+    target_filters:
+      - {column: transaction_status, operator: eq, value: POSTED}
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: gross_margin
+    definition_type: kpi
+    pair_id: sample_fact_sales
+    source_table: main.sales.fact_sales
+    target_table: your-gcp-project.analytics.fact_sales
+    source_expression: sales_amount - cost_amount
+    target_expression: sales_amount - cost_amount
+    business_name: Gross Margin
+    description: Sales less cost, demonstrating a controlled composite expression.
+    aggregation: sum
+    tolerance_absolute: 1.00
+    tolerance_percentage: 0.5
+    group_by:
+      source: [source_system]
+      target: [source_system]
+    enabled: false
+    approval_status: disabled
+    publish_to_context: false

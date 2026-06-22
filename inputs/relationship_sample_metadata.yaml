@@ -1,0 +1,68 @@
+tables:
+  sample_fact_sales:
+    table: your-gcp-project.analytics.fact_sales
+    location: US
+    description: Sales fact by brand, market, and channel.
+    columns:
+      - {name: sale_id, data_type: INT64, nullable: false, description: Sale transaction key}
+      - {name: brand_sid, data_type: INT64, nullable: true, description: Brand surrogate key}
+      - {name: market_sid, data_type: INT64, nullable: true, description: Market surrogate key}
+      - {name: market_code, data_type: STRING, nullable: true, description: Market business code}
+      - {name: channel_id, data_type: INT64, nullable: true, description: Channel identifier}
+      - {name: source_system, data_type: STRING, nullable: false, description: Originating source system}
+      - {name: transaction_status, data_type: STRING, nullable: false, description: Transaction processing status}
+      - {name: sales_amount, data_type: NUMERIC, nullable: true, description: Sales amount}
+
+  sample_dim_brand:
+    table: your-gcp-project.analytics.dim_brand
+    location: US
+    description: SCD Type 2 brand dimension.
+    columns:
+      - {name: brand_sid, data_type: INT64, nullable: false, description: Brand surrogate key}
+      - {name: brand_id, data_type: INT64, nullable: true, description: Brand source identifier}
+      - {name: brand_code, data_type: STRING, nullable: true, description: Brand business code}
+      - {name: active_indicator, data_type: BOOL, nullable: false, description: Current-record flag}
+
+  sample_dim_market:
+    table: your-gcp-project.analytics.dim_market
+    location: US
+    description: Market reference dimension.
+    columns:
+      - {name: market_sid, data_type: INT64, nullable: false, description: Market surrogate key}
+      - {name: market_id, data_type: INT64, nullable: true, description: Market source identifier}
+      - {name: market_code, data_type: STRING, nullable: false, description: Market business code}
+      - {name: source_system, data_type: STRING, nullable: false, description: Originating source system}
+      - {name: active_indicator, data_type: BOOL, nullable: false, description: Active market flag}
+
+  sample_dim_channel:
+    table: your-gcp-project.analytics.dim_channel
+    location: US
+    description: Channel reference dimension.
+    columns:
+      - {name: channel_sid, data_type: INT64, nullable: false, description: Channel surrogate key}
+      - {name: channel_id, data_type: INT64, nullable: false, description: Channel source identifier}
+      - {name: channel_code, data_type: STRING, nullable: true, description: Channel business code}
+
+parent_profiles:
+  your-gcp-project.analytics.dim_brand|brand_sid:
+    {parent_rows: 100, parent_null_key_rows: 0, parent_distinct_keys: 100}
+  your-gcp-project.analytics.dim_market|market_sid:
+    {parent_rows: 20, parent_null_key_rows: 0, parent_distinct_keys: 20}
+  your-gcp-project.analytics.dim_market|market_code,source_system:
+    {parent_rows: 20, parent_null_key_rows: 0, parent_distinct_keys: 20}
+  your-gcp-project.analytics.dim_channel|channel_sid:
+    {parent_rows: 10, parent_null_key_rows: 0, parent_distinct_keys: 10}
+  your-gcp-project.analytics.dim_channel|channel_id:
+    {parent_rows: 10, parent_null_key_rows: 0, parent_distinct_keys: 10}
+
+relationship_profiles:
+  sample_fact_sales|brand_sid|your-gcp-project.analytics.dim_brand|brand_sid:
+    {checked_count: 1000, matched_count: 998, orphan_count: 2}
+  sample_fact_sales|market_sid|your-gcp-project.analytics.dim_market|market_sid:
+    {checked_count: 1000, matched_count: 1000, orphan_count: 0}
+  sample_fact_sales|market_code,source_system|your-gcp-project.analytics.dim_market|market_code,source_system:
+    {checked_count: 1000, matched_count: 995, orphan_count: 5}
+  sample_fact_sales|channel_id|your-gcp-project.analytics.dim_channel|channel_sid:
+    {checked_count: 1000, matched_count: 940, orphan_count: 60}
+  sample_fact_sales|channel_id|your-gcp-project.analytics.dim_channel|channel_id:
+    {checked_count: 1000, matched_count: 999, orphan_count: 1}

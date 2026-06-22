@@ -1,0 +1,83 @@
+settings:
+  auto_inference_enabled: true
+  fuzzy_matching_enabled: true
+  profile_values: true
+  max_candidates_per_table: 20
+  minimum_match_rate: 0.50
+
+table_overrides:
+  sample_dim_market:
+    auto_inference_enabled: false
+
+dimensions:
+  brand:
+    enabled: true
+    table: your-gcp-project.analytics.dim_brand
+    description: Approved organizational brand dimension.
+    keys:
+      - parent_columns: [brand_sid]
+        child_column_sets:
+          - [brand_sid]
+          - [brand_key]
+      - parent_columns: [brand_id]
+        child_column_sets:
+          - [brand_id]
+      - parent_columns: [brand_code]
+        child_column_sets:
+          - [brand_code]
+    parent_filters:
+      - {column: active_indicator, operator: eq, value: true}
+
+  market:
+    enabled: true
+    table: your-gcp-project.analytics.dim_market
+    description: Approved organizational market dimension.
+    keys:
+      - parent_columns: [market_sid]
+        child_column_sets:
+          - [market_sid]
+      - parent_columns: [market_id]
+        child_column_sets:
+          - [market_id]
+      - parent_columns: [market_code]
+        child_column_sets:
+          - [market_code]
+
+  channel:
+    enabled: true
+    table: your-gcp-project.analytics.dim_channel
+    description: Channel dimension with an intentionally ambiguous sample alias.
+    keys:
+      - parent_columns: [channel_sid]
+        child_column_sets:
+          - [channel_sid]
+          - [channel_id]
+      - parent_columns: [channel_id]
+        child_column_sets:
+          - [channel_id]
+      - parent_columns: [channel_code]
+        child_column_sets:
+          - [channel_code]
+
+custom_relationships:
+  - id: sales_market_override
+    enabled: true
+    child_table: sample_fact_sales
+    child_columns: [market_sid]
+    parent_table: your-gcp-project.analytics.dim_market
+    parent_columns: [market_sid]
+    description: Explicit relationship that overrides the registry candidate for market_sid.
+    publish_to_context: false
+
+  - id: sales_market_composite
+    enabled: true
+    child_table: sample_fact_sales
+    child_columns: [market_code, source_system]
+    parent_table: your-gcp-project.analytics.dim_market
+    parent_columns: [market_code, source_system]
+    child_filters:
+      - {column: transaction_status, operator: eq, value: POSTED}
+    parent_filters:
+      - {column: active_indicator, operator: eq, value: true}
+    description: Explicit composite relationship; overrides automatic candidates for these child columns.
+    publish_to_context: false

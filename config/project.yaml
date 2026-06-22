@@ -1,0 +1,39 @@
+project_name: dbx_bq_validation_poc
+default_mode: migration
+table_mappings: inputs/table_mappings.xlsx
+column_mappings: inputs/column_mappings.xlsx
+business_context: inputs/business_context.yaml
+human_tests: inputs/human_tests.yaml
+relationships: inputs/relationships.yaml
+measures: inputs/measures.yaml
+outputs_dir: outputs
+
+# Persistent context. Set enabled to true after replacing the sample
+# project/dataset values and configuring Google Application Default Credentials.
+context_store:
+  enabled: false
+  project: your-governance-project
+  dataset: dq_agent_context
+  location: US
+  organization: example_org
+  environment: development
+  domain: sales
+
+approvals:
+  root: approvals
+
+confidence:
+  auto_accept: 0.85
+  review: 0.65
+
+query_limits:
+  max_result_rows: 10000
+  small_table_row_limit: 10000
+  max_bytes_billed: 10000000000
+  timeout_seconds: 300
+  key_hash_buckets: 256
+  evidence_rows: 200
+
+max_rca_rounds: 2
+fail_fast: false
+log_level: INFO

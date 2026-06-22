@@ -1,0 +1,124 @@
+tables:
+  sample_fact_sales:
+    publish_to_context: false
+    description: Sales transactions migrated from Databricks to BigQuery.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [sale_id]
+      target: [sale_id]
+    audit_columns:
+      source: updated_at
+      target: updated_at
+    freshness_sla_minutes: 1440
+    assumptions:
+      - Posted sales amounts should be non-negative.
+    known_source_systems: [ERP, BRANDING FOUNDATION]
+    columns:
+      sale_id:
+        description: Unique sales transaction identifier.
+        role: primary_key
+        required: true
+      sales_amount:
+        description: Posted sales revenue amount.
+        role: measure
+        minimum: 0
+      transaction_status:
+        description: Sales transaction processing status.
+        accepted_values: [POSTED, PENDING, CANCELLED]
+      updated_at:
+        description: Timestamp of the latest data update.
+        role: audit
+        required: true
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+    measures:
+      - source_column: sales_amount
+        target_column: sales_amount
+        aggregate: sum
+        tolerance:
+          absolute: 0.01
+          percentage: 0.001
+  sample_dim_brand_scd2:
+    publish_to_context: false
+    description: Brand dimension with current and historical versions.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [brand_sid]
+      target: [brand_sid]
+    audit_columns:
+      source: updated_at
+      target: updated_at
+    freshness_sla_minutes: 1440
+    columns:
+      brand_sid:
+        description: Brand surrogate key.
+        role: primary_key
+        required: true
+      active_indicator:
+        description: Identifies the current SCD Type 2 brand record.
+        accepted_values: [true, false]
+      updated_at:
+        description: Timestamp of the latest brand update.
+        role: audit
+    filters:
+      source:
+        - {column: source_system, operator: eq, value: BRANDING FOUNDATION}
+      target:
+        - {column: source_system, operator: eq, value: BRANDING FOUNDATION}
+    scd2:
+      enabled: true
+      current_filter:
+        source:
+          - {column: active_indicator, operator: eq, value: true}
+        target:
+          - {column: active_indicator, operator: eq, value: true}
+
+  sample_dim_market:
+    publish_to_context: false
+    description: Simple market reference dimension.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [market_sid]
+      target: [market_sid]
+    audit_columns:
+      source: updated_at
+      target: updated_at
+    freshness_sla_minutes: 1440
+    columns:
+      market_sid:
+        description: Market surrogate key.
+        role: primary_key
+        required: true
+      updated_at:
+        description: Timestamp of the latest market update.
+        role: audit
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  sample_bq_only_table:
+    publish_to_context: false
+    description: Example standalone BigQuery data-quality target.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      target: [record_id]
+    audit_columns:
+      target: updated_at
+    freshness_sla_minutes: 1440
+    columns:
+      record_id:
+        description: Unique record identifier.
+        role: primary_key
+        required: true
+      updated_at:
+        description: Timestamp of the latest BigQuery update.
+        role: audit
+    filters:
+      target: []
+    scd2:
+      enabled: false

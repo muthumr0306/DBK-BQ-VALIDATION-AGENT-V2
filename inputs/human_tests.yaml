@@ -1,0 +1,15 @@
+tests:
+  - test_id: sample_sales_amount_non_negative
+    publish_to_context: false
+    pair_id: sample_fact_sales
+    enabled: false
+    type: predicate
+    scope: target
+    target_columns: [sales_amount]
+    parameters:
+      predicate:
+        column: sales_amount
+        operator: gte
+        value: 0
+    severity: error
+    description: Sales amount must not be negative.

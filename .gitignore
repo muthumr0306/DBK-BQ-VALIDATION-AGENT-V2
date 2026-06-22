@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.ipynb_checkpoints/
+outputs/*
+!outputs/.gitkeep
+approvals/pending/*
+approvals/processed/*
+approvals/approved/*
+approvals/rejected/*
+approvals/errors/*
+!approvals/pending/.gitkeep
+!approvals/processed/.gitkeep
+!approvals/approved/.gitkeep
+!approvals/rejected/.gitkeep
+!approvals/errors/.gitkeep
