@@ -16,6 +16,48 @@ diagnostics:
     - null_distribution
 
 measures:
+  - measure_id: plan_qty
+    definition_type: measure
+    pair_id: pass_test
+    source_expression: plan_qty
+    target_expression: plan_quantity
+    business_name: Plan Quantity
+    aggregation: sum
+    tolerance_absolute: 0.0
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: plan_qty
+    definition_type: measure
+    pair_id: rowmismatch_test
+    source_expression: plan_qty
+    target_expression: plan_quantity
+    business_name: Plan Quantity
+    aggregation: sum
+    tolerance_absolute: 0.0
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: plan_qty
+    definition_type: measure
+    pair_id: valuemismatch_test
+    source_expression: plan_qty
+    target_expression: plan_quantity
+    business_name: Plan Quantity
+    aggregation: sum
+    tolerance_absolute: 0.0
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
   - measure_id: total_sales
     definition_type: measure
     pair_id: sample_fact_sales

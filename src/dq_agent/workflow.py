@@ -58,6 +58,7 @@ from .reporting import (
     configure_logging,
     write_consolidated_reports,
     write_json,
+    write_run_summary,
     write_table_report,
 )
 
@@ -255,6 +256,7 @@ class DQWorkflow:
                 rows=len(all_reviews), item_types=sorted({str(item.get("category")) for item in all_reviews}),
             )
             write_consolidated_reports(self.output_dir, table_outputs)
+            write_run_summary(self.output_dir, manifest, table_outputs, all_reviews)
             self._event("info", "reports_written", output_dir=str(self.output_dir))
             table_statuses = [row["summary"].get("status") for row in table_outputs]
             if "ERROR" in table_statuses:
@@ -406,6 +408,10 @@ class DQWorkflow:
             standard_failures = [row for row in failed if row.get("type") != "measure_reconciliation"]
             measure_failures = [row for row in failed if row.get("type") == "measure_reconciliation"]
             rca = self._perform_rca(pair, standard_failures, rules, audit, filters, table_dir)
+            if rca:
+                cascade_count = sum(1 for r in rca if r.get("is_cascade"))
+                summary["root_cause_count"] = len(rca) - cascade_count
+                summary["cascade_count"] = cascade_count
             measure_rca, rca_reviews = self._investigate_measure_failures(
                 pair, measure_failures, measures, measure_groupings, filters, context, table_dir
             )
@@ -2523,6 +2529,7 @@ class DQWorkflow:
                 "pair_id": pair.pair_id, "rule_id": rule.rule_id,
                 "conclusion": conclusion, "diagnostics": diagnostics,
             })
+        self._tag_cascade_groups(output, failures)
         return _jsonable(output)
 
     @staticmethod
@@ -2548,3 +2555,57 @@ class DQWorkflow:
             "evidence_summary": [json.dumps(evidence, default=str), json.dumps(diagnostics, default=str)],
             "inconclusive": not bool(diagnostics),
         }
+
+    @staticmethod
+    def _tag_cascade_groups(
+        rca_records: list[dict[str, Any]],
+        failure_results: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Tag each RCA record with root_cause_group and is_cascade.
+
+        When multiple failures for the same table share a consistent directional
+        delta (target has more rows than source, or vice versa), column-level
+        signals like distinct_count and value_distribution are marked as
+        cascading from that common root cause.
+        """
+        if len(rca_records) <= 1:
+            return rca_records
+        failure_by_rule = {r["rule_id"]: r for r in failure_results}
+        direction_votes: dict[str, int] = {"target_extra": 0, "source_extra": 0}
+        for rca_rec in rca_records:
+            comp = failure_by_rule.get(rca_rec.get("rule_id", ""), {}).get("comparison", {})
+            try:
+                delta = float(comp["target"]) - float(comp["source"])
+                if delta > 0:
+                    direction_votes["target_extra"] += 1
+                elif delta < 0:
+                    direction_votes["source_extra"] += 1
+            except (KeyError, TypeError, ValueError):
+                pass
+        dominant = max(direction_votes, key=direction_votes.get)
+        if direction_votes[dominant] < 2:
+            return rca_records
+        # Types that directly identify row/key mismatches — these are root causes
+        PRIMARY_TYPES = {"key_values", "key_buckets", "row_reconciliation", "row_count"}
+        # Column-level types whose failures cascade from a row-count root cause
+        CASCADE_TYPES = {"distinct_count", "value_distribution"}
+        has_primary = any(
+            failure_by_rule.get(r.get("rule_id", ""), {}).get("type") in PRIMARY_TYPES
+            for r in rca_records
+        )
+        if not has_primary:
+            return rca_records
+        for rca_rec in rca_records:
+            failure = failure_by_rule.get(rca_rec.get("rule_id", ""), {})
+            comp = failure.get("comparison", {})
+            is_cascade = False
+            if failure.get("type") in CASCADE_TYPES:
+                try:
+                    delta = float(comp["target"]) - float(comp["source"])
+                    if (dominant == "target_extra" and delta > 0) or (dominant == "source_extra" and delta < 0):
+                        is_cascade = True
+                except (KeyError, TypeError, ValueError):
+                    pass
+            rca_rec["root_cause_group"] = dominant
+            rca_rec["is_cascade"] = is_cascade
+        return rca_records

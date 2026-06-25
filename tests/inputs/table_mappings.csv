@@ -3,3 +3,6 @@ sample_fact_sales,true,migration,local,source,fact_sales,local,target,fact_sales
 sample_dim_brand_scd2,true,migration,local,source,dim_brand_scd2,local,target,dim_brand_scd2,medium
 sample_dim_market,true,migration,local,source,dim_market,local,target,dim_market,medium
 sample_bq_only_table,true,bigquery_only,,,,local,target,bq_only_table,low
+pass_test,true,migration,local,source,pass,local,target,pass,medium
+rowmismatch_test,true,migration,local,source,rowmismatch,local,target,rowmismatch,medium
+valuemismatch_test,true,migration,local,source,valuemismatch,local,target,valuemismatch,medium

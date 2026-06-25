@@ -112,6 +112,30 @@ def write_table_report(
     })
 
 
+def _build_failures_with_rca(
+    failures: list[dict[str, Any]], rca: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Merge each failure result with its RCA conclusion so readers get cause + evidence in one row."""
+    rca_by_rule = {r["rule_id"]: r for r in rca if r.get("rule_id")}
+    merged = []
+    for failure in failures:
+        row = dict(failure)
+        rca_rec = rca_by_rule.get(failure.get("rule_id", ""))
+        if rca_rec:
+            conclusion = rca_rec.get("conclusion", {})
+            if isinstance(conclusion, dict):
+                row["rca_conclusion"] = conclusion.get("conclusion")
+                row["rca_confidence"] = conclusion.get("confidence")
+                row["rca_inconclusive"] = conclusion.get("inconclusive")
+                row["rca_evidence_summary"] = json.dumps(
+                    conclusion.get("evidence_summary", []), default=json_default
+                )
+            row["rca_root_cause_group"] = rca_rec.get("root_cause_group")
+            row["rca_is_cascade"] = rca_rec.get("is_cascade")
+        merged.append(row)
+    return merged
+
+
 def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, Any]]) -> None:
     summaries = [item["summary"] for item in table_outputs]
     mappings = [row for item in table_outputs for row in item.get("mappings", [])]
@@ -151,6 +175,7 @@ def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, A
         }.items():
             _frame(records).to_excel(writer, index=False, sheet_name=_safe_sheet(name))
     _frame(failures).to_csv(output_dir / "failed_tests.csv", index=False)
+    _frame(_build_failures_with_rca(failures, rca)).to_csv(output_dir / "failures_with_rca.csv", index=False)
     _frame(rca).to_csv(output_dir / "rca_report.csv", index=False)
     _frame(mappings).to_csv(output_dir / "mapping_confidence.csv", index=False)
     _frame(freshness).to_csv(output_dir / "freshness.csv", index=False)
@@ -260,3 +285,136 @@ def write_measure_reports(
         "failed_csv": output_dir / "failed_measures.csv",
         "rca_csv": output_dir / "measure_rca.csv",
     }
+
+
+def write_run_summary(
+    output_dir: Path,
+    manifest: dict[str, Any],
+    table_outputs: list[dict[str, Any]],
+    pending_reviews: list[dict[str, Any]],
+) -> None:
+    """Write summary.md — a plain-English narrative of the run readable without opening any other file."""
+    _STATUS_ICON = {
+        "PASS": "PASS",
+        "FAIL": "FAIL",
+        "ERROR": "ERROR",
+        "WAITING_FOR_REVIEW": "WAITING FOR REVIEW",
+        "COMPLETED": "PASS",
+        "COMPLETED_WITH_FAILURES": "FAIL",
+        "COMPLETED_WITH_ERRORS": "ERROR",
+        "COMPLETED_WAITING_FOR_REVIEW": "WAITING FOR REVIEW",
+    }
+
+    lines: list[str] = []
+    run_status = manifest.get("status", "UNKNOWN")
+    lines.append(f"# DQ Run: {manifest.get('run_id', 'unknown')}")
+    lines.append(f"**Project**: {manifest.get('project', '')}  ")
+    lines.append(f"**Status**: {_STATUS_ICON.get(run_status, run_status)}  ")
+
+    started = manifest.get("started_at", "")
+    completed = manifest.get("completed_at", "")
+    if started and completed:
+        try:
+            from datetime import timezone as _tz
+            t0 = datetime.fromisoformat(started.replace("Z", "+00:00"))
+            t1 = datetime.fromisoformat(completed.replace("Z", "+00:00"))
+            secs = int((t1 - t0).total_seconds())
+            lines.append(f"**Duration**: {secs // 60}m {secs % 60}s ({started[:19]} → {completed[11:19]} UTC)  ")
+        except Exception:
+            pass
+
+    lines += ["", "---", ""]
+
+    rca_by_rule: dict[str, dict[str, Any]] = {}
+    output_by_pair: dict[str, dict[str, Any]] = {}
+    for item in table_outputs:
+        pid = item["summary"]["pair_id"]
+        output_by_pair[pid] = item
+        for rca_rec in item.get("rca", []):
+            if rca_rec.get("rule_id"):
+                rca_by_rule[rca_rec["rule_id"]] = rca_rec
+
+    reviews_by_pair: dict[str, list[dict[str, Any]]] = {}
+    for review in pending_reviews:
+        reviews_by_pair.setdefault(review.get("pair_id", ""), []).append(review)
+
+    for table in manifest.get("tables", []):
+        pair_id = table.get("pair_id", "")
+        status = table.get("status", "UNKNOWN")
+        status_label = _STATUS_ICON.get(status, status)
+        lines.append(f"## [{status_label}] {pair_id}")
+
+        rule_count = table.get("rule_count")
+        passed = table.get("passed")
+        failed = table.get("failed")
+        errors = table.get("errors")
+
+        if rule_count is not None:
+            parts = []
+            if passed is not None:
+                parts.append(f"{passed} passed")
+            if failed:
+                parts.append(f"**{failed} failed**")
+            if errors:
+                parts.append(f"{errors} errors")
+            lines.append(f"{rule_count} rules — " + ", ".join(parts) if parts else f"{rule_count} rules")
+
+        root_cause_count = table.get("root_cause_count")
+        cascade_count = table.get("cascade_count", 0)
+        if root_cause_count is not None and cascade_count > 0:
+            lines.append(f"*{root_cause_count} root cause(s), {cascade_count} cascading signal(s)*")
+
+        if status in {"FAIL", "ERROR"} and failed:
+            item = output_by_pair.get(pair_id, {})
+            failed_results = [r for r in item.get("results", []) if r.get("status") in {"FAIL", "ERROR"}]
+            if failed_results:
+                lines.append("")
+                lines.append("**Failures:**")
+                for result in failed_results:
+                    rule_id = result.get("rule_id", "")
+                    rca_rec = rca_by_rule.get(rule_id)
+                    is_cascade = bool(rca_rec.get("is_cascade")) if rca_rec else False
+                    tag = " *(cascade)*" if is_cascade else ""
+                    conclusion_text = ""
+                    if rca_rec:
+                        c = rca_rec.get("conclusion", {})
+                        conclusion_text = str(c.get("conclusion") or "" if isinstance(c, dict) else c)[:200]
+                    rule_short = rule_id.replace(f"{pair_id}__", "")
+                    lines.append(f"- `{rule_short}`{tag}: {conclusion_text}")
+
+        if status == "WAITING_FOR_REVIEW":
+            blocking = [r for r in reviews_by_pair.get(pair_id, []) if r.get("blocking")]
+            if blocking:
+                lines.append("")
+                lines.append(f"Rules did not execute — {len(blocking)} pending decision(s) required.")
+                lines.append("")
+                lines.append("**Pending decisions:**")
+                for review in blocking:
+                    category = review.get("category", "")
+                    subject = review.get("subject", "")
+                    confidence = float(review.get("confidence") or 0)
+                    try:
+                        proposal = json.loads(review.get("proposal", "{}"))
+                    except Exception:
+                        proposal = {}
+                    if category == "column_mapping":
+                        src = proposal.get("source_column", subject)
+                        tgt = proposal.get("target_column", "?")
+                        lines.append(
+                            f"- Approve column mapping: **{src}** (source) → **{tgt}** (target)?"
+                            f" [confidence: {confidence:.0%}]"
+                        )
+                    elif category == "primary_key":
+                        lines.append(f"- Approve primary key: {json.dumps(proposal)}? [confidence: {confidence:.0%}]")
+                    else:
+                        lines.append(f"- [{category}] {subject}: confidence {confidence:.0%}")
+
+        lines += ["", "---", ""]
+
+    lines.append("*Key files:*")
+    lines.append("- `failures_with_rca.csv` — every failed check with its root cause explanation inline")
+    lines.append("- `consolidated_report.xlsx` — full results across all tables")
+    lines.append("- `data_profiling.csv` — column-level statistics")
+    lines.append("- `approval_proposals.json` — pending decisions blocking rule execution")
+
+    (output_dir / "summary.md").write_text("\n".join(lines), encoding="utf-8")

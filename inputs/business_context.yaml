@@ -101,6 +101,132 @@ tables:
     scd2:
       enabled: false
 
+  pass_test:
+    publish_to_context: false
+    description: Planning data migration with clean data and renamed columns.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [sku_id, store_id, fiscal_week, plan_type]
+      target: [SkuID, store_number, fiscal_wk, PlanType]
+    audit_columns:
+      source: last_updated_date
+      target: last_update_ts
+    freshness_sla_minutes: 1440
+    columns:
+      SkuID:
+        description: SKU identifier.
+        role: primary_key
+        required: true
+      store_number:
+        description: Store identifier.
+        role: primary_key
+        required: true
+      fiscal_wk:
+        description: Fiscal week number.
+        role: primary_key
+        required: true
+      PlanType:
+        description: Plan type (WP or OP).
+        role: primary_key
+        accepted_values: [WP, OP]
+        required: true
+      plan_quantity:
+        description: Planned quantity.
+        role: measure
+        minimum: 0
+      last_update_ts:
+        description: Timestamp of the latest data update.
+        role: audit
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  rowmismatch_test:
+    publish_to_context: false
+    description: Planning data migration where target is missing rows for later fiscal weeks.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [sku_id, store_id, fiscal_week, plan_type]
+      target: [SkuID, store_number, fiscal_wk, PlanType]
+    audit_columns:
+      source: last_updated_date
+      target: last_update_ts
+    freshness_sla_minutes: 1440
+    columns:
+      SkuID:
+        description: SKU identifier.
+        role: primary_key
+        required: true
+      store_number:
+        description: Store identifier.
+        role: primary_key
+        required: true
+      fiscal_wk:
+        description: Fiscal week number.
+        role: primary_key
+        required: true
+      PlanType:
+        description: Plan type (WP or OP).
+        role: primary_key
+        accepted_values: [WP, OP]
+        required: true
+      plan_quantity:
+        description: Planned quantity.
+        role: measure
+        minimum: 0
+      last_update_ts:
+        description: Timestamp of the latest data update.
+        role: audit
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  valuemismatch_test:
+    publish_to_context: false
+    description: Planning data migration where target has scattered value differences and future-dated timestamps.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [sku_id, store_id, fiscal_week, plan_type]
+      target: [SkuID, store_number, fiscal_wk, PlanType]
+    audit_columns:
+      source: last_updated_date
+      target: last_update_ts
+    freshness_sla_minutes: 1440
+    columns:
+      SkuID:
+        description: SKU identifier.
+        role: primary_key
+        required: true
+      store_number:
+        description: Store identifier.
+        role: primary_key
+        required: true
+      fiscal_wk:
+        description: Fiscal week number.
+        role: primary_key
+        required: true
+      PlanType:
+        description: Plan type (WP or OP).
+        role: primary_key
+        accepted_values: [WP, OP]
+        required: true
+      plan_quantity:
+        description: Planned quantity.
+        role: measure
+        minimum: 0
+      last_update_ts:
+        description: Timestamp of the latest data update.
+        role: audit
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
   sample_bq_only_table:
     publish_to_context: false
     description: Example standalone BigQuery data-quality target.
