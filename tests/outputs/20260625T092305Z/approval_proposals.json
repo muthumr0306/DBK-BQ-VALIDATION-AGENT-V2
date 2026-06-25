@@ -1,0 +1,13 @@
+[
+  {
+    "inference_id": "9a050be45899543c3734",
+    "pair_id": "sample_fact_sales",
+    "category": "column_mapping",
+    "subject": "sale_id",
+    "proposal": "{\"source_column\": \"sale_id\", \"target_column\": \"sale_id\"}",
+    "confidence": 0.73,
+    "evidence": "[{\"target\": \"sale_id\", \"score\": 0.73}, {\"target\": \"brand_sid\", \"score\": 0.48}, {\"target\": \"market_sid\", \"score\": 0.468}]",
+    "status": "PENDING",
+    "blocking": true
+  }
+]

@@ -1,0 +1,37 @@
+pair_id,source_column,target_column,confidence,status,rationale
+sample_fact_sales,brand_sid,brand_sid,0.85,AUTO,name/type/description score; second_best=0.548
+sample_fact_sales,market_sid,market_sid,0.85,AUTO,name/type/description score; second_best=0.404
+sample_fact_sales,sales_amount,sales_amount,0.85,AUTO,name/type/description score; second_best=0.498
+sample_fact_sales,transaction_status,transaction_status,0.85,AUTO,name/type/description score; second_best=0.110
+sample_fact_sales,updated_at,updated_at,0.85,AUTO,name/type/description score; second_best=0.056
+sample_dim_brand_scd2,brand_sid,brand_sid,0.85,AUTO,name/type/description score; second_best=0.297
+sample_dim_brand_scd2,brand_name,brand_name,0.85,AUTO,name/type/description score; second_best=0.380
+sample_dim_brand_scd2,active_indicator,active_indicator,0.85,AUTO,name/type/description score; second_best=0.105
+sample_dim_brand_scd2,source_system,source_system,0.85,AUTO,name/type/description score; second_best=0.120
+sample_dim_brand_scd2,updated_at,updated_at,0.85,AUTO,only candidate
+sample_dim_market,market_sid,market_sid,0.85,AUTO,name/type/description score; second_best=0.315
+sample_dim_market,market_name,market_name,0.85,AUTO,name/type/description score; second_best=0.458
+sample_dim_market,region,region,0.85,AUTO,name/type/description score; second_best=0.056
+sample_dim_market,updated_at,updated_at,0.85,AUTO,only candidate
+sample_bq_only_table,record_id,record_id,1.0,SELF,BigQuery-only mode
+sample_bq_only_table,category,category,1.0,SELF,BigQuery-only mode
+sample_bq_only_table,value,value,1.0,SELF,BigQuery-only mode
+sample_bq_only_table,updated_at,updated_at,1.0,SELF,BigQuery-only mode
+pass_test,sku_id,SkuID,1.0,MANUAL,snake_case to mixed case
+pass_test,store_id,store_number,1.0,MANUAL,Approved manual mapping
+pass_test,fiscal_week,fiscal_wk,1.0,MANUAL,Approved manual mapping
+pass_test,plan_type,PlanType,1.0,MANUAL,Approved manual mapping
+pass_test,plan_qty,plan_quantity,1.0,MANUAL,Approved manual mapping
+pass_test,last_updated_date,last_update_ts,1.0,MANUAL,Approved manual mapping
+rowmismatch_test,sku_id,SkuID,1.0,MANUAL,Approved manual mapping
+rowmismatch_test,store_id,store_number,1.0,MANUAL,Approved manual mapping
+rowmismatch_test,fiscal_week,fiscal_wk,1.0,MANUAL,Approved manual mapping
+rowmismatch_test,plan_type,PlanType,1.0,MANUAL,Approved manual mapping
+rowmismatch_test,plan_qty,plan_quantity,1.0,MANUAL,Approved manual mapping
+rowmismatch_test,last_updated_date,last_update_ts,1.0,MANUAL,Approved manual mapping
+valuemismatch_test,sku_id,SkuID,1.0,MANUAL,Approved manual mapping
+valuemismatch_test,store_id,store_number,1.0,MANUAL,Approved manual mapping
+valuemismatch_test,fiscal_week,fiscal_wk,1.0,MANUAL,Approved manual mapping
+valuemismatch_test,plan_type,PlanType,1.0,MANUAL,Approved manual mapping
+valuemismatch_test,plan_qty,plan_quantity,1.0,MANUAL,Approved manual mapping
+valuemismatch_test,last_updated_date,last_update_ts,1.0,MANUAL,Approved manual mapping

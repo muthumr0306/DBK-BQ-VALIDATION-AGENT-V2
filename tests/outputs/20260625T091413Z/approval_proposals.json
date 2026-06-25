@@ -1,0 +1,79 @@
+[
+  {
+    "inference_id": "9a050be45899543c3734",
+    "pair_id": "sample_fact_sales",
+    "category": "column_mapping",
+    "subject": "sale_id",
+    "proposal": "{\"source_column\": \"sale_id\", \"target_column\": \"sale_id\"}",
+    "confidence": 0.73,
+    "evidence": "[{\"target\": \"sale_id\", \"score\": 0.73}, {\"target\": \"brand_sid\", \"score\": 0.48}, {\"target\": \"market_sid\", \"score\": 0.468}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "aac29b7b2ce2b8114a74",
+    "pair_id": "pass_test",
+    "category": "primary_key",
+    "subject": "table",
+    "proposal": "{\"source\": [\"sku_id\"], \"target\": [\"SkuID\"]}",
+    "confidence": 0.6517,
+    "evidence": "{\"row_count\": 1200.0, \"distinct_count\": 10.0, \"null_count\": 0.0}",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "bbf26b9cfa5e66fd9337",
+    "pair_id": "pass_test",
+    "category": "measure",
+    "subject": "plan_quantity",
+    "proposal": "{\"measure_id\": \"plan_quantity\", \"definition_type\": \"measure\", \"pair_id\": \"pass_test\", \"source_table\": \"local.source.pass\", \"target_table\": \"local.target.pass\", \"source_expression\": \"plan_qty\", \"target_expression\": \"plan_quantity\", \"business_name\": \"Plan Quantity\", \"description\": null, \"aggregation\": \"sum\", \"tolerance_absolute\": 0.0, \"tolerance_percentage\": 0.5, \"date_column\": {}, \"group_by\": {}, \"source_filters\": [], \"target_filters\": [], \"enabled\": true, \"severity\": \"error\", \"approval_status\": \"inferred\", \"publish_to_context\": false, \"origin\": \"inference\", \"confidence\": 0.8, \"evidence\": {\"data_type\": \"FLOAT64\", \"measure_name_tokens\": [\"quantity\"], \"kpi_name_tokens\": [], \"description_tokens\": [], \"description_kpi_tokens\": [], \"profile\": {\"row_count\": 1200.0, \"null_count\": 0.0, \"distinct_count\": 1184.0, \"minimum_value\": 10.2, \"maximum_value\": 499.95}, \"distinct_ratio\": 0.9867, \"non_null_ratio\": 1.0, \"score_components\": {\"name\": 0.45, \"type\": 0.2, \"description\": 0.0, \"profile\": 0.1, \"source_mapping\": 0.05}}, \"metadata_errors\": []}",
+    "confidence": 0.8,
+    "evidence": "{\"data_type\": \"FLOAT64\", \"measure_name_tokens\": [\"quantity\"], \"kpi_name_tokens\": [], \"description_tokens\": [], \"description_kpi_tokens\": [], \"profile\": {\"row_count\": 1200.0, \"null_count\": 0.0, \"distinct_count\": 1184.0, \"minimum_value\": 10.2, \"maximum_value\": 499.95}, \"distinct_ratio\": 0.9867, \"non_null_ratio\": 1.0, \"score_components\": {\"name\": 0.45, \"type\": 0.2, \"description\": 0.0, \"profile\": 0.1, \"source_mapping\": 0.05}}",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "f967ae8b9eeb50e4cf30",
+    "pair_id": "rowmismatch_test",
+    "category": "primary_key",
+    "subject": "table",
+    "proposal": "{\"source\": [\"sku_id\"], \"target\": [\"SkuID\"]}",
+    "confidence": 0.652,
+    "evidence": "{\"row_count\": 1103.0, \"distinct_count\": 11.0, \"null_count\": 0.0}",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "30b99c0eaf92e29ff505",
+    "pair_id": "rowmismatch_test",
+    "category": "measure",
+    "subject": "plan_quantity",
+    "proposal": "{\"measure_id\": \"plan_quantity\", \"definition_type\": \"measure\", \"pair_id\": \"rowmismatch_test\", \"source_table\": \"local.source.rowmismatch\", \"target_table\": \"local.target.rowmismatch\", \"source_expression\": \"plan_qty\", \"target_expression\": \"plan_quantity\", \"business_name\": \"Plan Quantity\", \"description\": null, \"aggregation\": \"sum\", \"tolerance_absolute\": 0.0, \"tolerance_percentage\": 0.5, \"date_column\": {}, \"group_by\": {}, \"source_filters\": [], \"target_filters\": [], \"enabled\": true, \"severity\": \"error\", \"approval_status\": \"inferred\", \"publish_to_context\": false, \"origin\": \"inference\", \"confidence\": 0.8, \"evidence\": {\"data_type\": \"FLOAT64\", \"measure_name_tokens\": [\"quantity\"], \"kpi_name_tokens\": [], \"description_tokens\": [], \"description_kpi_tokens\": [], \"profile\": {\"row_count\": 1103.0, \"null_count\": 0.0, \"distinct_count\": 1088.0, \"minimum_value\": 10.2, \"maximum_value\": 499.95}, \"distinct_ratio\": 0.9864, \"non_null_ratio\": 1.0, \"score_components\": {\"name\": 0.45, \"type\": 0.2, \"description\": 0.0, \"profile\": 0.1, \"source_mapping\": 0.05}}, \"metadata_errors\": []}",
+    "confidence": 0.8,
+    "evidence": "{\"data_type\": \"FLOAT64\", \"measure_name_tokens\": [\"quantity\"], \"kpi_name_tokens\": [], \"description_tokens\": [], \"description_kpi_tokens\": [], \"profile\": {\"row_count\": 1103.0, \"null_count\": 0.0, \"distinct_count\": 1088.0, \"minimum_value\": 10.2, \"maximum_value\": 499.95}, \"distinct_ratio\": 0.9864, \"non_null_ratio\": 1.0, \"score_components\": {\"name\": 0.45, \"type\": 0.2, \"description\": 0.0, \"profile\": 0.1, \"source_mapping\": 0.05}}",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "b0e594a56f9ea0912a2e",
+    "pair_id": "valuemismatch_test",
+    "category": "primary_key",
+    "subject": "table",
+    "proposal": "{\"source\": [\"sku_id\"], \"target\": [\"SkuID\"]}",
+    "confidence": 0.6517,
+    "evidence": "{\"row_count\": 1200.0, \"distinct_count\": 10.0, \"null_count\": 0.0}",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "1844614d20e91635851c",
+    "pair_id": "valuemismatch_test",
+    "category": "measure",
+    "subject": "plan_quantity",
+    "proposal": "{\"measure_id\": \"plan_quantity\", \"definition_type\": \"measure\", \"pair_id\": \"valuemismatch_test\", \"source_table\": \"local.source.valuemismatch\", \"target_table\": \"local.target.valuemismatch\", \"source_expression\": \"plan_qty\", \"target_expression\": \"plan_quantity\", \"business_name\": \"Plan Quantity\", \"description\": null, \"aggregation\": \"sum\", \"tolerance_absolute\": 0.0, \"tolerance_percentage\": 0.5, \"date_column\": {}, \"group_by\": {}, \"source_filters\": [], \"target_filters\": [], \"enabled\": true, \"severity\": \"error\", \"approval_status\": \"inferred\", \"publish_to_context\": false, \"origin\": \"inference\", \"confidence\": 0.8, \"evidence\": {\"data_type\": \"FLOAT64\", \"measure_name_tokens\": [\"quantity\"], \"kpi_name_tokens\": [], \"description_tokens\": [], \"description_kpi_tokens\": [], \"profile\": {\"row_count\": 1200.0, \"null_count\": 0.0, \"distinct_count\": 1185.0, \"minimum_value\": 10.2, \"maximum_value\": 554.95}, \"distinct_ratio\": 0.9875, \"non_null_ratio\": 1.0, \"score_components\": {\"name\": 0.45, \"type\": 0.2, \"description\": 0.0, \"profile\": 0.1, \"source_mapping\": 0.05}}, \"metadata_errors\": []}",
+    "confidence": 0.8,
+    "evidence": "{\"data_type\": \"FLOAT64\", \"measure_name_tokens\": [\"quantity\"], \"kpi_name_tokens\": [], \"description_tokens\": [], \"description_kpi_tokens\": [], \"profile\": {\"row_count\": 1200.0, \"null_count\": 0.0, \"distinct_count\": 1185.0, \"minimum_value\": 10.2, \"maximum_value\": 554.95}, \"distinct_ratio\": 0.9875, \"non_null_ratio\": 1.0, \"score_components\": {\"name\": 0.45, \"type\": 0.2, \"description\": 0.0, \"profile\": 0.1, \"source_mapping\": 0.05}}",
+    "status": "PENDING",
+    "blocking": true
+  }
+]

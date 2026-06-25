@@ -1,0 +1,211 @@
+[
+  {
+    "inference_id": "9a050be45899543c3734",
+    "pair_id": "sample_fact_sales",
+    "category": "column_mapping",
+    "subject": "sale_id",
+    "proposal": "{\"source_column\": \"sale_id\", \"target_column\": \"sale_id\"}",
+    "confidence": 0.73,
+    "evidence": "[{\"target\": \"sale_id\", \"score\": 0.73}, {\"target\": \"brand_sid\", \"score\": 0.48}, {\"target\": \"market_sid\", \"score\": 0.468}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "1e7203bc1d394a2e8aa4",
+    "pair_id": "pass_test",
+    "category": "column_mapping",
+    "subject": "store_id",
+    "proposal": "{\"source_column\": \"store_id\", \"target_column\": \"store_number\"}",
+    "confidence": 0.5833,
+    "evidence": "[{\"target\": \"store_number\", \"score\": 0.5833}, {\"target\": \"PlanType\", \"score\": 0.412}, {\"target\": \"last_update_ts\", \"score\": 0.1326}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "5b274218106c673663e8",
+    "pair_id": "pass_test",
+    "category": "column_mapping",
+    "subject": "fiscal_week",
+    "proposal": "{\"source_column\": \"fiscal_week\", \"target_column\": \"fiscal_wk\"}",
+    "confidence": 0.7233,
+    "evidence": "[{\"target\": \"fiscal_wk\", \"score\": 0.7233}, {\"target\": \"plan_quantity\", \"score\": 0.2182}, {\"target\": \"store_number\", \"score\": 0.12}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "4ff7c64bb75feefde966",
+    "pair_id": "pass_test",
+    "category": "column_mapping",
+    "subject": "plan_qty",
+    "proposal": "{\"source_column\": \"plan_qty\", \"target_column\": \"plan_quantity\"}",
+    "confidence": 0.6595,
+    "evidence": "[{\"target\": \"plan_quantity\", \"score\": 0.6595}, {\"target\": \"fiscal_wk\", \"score\": 0.236}, {\"target\": \"last_update_ts\", \"score\": 0.1326}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "208ba75f484c272276d8",
+    "pair_id": "pass_test",
+    "category": "column_mapping",
+    "subject": "last_updated_date",
+    "proposal": "{\"source_column\": \"last_updated_date\", \"target_column\": \"last_update_ts\"}",
+    "confidence": 0.6922,
+    "evidence": "[{\"target\": \"last_update_ts\", \"score\": 0.6922}, {\"target\": \"store_number\", \"score\": 0.1292}, {\"target\": \"plan_quantity\", \"score\": 0.1244}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "aac29b7b2ce2b8114a74",
+    "pair_id": "pass_test",
+    "category": "primary_key",
+    "subject": "table",
+    "proposal": "{\"source\": [\"sku_id\"], \"target\": [\"SkuID\"]}",
+    "confidence": 0.6517,
+    "evidence": "{\"row_count\": 1200.0, \"distinct_count\": 10.0, \"null_count\": 0.0}",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "bbf26b9cfa5e66fd9337",
+    "pair_id": "pass_test",
+    "category": "measure",
+    "subject": "plan_quantity",
+    "proposal": "{\"measure_id\": \"plan_quantity\", \"definition_type\": \"measure\", \"pair_id\": \"pass_test\", \"source_table\": \"local.source.pass\", \"target_table\": \"local.target.pass\", \"source_expression\": null, \"target_expression\": \"plan_quantity\", \"business_name\": \"Plan Quantity\", \"description\": null, \"aggregation\": \"sum\", \"tolerance_absolute\": 0.0, \"tolerance_percentage\": 0.5, \"date_column\": {}, \"group_by\": {}, \"source_filters\": [], \"target_filters\": [], \"enabled\": true, \"severity\": \"error\", \"approval_status\": \"inferred\", \"publish_to_context\": false, \"origin\": \"inference\", \"confidence\": 0.75, \"evidence\": {\"data_type\": \"FLOAT64\", \"measure_name_tokens\": [\"quantity\"], \"kpi_name_tokens\": [], \"description_tokens\": [], \"description_kpi_tokens\": [], \"profile\": {\"row_count\": 1200.0, \"null_count\": 0.0, \"distinct_count\": 1184.0, \"minimum_value\": 10.2, \"maximum_value\": 499.95}, \"distinct_ratio\": 0.9867, \"non_null_ratio\": 1.0, \"score_components\": {\"name\": 0.45, \"type\": 0.2, \"description\": 0.0, \"profile\": 0.1, \"source_mapping\": 0.0}}, \"metadata_errors\": [\"Missing source_expression\"]}",
+    "confidence": 0.0,
+    "evidence": "{\"metadata_errors\": [\"Missing source_expression\"]}",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "9416cf8e0fc7c6a50824",
+    "pair_id": "rowmismatch_test",
+    "category": "column_mapping",
+    "subject": "store_id",
+    "proposal": "{\"source_column\": \"store_id\", \"target_column\": \"store_number\"}",
+    "confidence": 0.5833,
+    "evidence": "[{\"target\": \"store_number\", \"score\": 0.5833}, {\"target\": \"PlanType\", \"score\": 0.412}, {\"target\": \"last_update_ts\", \"score\": 0.1326}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "255404f530731ea9625f",
+    "pair_id": "rowmismatch_test",
+    "category": "column_mapping",
+    "subject": "fiscal_week",
+    "proposal": "{\"source_column\": \"fiscal_week\", \"target_column\": \"fiscal_wk\"}",
+    "confidence": 0.7233,
+    "evidence": "[{\"target\": \"fiscal_wk\", \"score\": 0.7233}, {\"target\": \"plan_quantity\", \"score\": 0.2182}, {\"target\": \"store_number\", \"score\": 0.12}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "5298c607d81fb9a149f2",
+    "pair_id": "rowmismatch_test",
+    "category": "column_mapping",
+    "subject": "plan_qty",
+    "proposal": "{\"source_column\": \"plan_qty\", \"target_column\": \"plan_quantity\"}",
+    "confidence": 0.6595,
+    "evidence": "[{\"target\": \"plan_quantity\", \"score\": 0.6595}, {\"target\": \"fiscal_wk\", \"score\": 0.236}, {\"target\": \"last_update_ts\", \"score\": 0.1326}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "2ed912849c55d83fc52c",
+    "pair_id": "rowmismatch_test",
+    "category": "column_mapping",
+    "subject": "last_updated_date",
+    "proposal": "{\"source_column\": \"last_updated_date\", \"target_column\": \"last_update_ts\"}",
+    "confidence": 0.6922,
+    "evidence": "[{\"target\": \"last_update_ts\", \"score\": 0.6922}, {\"target\": \"store_number\", \"score\": 0.1292}, {\"target\": \"plan_quantity\", \"score\": 0.1244}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "f967ae8b9eeb50e4cf30",
+    "pair_id": "rowmismatch_test",
+    "category": "primary_key",
+    "subject": "table",
+    "proposal": "{\"source\": [\"sku_id\"], \"target\": [\"SkuID\"]}",
+    "confidence": 0.652,
+    "evidence": "{\"row_count\": 1103.0, \"distinct_count\": 11.0, \"null_count\": 0.0}",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "30b99c0eaf92e29ff505",
+    "pair_id": "rowmismatch_test",
+    "category": "measure",
+    "subject": "plan_quantity",
+    "proposal": "{\"measure_id\": \"plan_quantity\", \"definition_type\": \"measure\", \"pair_id\": \"rowmismatch_test\", \"source_table\": \"local.source.rowmismatch\", \"target_table\": \"local.target.rowmismatch\", \"source_expression\": null, \"target_expression\": \"plan_quantity\", \"business_name\": \"Plan Quantity\", \"description\": null, \"aggregation\": \"sum\", \"tolerance_absolute\": 0.0, \"tolerance_percentage\": 0.5, \"date_column\": {}, \"group_by\": {}, \"source_filters\": [], \"target_filters\": [], \"enabled\": true, \"severity\": \"error\", \"approval_status\": \"inferred\", \"publish_to_context\": false, \"origin\": \"inference\", \"confidence\": 0.75, \"evidence\": {\"data_type\": \"FLOAT64\", \"measure_name_tokens\": [\"quantity\"], \"kpi_name_tokens\": [], \"description_tokens\": [], \"description_kpi_tokens\": [], \"profile\": {\"row_count\": 1103.0, \"null_count\": 0.0, \"distinct_count\": 1088.0, \"minimum_value\": 10.2, \"maximum_value\": 499.95}, \"distinct_ratio\": 0.9864, \"non_null_ratio\": 1.0, \"score_components\": {\"name\": 0.45, \"type\": 0.2, \"description\": 0.0, \"profile\": 0.1, \"source_mapping\": 0.0}}, \"metadata_errors\": [\"Missing source_expression\"]}",
+    "confidence": 0.0,
+    "evidence": "{\"metadata_errors\": [\"Missing source_expression\"]}",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "c3f0a3a3bad591aabc89",
+    "pair_id": "valuemismatch_test",
+    "category": "column_mapping",
+    "subject": "store_id",
+    "proposal": "{\"source_column\": \"store_id\", \"target_column\": \"store_number\"}",
+    "confidence": 0.5833,
+    "evidence": "[{\"target\": \"store_number\", \"score\": 0.5833}, {\"target\": \"PlanType\", \"score\": 0.412}, {\"target\": \"last_update_ts\", \"score\": 0.1326}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "06d2b318a544fd944258",
+    "pair_id": "valuemismatch_test",
+    "category": "column_mapping",
+    "subject": "fiscal_week",
+    "proposal": "{\"source_column\": \"fiscal_week\", \"target_column\": \"fiscal_wk\"}",
+    "confidence": 0.7233,
+    "evidence": "[{\"target\": \"fiscal_wk\", \"score\": 0.7233}, {\"target\": \"plan_quantity\", \"score\": 0.2182}, {\"target\": \"store_number\", \"score\": 0.12}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "23e519846d1f836c1556",
+    "pair_id": "valuemismatch_test",
+    "category": "column_mapping",
+    "subject": "plan_qty",
+    "proposal": "{\"source_column\": \"plan_qty\", \"target_column\": \"plan_quantity\"}",
+    "confidence": 0.6595,
+    "evidence": "[{\"target\": \"plan_quantity\", \"score\": 0.6595}, {\"target\": \"fiscal_wk\", \"score\": 0.236}, {\"target\": \"last_update_ts\", \"score\": 0.1326}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "b32ce92d69dce58973ef",
+    "pair_id": "valuemismatch_test",
+    "category": "column_mapping",
+    "subject": "last_updated_date",
+    "proposal": "{\"source_column\": \"last_updated_date\", \"target_column\": \"last_update_ts\"}",
+    "confidence": 0.6922,
+    "evidence": "[{\"target\": \"last_update_ts\", \"score\": 0.6922}, {\"target\": \"store_number\", \"score\": 0.1292}, {\"target\": \"plan_quantity\", \"score\": 0.1244}]",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "b0e594a56f9ea0912a2e",
+    "pair_id": "valuemismatch_test",
+    "category": "primary_key",
+    "subject": "table",
+    "proposal": "{\"source\": [\"sku_id\"], \"target\": [\"SkuID\"]}",
+    "confidence": 0.6517,
+    "evidence": "{\"row_count\": 1200.0, \"distinct_count\": 10.0, \"null_count\": 0.0}",
+    "status": "PENDING",
+    "blocking": true
+  },
+  {
+    "inference_id": "1844614d20e91635851c",
+    "pair_id": "valuemismatch_test",
+    "category": "measure",
+    "subject": "plan_quantity",
+    "proposal": "{\"measure_id\": \"plan_quantity\", \"definition_type\": \"measure\", \"pair_id\": \"valuemismatch_test\", \"source_table\": \"local.source.valuemismatch\", \"target_table\": \"local.target.valuemismatch\", \"source_expression\": null, \"target_expression\": \"plan_quantity\", \"business_name\": \"Plan Quantity\", \"description\": null, \"aggregation\": \"sum\", \"tolerance_absolute\": 0.0, \"tolerance_percentage\": 0.5, \"date_column\": {}, \"group_by\": {}, \"source_filters\": [], \"target_filters\": [], \"enabled\": true, \"severity\": \"error\", \"approval_status\": \"inferred\", \"publish_to_context\": false, \"origin\": \"inference\", \"confidence\": 0.75, \"evidence\": {\"data_type\": \"FLOAT64\", \"measure_name_tokens\": [\"quantity\"], \"kpi_name_tokens\": [], \"description_tokens\": [], \"description_kpi_tokens\": [], \"profile\": {\"row_count\": 1200.0, \"null_count\": 0.0, \"distinct_count\": 1185.0, \"minimum_value\": 10.2, \"maximum_value\": 554.95}, \"distinct_ratio\": 0.9875, \"non_null_ratio\": 1.0, \"score_components\": {\"name\": 0.45, \"type\": 0.2, \"description\": 0.0, \"profile\": 0.1, \"source_mapping\": 0.0}}, \"metadata_errors\": [\"Missing source_expression\"]}",
+    "confidence": 0.0,
+    "evidence": "{\"metadata_errors\": [\"Missing source_expression\"]}",
+    "status": "PENDING",
+    "blocking": true
+  }
+]

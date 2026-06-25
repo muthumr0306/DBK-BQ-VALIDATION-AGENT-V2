@@ -1,0 +1,42 @@
+{
+  "run_id": "20260625T064028Z",
+  "project": "mock_test",
+  "started_at": "2026-06-25T06:40:28.450601+00:00",
+  "requested_stop_after": "reports",
+  "status": "ERROR",
+  "tables": [
+    {
+      "pair_id": "sample_fact_sales",
+      "mode": "migration",
+      "source_table": "local.source.fact_sales",
+      "target_table": "local.target.fact_sales",
+      "status": "WAITING_FOR_REVIEW",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "sale_id"
+        ],
+        "target": [
+          "sale_id"
+        ]
+      },
+      "audit_columns": {
+        "source": "updated_at",
+        "target": "updated_at",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 1,
+      "relationship_candidates": 3,
+      "relationships_executable": 0,
+      "review_items": 1,
+      "non_blocking_reviews": 0,
+      "pending_decisions": 1
+    }
+  ],
+  "error": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 422, in _process_pair\n    return self._finalize_table(table_dir, summary, mappings, rules, results, rca, relationship_candidates), reviews\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 442, in _finalize_table\n    write_table_report(\n    ~~~~~~~~~~~~~~~~~~^\n        table_dir, summary, mappings, rule_rows, results, rca, relationship_candidates\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\reporting.py\", line 104, in write_table_report\n    _frame(records).to_excel(writer, index=False, sheet_name=_safe_sheet(name))\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\pandas\\util\\_decorators.py\", line 333, in wrapper\n    return func(*args, **kwargs)\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\pandas\\core\\generic.py\", line 2417, in to_excel\n    formatter.write(\n    ~~~~~~~~~~~~~~~^\n        excel_writer,\n        ^^^^^^^^^^^^^\n    ...<6 lines>...\n        engine_kwargs=engine_kwargs,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\pandas\\io\\formats\\excel.py\", line 952, in write\n    writer._write_cells(\n    ~~~~~~~~~~~~~~~~~~~^\n        formatted_cells,\n        ^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n        freeze_panes=freeze_panes,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\pandas\\io\\excel\\_openpyxl.py\", line 490, in _write_cells\n    xcell.value, fmt = self._value_with_fmt(cell.val)\n    ^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\openpyxl\\cell\\cell.py\", line 218, in value\n    self._bind_value(value)\n    ~~~~~~~~~~~~~~~~^^^^^^^\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\openpyxl\\cell\\cell.py\", line 197, in _bind_value\n    value = self.check_string(value)\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\openpyxl\\cell\\cell.py\", line 165, in check_string\n    raise IllegalCharacterError(f\"{value} cannot be used in worksheets.\")\nopenpyxl.utils.exceptions.IllegalCharacterError: Invalid expression / Unexpected token. Line 1, Col: 41.\n  SELECT COUNT(*) AS row_count FROM `local\u001b[4m`\u001b[0m.`source`.`dim_brand_scd2` WHERE `source_system` = 'BRANDING FOUNDATION' AND `active_indicator` = TR cannot be used in worksheets.\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 243, in run\n    result, reviews = self._process_pair(pair, stop_after)\n                      ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 429, in _process_pair\n    return self._finalize_table(table_dir, summary, mappings, rules, results, rca, relationship_candidates), reviews\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 442, in _finalize_table\n    write_table_report(\n    ~~~~~~~~~~~~~~~~~~^\n        table_dir, summary, mappings, rule_rows, results, rca, relationship_candidates\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\reporting.py\", line 104, in write_table_report\n    _frame(records).to_excel(writer, index=False, sheet_name=_safe_sheet(name))\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\pandas\\util\\_decorators.py\", line 333, in wrapper\n    return func(*args, **kwargs)\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\pandas\\core\\generic.py\", line 2417, in to_excel\n    formatter.write(\n    ~~~~~~~~~~~~~~~^\n        excel_writer,\n        ^^^^^^^^^^^^^\n    ...<6 lines>...\n        engine_kwargs=engine_kwargs,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\pandas\\io\\formats\\excel.py\", line 952, in write\n    writer._write_cells(\n    ~~~~~~~~~~~~~~~~~~~^\n        formatted_cells,\n        ^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n        freeze_panes=freeze_panes,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\pandas\\io\\excel\\_openpyxl.py\", line 490, in _write_cells\n    xcell.value, fmt = self._value_with_fmt(cell.val)\n    ^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\openpyxl\\cell\\cell.py\", line 218, in value\n    self._bind_value(value)\n    ~~~~~~~~~~~~~~~~^^^^^^^\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\openpyxl\\cell\\cell.py\", line 197, in _bind_value\n    value = self.check_string(value)\n  File \"C:\\Users\\saipr\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\openpyxl\\cell\\cell.py\", line 165, in check_string\n    raise IllegalCharacterError(f\"{value} cannot be used in worksheets.\")\nopenpyxl.utils.exceptions.IllegalCharacterError: Invalid expression / Unexpected token. Line 1, Col: 41.\n  SELECT COUNT(*) AS row_count FROM `local\u001b[4m`\u001b[0m.`source`.`dim_brand_scd2` WHERE `source_system` = 'BRANDING FOUNDATION' AND `active_indicator` = TR cannot be used in worksheets. cannot be used in worksheets.\n",
+  "completed_at": "2026-06-25T06:41:13.985017+00:00"
+}

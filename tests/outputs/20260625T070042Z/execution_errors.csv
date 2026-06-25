@@ -1,0 +1,55 @@
+pair_id,rule_id,type,category,severity,origin,description,status,error,stack_trace
+sample_dim_brand_scd2,sample_dim_brand_scd2__key_buckets,key_buckets,reconciliation,error,generated,,ERROR,"Binder Error: No function matches the given name and argument types 'substring(BLOB, INTEGER_LITERAL, INTEGER_LITERAL)'. You might need to add explicit type casts.
+	Candidate functions:
+	substring(VARCHAR, BIGINT, BIGINT) -> VARCHAR
+	substring(VARCHAR, BIGINT) -> VARCHAR
+
+
+LINE 1: SELECT SUBSTRING(UNHEX(MD5(CONCAT_WS('|', COALESCE(CAST(""brand_sid...
+               ^","Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2160, in _execute_rule
+    result = self._controlled_execute(
+        side, sql, allowed_tables_for_rule(rule, pair, side), table_dir,
+        f""{rule.rule_id}_{side}"",
+    )
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2302, in _controlled_execute
+    result = connector.execute(validated)
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\connectors.py"", line 355, in execute
+    frame = self._conn().execute(duckdb_sql).fetchdf()
+            ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+_duckdb.BinderException: Binder Error: No function matches the given name and argument types 'substring(BLOB, INTEGER_LITERAL, INTEGER_LITERAL)'. You might need to add explicit type casts.
+	Candidate functions:
+	substring(VARCHAR, BIGINT, BIGINT) -> VARCHAR
+	substring(VARCHAR, BIGINT) -> VARCHAR
+
+
+LINE 1: SELECT SUBSTRING(UNHEX(MD5(CONCAT_WS('|', COALESCE(CAST(""brand_sid...
+               ^
+"
+sample_dim_market,sample_dim_market__key_buckets,key_buckets,reconciliation,error,generated,,ERROR,"Binder Error: No function matches the given name and argument types 'substring(BLOB, INTEGER_LITERAL, INTEGER_LITERAL)'. You might need to add explicit type casts.
+	Candidate functions:
+	substring(VARCHAR, BIGINT, BIGINT) -> VARCHAR
+	substring(VARCHAR, BIGINT) -> VARCHAR
+
+
+LINE 1: SELECT SUBSTRING(UNHEX(MD5(CONCAT_WS('|', COALESCE(CAST(""market_sid...
+               ^","Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2160, in _execute_rule
+    result = self._controlled_execute(
+        side, sql, allowed_tables_for_rule(rule, pair, side), table_dir,
+        f""{rule.rule_id}_{side}"",
+    )
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2302, in _controlled_execute
+    result = connector.execute(validated)
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\connectors.py"", line 355, in execute
+    frame = self._conn().execute(duckdb_sql).fetchdf()
+            ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+_duckdb.BinderException: Binder Error: No function matches the given name and argument types 'substring(BLOB, INTEGER_LITERAL, INTEGER_LITERAL)'. You might need to add explicit type casts.
+	Candidate functions:
+	substring(VARCHAR, BIGINT, BIGINT) -> VARCHAR
+	substring(VARCHAR, BIGINT) -> VARCHAR
+
+
+LINE 1: SELECT SUBSTRING(UNHEX(MD5(CONCAT_WS('|', COALESCE(CAST(""market_sid...
+               ^
+"

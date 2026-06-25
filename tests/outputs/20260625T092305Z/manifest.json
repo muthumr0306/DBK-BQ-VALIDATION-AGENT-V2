@@ -1,0 +1,289 @@
+{
+  "run_id": "20260625T092305Z",
+  "project": "mock_test",
+  "started_at": "2026-06-25T09:23:05.093996+00:00",
+  "requested_stop_after": "reports",
+  "status": "COMPLETED_WITH_ERRORS",
+  "tables": [
+    {
+      "pair_id": "sample_fact_sales",
+      "mode": "migration",
+      "source_table": "local.source.fact_sales",
+      "target_table": "local.target.fact_sales",
+      "status": "WAITING_FOR_REVIEW",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "sale_id"
+        ],
+        "target": [
+          "sale_id"
+        ]
+      },
+      "audit_columns": {
+        "source": "updated_at",
+        "target": "updated_at",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 1,
+      "relationship_candidates": 3,
+      "relationships_executable": 0,
+      "review_items": 1,
+      "non_blocking_reviews": 0,
+      "pending_decisions": 1
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "mode": "migration",
+      "source_table": "local.source.dim_brand_scd2",
+      "target_table": "local.target.dim_brand_scd2",
+      "status": "FAIL",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [
+          "brand_sid"
+        ],
+        "target": [
+          "brand_sid"
+        ]
+      },
+      "audit_columns": {
+        "source": "updated_at",
+        "target": "updated_at",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [
+          {
+            "column": "source_system",
+            "operator": "eq",
+            "value": "BRANDING FOUNDATION"
+          },
+          {
+            "column": "active_indicator",
+            "operator": "eq",
+            "value": true
+          }
+        ],
+        "target": [
+          {
+            "column": "source_system",
+            "operator": "eq",
+            "value": "BRANDING FOUNDATION"
+          },
+          {
+            "column": "active_indicator",
+            "operator": "eq",
+            "value": true
+          }
+        ]
+      },
+      "measure_count": 0,
+      "relationship_candidates": 1,
+      "relationships_executable": 0,
+      "review_items": 0,
+      "non_blocking_reviews": 0,
+      "rule_count": 29,
+      "passed": 19,
+      "failed": 10,
+      "errors": 0,
+      "root_cause_count": 7,
+      "cascade_count": 3
+    },
+    {
+      "pair_id": "sample_dim_market",
+      "mode": "migration",
+      "source_table": "local.source.dim_market",
+      "target_table": "local.target.dim_market",
+      "status": "PASS",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [
+          "market_sid"
+        ],
+        "target": [
+          "market_sid"
+        ]
+      },
+      "audit_columns": {
+        "source": "updated_at",
+        "target": "updated_at",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 0,
+      "relationships_executable": 0,
+      "review_items": 0,
+      "non_blocking_reviews": 0,
+      "rule_count": 24,
+      "passed": 24,
+      "failed": 0,
+      "errors": 0
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "mode": "bigquery_only",
+      "source_table": null,
+      "target_table": "local.target.bq_only_table",
+      "status": "FAIL",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [],
+        "target": [
+          "record_id"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "updated_at",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 0,
+      "relationships_executable": 0,
+      "review_items": 0,
+      "non_blocking_reviews": 0,
+      "rule_count": 9,
+      "passed": 7,
+      "failed": 2,
+      "errors": 0,
+      "root_cause_count": 2,
+      "cascade_count": 0
+    },
+    {
+      "pair_id": "pass_test",
+      "mode": "migration",
+      "source_table": "local.source.pass",
+      "target_table": "local.target.pass",
+      "status": "ERROR",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "sku_id",
+          "store_id",
+          "fiscal_week",
+          "plan_type"
+        ],
+        "target": [
+          "SkuID",
+          "store_number",
+          "fiscal_wk",
+          "PlanType"
+        ]
+      },
+      "audit_columns": {
+        "source": "last_updated_date",
+        "target": "last_update_ts",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 1,
+      "relationship_candidates": 0,
+      "relationships_executable": 0,
+      "review_items": 0,
+      "non_blocking_reviews": 0,
+      "error": "Business context references missing target columns; columns=['fiscal_week', 'last_updated_date', 'plan_qty', 'plan_type', 'sku_id', 'store_id'], domains=[]",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 373, in _process_pair\n    rules = self._generate_rules(\n        pair, metadata, mappings, context, keys, audit, resolved_relationships\n    )\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 1815, in _generate_rules\n    raise ValueError(\n    ...<3 lines>...\n    )\nValueError: Business context references missing target columns; columns=['fiscal_week', 'last_updated_date', 'plan_qty', 'plan_type', 'sku_id', 'store_id'], domains=[]\n"
+    },
+    {
+      "pair_id": "rowmismatch_test",
+      "mode": "migration",
+      "source_table": "local.source.rowmismatch",
+      "target_table": "local.target.rowmismatch",
+      "status": "ERROR",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "sku_id",
+          "store_id",
+          "fiscal_week",
+          "plan_type"
+        ],
+        "target": [
+          "SkuID",
+          "store_number",
+          "fiscal_wk",
+          "PlanType"
+        ]
+      },
+      "audit_columns": {
+        "source": "last_updated_date",
+        "target": "last_update_ts",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 1,
+      "relationship_candidates": 0,
+      "relationships_executable": 0,
+      "review_items": 0,
+      "non_blocking_reviews": 0,
+      "error": "Business context references missing target columns; columns=['fiscal_week', 'last_updated_date', 'plan_qty', 'plan_type', 'sku_id', 'store_id'], domains=[]",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 373, in _process_pair\n    rules = self._generate_rules(\n        pair, metadata, mappings, context, keys, audit, resolved_relationships\n    )\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 1815, in _generate_rules\n    raise ValueError(\n    ...<3 lines>...\n    )\nValueError: Business context references missing target columns; columns=['fiscal_week', 'last_updated_date', 'plan_qty', 'plan_type', 'sku_id', 'store_id'], domains=[]\n"
+    },
+    {
+      "pair_id": "valuemismatch_test",
+      "mode": "migration",
+      "source_table": "local.source.valuemismatch",
+      "target_table": "local.target.valuemismatch",
+      "status": "ERROR",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "sku_id",
+          "store_id",
+          "fiscal_week",
+          "plan_type"
+        ],
+        "target": [
+          "SkuID",
+          "store_number",
+          "fiscal_wk",
+          "PlanType"
+        ]
+      },
+      "audit_columns": {
+        "source": "last_updated_date",
+        "target": "last_update_ts",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 1,
+      "relationship_candidates": 0,
+      "relationships_executable": 0,
+      "review_items": 0,
+      "non_blocking_reviews": 0,
+      "error": "Business context references missing target columns; columns=['fiscal_week', 'last_updated_date', 'plan_qty', 'plan_type', 'sku_id', 'store_id'], domains=[]",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 373, in _process_pair\n    rules = self._generate_rules(\n        pair, metadata, mappings, context, keys, audit, resolved_relationships\n    )\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 1815, in _generate_rules\n    raise ValueError(\n    ...<3 lines>...\n    )\nValueError: Business context references missing target columns; columns=['fiscal_week', 'last_updated_date', 'plan_qty', 'plan_type', 'sku_id', 'store_id'], domains=[]\n"
+    }
+  ],
+  "approval_proposals": 1,
+  "approval_proposals_file": "C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\tests\\outputs\\20260625T092305Z\\approval_proposals.json",
+  "table_status_counts": {
+    "ERROR": 3,
+    "FAIL": 2,
+    "PASS": 1,
+    "WAITING_FOR_REVIEW": 1
+  },
+  "completed_at": "2026-06-25T09:29:34.002251+00:00"
+}
