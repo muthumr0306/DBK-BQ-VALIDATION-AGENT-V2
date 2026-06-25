@@ -1,0 +1,1268 @@
+[
+  {
+    "rule_id": "sample_dim_brand_scd2__row_count",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "row_count",
+    "scope": "compare",
+    "category": "reconciliation",
+    "source_columns": [],
+    "target_columns": [],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Filtered source and target row counts match",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__schema__brand_sid",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "schema",
+    "scope": "compare",
+    "category": "schema",
+    "source_columns": [
+      "brand_sid"
+    ],
+    "target_columns": [
+      "brand_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__null__brand_sid",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "null_count",
+    "scope": "compare",
+    "category": "completeness",
+    "source_columns": [
+      "brand_sid"
+    ],
+    "target_columns": [
+      "brand_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__distinct__brand_sid",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "distinct_count",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "brand_sid"
+    ],
+    "target_columns": [
+      "brand_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__schema__brand_name",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "schema",
+    "scope": "compare",
+    "category": "schema",
+    "source_columns": [
+      "brand_name"
+    ],
+    "target_columns": [
+      "brand_name"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__null__brand_name",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "null_count",
+    "scope": "compare",
+    "category": "completeness",
+    "source_columns": [
+      "brand_name"
+    ],
+    "target_columns": [
+      "brand_name"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__distinct__brand_name",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "distinct_count",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "brand_name"
+    ],
+    "target_columns": [
+      "brand_name"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__distribution__brand_name",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "value_distribution",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "brand_name"
+    ],
+    "target_columns": [
+      "brand_name"
+    ],
+    "parameters": {
+      "limit": 20
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__schema__active_indicator",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "schema",
+    "scope": "compare",
+    "category": "schema",
+    "source_columns": [
+      "active_indicator"
+    ],
+    "target_columns": [
+      "active_indicator"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__null__active_indicator",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "null_count",
+    "scope": "compare",
+    "category": "completeness",
+    "source_columns": [
+      "active_indicator"
+    ],
+    "target_columns": [
+      "active_indicator"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__distinct__active_indicator",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "distinct_count",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "active_indicator"
+    ],
+    "target_columns": [
+      "active_indicator"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__distribution__active_indicator",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "value_distribution",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "active_indicator"
+    ],
+    "target_columns": [
+      "active_indicator"
+    ],
+    "parameters": {
+      "limit": 20
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__schema__source_system",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "schema",
+    "scope": "compare",
+    "category": "schema",
+    "source_columns": [
+      "source_system"
+    ],
+    "target_columns": [
+      "source_system"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__null__source_system",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "null_count",
+    "scope": "compare",
+    "category": "completeness",
+    "source_columns": [
+      "source_system"
+    ],
+    "target_columns": [
+      "source_system"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__distinct__source_system",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "distinct_count",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "source_system"
+    ],
+    "target_columns": [
+      "source_system"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__distribution__source_system",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "value_distribution",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "source_system"
+    ],
+    "target_columns": [
+      "source_system"
+    ],
+    "parameters": {
+      "limit": 20
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__schema__updated_at",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "schema",
+    "scope": "compare",
+    "category": "schema",
+    "source_columns": [
+      "updated_at"
+    ],
+    "target_columns": [
+      "updated_at"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__null__updated_at",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "null_count",
+    "scope": "compare",
+    "category": "completeness",
+    "source_columns": [
+      "updated_at"
+    ],
+    "target_columns": [
+      "updated_at"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__distinct__updated_at",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "distinct_count",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "updated_at"
+    ],
+    "target_columns": [
+      "updated_at"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__target_key_unique",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "uniqueness",
+    "scope": "target",
+    "category": "uniqueness",
+    "source_columns": [],
+    "target_columns": [
+      "brand_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__source_key_unique",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "uniqueness",
+    "scope": "source",
+    "category": "uniqueness",
+    "source_columns": [
+      "brand_sid"
+    ],
+    "target_columns": [],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__key_buckets",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "key_buckets",
+    "scope": "compare",
+    "category": "reconciliation",
+    "source_columns": [
+      "brand_sid"
+    ],
+    "target_columns": [
+      "brand_sid"
+    ],
+    "parameters": {
+      "buckets": 256
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__exact_keys_when_small",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "key_values",
+    "scope": "compare",
+    "category": "reconciliation",
+    "source_columns": [
+      "brand_sid"
+    ],
+    "target_columns": [
+      "brand_sid"
+    ],
+    "parameters": {
+      "limit": 5000
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Exact hashed key comparison when both filtered tables fit within the configured limit",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__mapped_rows_when_small",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "row_reconciliation",
+    "scope": "compare",
+    "category": "reconciliation",
+    "source_columns": [
+      "brand_sid",
+      "brand_name",
+      "active_indicator",
+      "source_system",
+      "updated_at"
+    ],
+    "target_columns": [
+      "brand_sid",
+      "brand_name",
+      "active_indicator",
+      "source_system",
+      "updated_at"
+    ],
+    "parameters": {
+      "source_keys": [
+        "brand_sid"
+      ],
+      "target_keys": [
+        "brand_sid"
+      ],
+      "limit": 5000
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Bounded mapped-row comparison; output contains hashes only",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__target_key_not_null__brand_sid",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "null_count",
+    "scope": "target",
+    "category": "completeness",
+    "source_columns": [],
+    "target_columns": [
+      "brand_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Every primary-key component must not be null",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__source_key_not_null__brand_sid",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "null_count",
+    "scope": "source",
+    "category": "completeness",
+    "source_columns": [
+      "brand_sid"
+    ],
+    "target_columns": [],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Every source primary-key component must not be null",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__freshness",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "freshness",
+    "scope": "compare",
+    "category": "freshness",
+    "source_columns": [
+      "updated_at"
+    ],
+    "target_columns": [
+      "updated_at"
+    ],
+    "parameters": {},
+    "tolerance": {
+      "minutes": 1440
+    },
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__context_required__brand_sid",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "null_count",
+    "scope": "target",
+    "category": "business_rule",
+    "source_columns": [],
+    "target_columns": [
+      "brand_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Brand surrogate key.",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_brand_scd2__context_domain__active_indicator",
+    "pair_id": "sample_dim_brand_scd2",
+    "type": "domain",
+    "scope": "target",
+    "category": "business_rule",
+    "source_columns": [],
+    "target_columns": [
+      "active_indicator"
+    ],
+    "parameters": {
+      "values": [
+        true,
+        false
+      ]
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__row_count",
+    "pair_id": "sample_dim_market",
+    "type": "row_count",
+    "scope": "compare",
+    "category": "reconciliation",
+    "source_columns": [],
+    "target_columns": [],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Filtered source and target row counts match",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__schema__market_sid",
+    "pair_id": "sample_dim_market",
+    "type": "schema",
+    "scope": "compare",
+    "category": "schema",
+    "source_columns": [
+      "market_sid"
+    ],
+    "target_columns": [
+      "market_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__null__market_sid",
+    "pair_id": "sample_dim_market",
+    "type": "null_count",
+    "scope": "compare",
+    "category": "completeness",
+    "source_columns": [
+      "market_sid"
+    ],
+    "target_columns": [
+      "market_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__distinct__market_sid",
+    "pair_id": "sample_dim_market",
+    "type": "distinct_count",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "market_sid"
+    ],
+    "target_columns": [
+      "market_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__schema__market_name",
+    "pair_id": "sample_dim_market",
+    "type": "schema",
+    "scope": "compare",
+    "category": "schema",
+    "source_columns": [
+      "market_name"
+    ],
+    "target_columns": [
+      "market_name"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__null__market_name",
+    "pair_id": "sample_dim_market",
+    "type": "null_count",
+    "scope": "compare",
+    "category": "completeness",
+    "source_columns": [
+      "market_name"
+    ],
+    "target_columns": [
+      "market_name"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__distinct__market_name",
+    "pair_id": "sample_dim_market",
+    "type": "distinct_count",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "market_name"
+    ],
+    "target_columns": [
+      "market_name"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__distribution__market_name",
+    "pair_id": "sample_dim_market",
+    "type": "value_distribution",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "market_name"
+    ],
+    "target_columns": [
+      "market_name"
+    ],
+    "parameters": {
+      "limit": 20
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__schema__region",
+    "pair_id": "sample_dim_market",
+    "type": "schema",
+    "scope": "compare",
+    "category": "schema",
+    "source_columns": [
+      "region"
+    ],
+    "target_columns": [
+      "region"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__null__region",
+    "pair_id": "sample_dim_market",
+    "type": "null_count",
+    "scope": "compare",
+    "category": "completeness",
+    "source_columns": [
+      "region"
+    ],
+    "target_columns": [
+      "region"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__distinct__region",
+    "pair_id": "sample_dim_market",
+    "type": "distinct_count",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "region"
+    ],
+    "target_columns": [
+      "region"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__distribution__region",
+    "pair_id": "sample_dim_market",
+    "type": "value_distribution",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "region"
+    ],
+    "target_columns": [
+      "region"
+    ],
+    "parameters": {
+      "limit": 20
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__schema__updated_at",
+    "pair_id": "sample_dim_market",
+    "type": "schema",
+    "scope": "compare",
+    "category": "schema",
+    "source_columns": [
+      "updated_at"
+    ],
+    "target_columns": [
+      "updated_at"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__null__updated_at",
+    "pair_id": "sample_dim_market",
+    "type": "null_count",
+    "scope": "compare",
+    "category": "completeness",
+    "source_columns": [
+      "updated_at"
+    ],
+    "target_columns": [
+      "updated_at"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__distinct__updated_at",
+    "pair_id": "sample_dim_market",
+    "type": "distinct_count",
+    "scope": "compare",
+    "category": "distribution",
+    "source_columns": [
+      "updated_at"
+    ],
+    "target_columns": [
+      "updated_at"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__target_key_unique",
+    "pair_id": "sample_dim_market",
+    "type": "uniqueness",
+    "scope": "target",
+    "category": "uniqueness",
+    "source_columns": [],
+    "target_columns": [
+      "market_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__source_key_unique",
+    "pair_id": "sample_dim_market",
+    "type": "uniqueness",
+    "scope": "source",
+    "category": "uniqueness",
+    "source_columns": [
+      "market_sid"
+    ],
+    "target_columns": [],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__key_buckets",
+    "pair_id": "sample_dim_market",
+    "type": "key_buckets",
+    "scope": "compare",
+    "category": "reconciliation",
+    "source_columns": [
+      "market_sid"
+    ],
+    "target_columns": [
+      "market_sid"
+    ],
+    "parameters": {
+      "buckets": 256
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__exact_keys_when_small",
+    "pair_id": "sample_dim_market",
+    "type": "key_values",
+    "scope": "compare",
+    "category": "reconciliation",
+    "source_columns": [
+      "market_sid"
+    ],
+    "target_columns": [
+      "market_sid"
+    ],
+    "parameters": {
+      "limit": 5000
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Exact hashed key comparison when both filtered tables fit within the configured limit",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__mapped_rows_when_small",
+    "pair_id": "sample_dim_market",
+    "type": "row_reconciliation",
+    "scope": "compare",
+    "category": "reconciliation",
+    "source_columns": [
+      "market_sid",
+      "market_name",
+      "region",
+      "updated_at"
+    ],
+    "target_columns": [
+      "market_sid",
+      "market_name",
+      "region",
+      "updated_at"
+    ],
+    "parameters": {
+      "source_keys": [
+        "market_sid"
+      ],
+      "target_keys": [
+        "market_sid"
+      ],
+      "limit": 5000
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Bounded mapped-row comparison; output contains hashes only",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__target_key_not_null__market_sid",
+    "pair_id": "sample_dim_market",
+    "type": "null_count",
+    "scope": "target",
+    "category": "completeness",
+    "source_columns": [],
+    "target_columns": [
+      "market_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Every primary-key component must not be null",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__source_key_not_null__market_sid",
+    "pair_id": "sample_dim_market",
+    "type": "null_count",
+    "scope": "source",
+    "category": "completeness",
+    "source_columns": [
+      "market_sid"
+    ],
+    "target_columns": [],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Every source primary-key component must not be null",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__freshness",
+    "pair_id": "sample_dim_market",
+    "type": "freshness",
+    "scope": "compare",
+    "category": "freshness",
+    "source_columns": [
+      "updated_at"
+    ],
+    "target_columns": [
+      "updated_at"
+    ],
+    "parameters": {},
+    "tolerance": {
+      "minutes": 1440
+    },
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_dim_market__context_required__market_sid",
+    "pair_id": "sample_dim_market",
+    "type": "null_count",
+    "scope": "target",
+    "category": "business_rule",
+    "source_columns": [],
+    "target_columns": [
+      "market_sid"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Market surrogate key.",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_bq_only_table__target_key_unique",
+    "pair_id": "sample_bq_only_table",
+    "type": "uniqueness",
+    "scope": "target",
+    "category": "uniqueness",
+    "source_columns": [],
+    "target_columns": [
+      "record_id"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_bq_only_table__target_key_not_null__record_id",
+    "pair_id": "sample_bq_only_table",
+    "type": "null_count",
+    "scope": "target",
+    "category": "completeness",
+    "source_columns": [],
+    "target_columns": [
+      "record_id"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Every primary-key component must not be null",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_bq_only_table__profile__record_id",
+    "pair_id": "sample_bq_only_table",
+    "type": "column_profile",
+    "scope": "target",
+    "category": "profiling",
+    "source_columns": [],
+    "target_columns": [
+      "record_id"
+    ],
+    "parameters": {
+      "informational": true,
+      "include_min_max": true
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Informational BigQuery column profile",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_bq_only_table__profile__category",
+    "pair_id": "sample_bq_only_table",
+    "type": "column_profile",
+    "scope": "target",
+    "category": "profiling",
+    "source_columns": [],
+    "target_columns": [
+      "category"
+    ],
+    "parameters": {
+      "informational": true,
+      "include_min_max": true
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Informational BigQuery column profile",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_bq_only_table__distribution__category",
+    "pair_id": "sample_bq_only_table",
+    "type": "value_distribution",
+    "scope": "target",
+    "category": "profiling",
+    "source_columns": [],
+    "target_columns": [
+      "category"
+    ],
+    "parameters": {
+      "limit": 20,
+      "informational": true
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_bq_only_table__profile__value",
+    "pair_id": "sample_bq_only_table",
+    "type": "column_profile",
+    "scope": "target",
+    "category": "profiling",
+    "source_columns": [],
+    "target_columns": [
+      "value"
+    ],
+    "parameters": {
+      "informational": true,
+      "include_min_max": true
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Informational BigQuery column profile",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_bq_only_table__profile__updated_at",
+    "pair_id": "sample_bq_only_table",
+    "type": "column_profile",
+    "scope": "target",
+    "category": "profiling",
+    "source_columns": [],
+    "target_columns": [
+      "updated_at"
+    ],
+    "parameters": {
+      "informational": true,
+      "include_min_max": true
+    },
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Informational BigQuery column profile",
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_bq_only_table__freshness",
+    "pair_id": "sample_bq_only_table",
+    "type": "freshness",
+    "scope": "target",
+    "category": "freshness",
+    "source_columns": [],
+    "target_columns": [
+      "updated_at"
+    ],
+    "parameters": {},
+    "tolerance": {
+      "minutes": 1440
+    },
+    "severity": "error",
+    "origin": "generated",
+    "description": null,
+    "source_sql": null,
+    "target_sql": null
+  },
+  {
+    "rule_id": "sample_bq_only_table__context_required__record_id",
+    "pair_id": "sample_bq_only_table",
+    "type": "null_count",
+    "scope": "target",
+    "category": "business_rule",
+    "source_columns": [],
+    "target_columns": [
+      "record_id"
+    ],
+    "parameters": {},
+    "tolerance": {},
+    "severity": "error",
+    "origin": "generated",
+    "description": "Unique record identifier.",
+    "source_sql": null,
+    "target_sql": null
+  }
+]

@@ -1,0 +1,3 @@
+SELECT
+  SUM(CASE WHEN `market_name` IS NULL THEN 1 ELSE 0 END) AS null_count
+FROM `local`.`source`.`dim_market`

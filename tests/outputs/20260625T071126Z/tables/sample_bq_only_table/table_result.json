@@ -1,0 +1,561 @@
+{
+  "summary": {
+    "pair_id": "sample_bq_only_table",
+    "mode": "bigquery_only",
+    "source_table": null,
+    "target_table": "local.target.bq_only_table",
+    "status": "FAIL",
+    "last_stage": "rca",
+    "primary_keys": {
+      "source": [],
+      "target": [
+        "record_id"
+      ]
+    },
+    "audit_columns": {
+      "source": null,
+      "target": "updated_at",
+      "method": "configured_column"
+    },
+    "filters": {
+      "source": [],
+      "target": []
+    },
+    "measure_count": 0,
+    "relationship_candidates": 0,
+    "relationships_executable": 0,
+    "review_items": 0,
+    "non_blocking_reviews": 0,
+    "rule_count": 9,
+    "passed": 7,
+    "failed": 2,
+    "errors": 0
+  },
+  "mappings": [
+    {
+      "pair_id": "sample_bq_only_table",
+      "source_column": "record_id",
+      "target_column": "record_id",
+      "confidence": 1.0,
+      "status": "SELF",
+      "rationale": "BigQuery-only mode"
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "source_column": "category",
+      "target_column": "category",
+      "confidence": 1.0,
+      "status": "SELF",
+      "rationale": "BigQuery-only mode"
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "source_column": "value",
+      "target_column": "value",
+      "confidence": 1.0,
+      "status": "SELF",
+      "rationale": "BigQuery-only mode"
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "source_column": "updated_at",
+      "target_column": "updated_at",
+      "confidence": 1.0,
+      "status": "SELF",
+      "rationale": "BigQuery-only mode"
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "sample_bq_only_table__target_key_unique",
+      "pair_id": "sample_bq_only_table",
+      "type": "uniqueness",
+      "scope": "target",
+      "category": "uniqueness",
+      "source_columns": [],
+      "target_columns": [
+        "record_id"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_bq_only_table__target_key_not_null__record_id",
+      "pair_id": "sample_bq_only_table",
+      "type": "null_count",
+      "scope": "target",
+      "category": "completeness",
+      "source_columns": [],
+      "target_columns": [
+        "record_id"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Every primary-key component must not be null",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_bq_only_table__profile__record_id",
+      "pair_id": "sample_bq_only_table",
+      "type": "column_profile",
+      "scope": "target",
+      "category": "profiling",
+      "source_columns": [],
+      "target_columns": [
+        "record_id"
+      ],
+      "parameters": {
+        "informational": true,
+        "include_min_max": true
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Informational BigQuery column profile",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_bq_only_table__profile__category",
+      "pair_id": "sample_bq_only_table",
+      "type": "column_profile",
+      "scope": "target",
+      "category": "profiling",
+      "source_columns": [],
+      "target_columns": [
+        "category"
+      ],
+      "parameters": {
+        "informational": true,
+        "include_min_max": true
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Informational BigQuery column profile",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_bq_only_table__distribution__category",
+      "pair_id": "sample_bq_only_table",
+      "type": "value_distribution",
+      "scope": "target",
+      "category": "profiling",
+      "source_columns": [],
+      "target_columns": [
+        "category"
+      ],
+      "parameters": {
+        "limit": 20,
+        "informational": true
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_bq_only_table__profile__value",
+      "pair_id": "sample_bq_only_table",
+      "type": "column_profile",
+      "scope": "target",
+      "category": "profiling",
+      "source_columns": [],
+      "target_columns": [
+        "value"
+      ],
+      "parameters": {
+        "informational": true,
+        "include_min_max": true
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Informational BigQuery column profile",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_bq_only_table__profile__updated_at",
+      "pair_id": "sample_bq_only_table",
+      "type": "column_profile",
+      "scope": "target",
+      "category": "profiling",
+      "source_columns": [],
+      "target_columns": [
+        "updated_at"
+      ],
+      "parameters": {
+        "informational": true,
+        "include_min_max": true
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Informational BigQuery column profile",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_bq_only_table__freshness",
+      "pair_id": "sample_bq_only_table",
+      "type": "freshness",
+      "scope": "target",
+      "category": "freshness",
+      "source_columns": [],
+      "target_columns": [
+        "updated_at"
+      ],
+      "parameters": {},
+      "tolerance": {
+        "minutes": 1440
+      },
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_bq_only_table__context_required__record_id",
+      "pair_id": "sample_bq_only_table",
+      "type": "null_count",
+      "scope": "target",
+      "category": "business_rule",
+      "source_columns": [],
+      "target_columns": [
+        "record_id"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Unique record identifier.",
+      "source_sql": null,
+      "target_sql": null
+    }
+  ],
+  "results": [
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__target_key_unique",
+      "type": "uniqueness",
+      "category": "uniqueness",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "FAIL",
+      "evidence": {
+        "target": {
+          "duplicate_groups": 2.0,
+          "duplicate_rows": 2.0
+        }
+      },
+      "comparison": {
+        "violations": {
+          "target": 2.0
+        }
+      }
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__target_key_not_null__record_id",
+      "type": "null_count",
+      "category": "completeness",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Every primary-key component must not be null",
+      "status": "PASS",
+      "evidence": {
+        "target": {
+          "null_count": 0.0
+        }
+      },
+      "comparison": {
+        "side": "target",
+        "null_count": 0.0,
+        "allowed": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__profile__record_id",
+      "type": "column_profile",
+      "category": "profiling",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Informational BigQuery column profile",
+      "status": "PASS",
+      "evidence": {
+        "target": {
+          "row_count": 202.0,
+          "null_count": 0.0,
+          "distinct_count": 200.0,
+          "min_value": 1.0,
+          "max_value": 200.0
+        }
+      },
+      "comparison": {
+        "informational": true,
+        "profile": {
+          "target": {
+            "row_count": 202.0,
+            "null_count": 0.0,
+            "distinct_count": 200.0,
+            "min_value": 1.0,
+            "max_value": 200.0
+          }
+        }
+      }
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__profile__category",
+      "type": "column_profile",
+      "category": "profiling",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Informational BigQuery column profile",
+      "status": "PASS",
+      "evidence": {
+        "target": {
+          "row_count": 202,
+          "null_count": 0.0,
+          "distinct_count": 3,
+          "min_value": "A",
+          "max_value": "C"
+        }
+      },
+      "comparison": {
+        "informational": true,
+        "profile": {
+          "target": {
+            "row_count": 202,
+            "null_count": 0.0,
+            "distinct_count": 3,
+            "min_value": "A",
+            "max_value": "C"
+          }
+        }
+      }
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__distribution__category",
+      "type": "value_distribution",
+      "category": "profiling",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "target": [
+          {
+            "value_hash": "0d61f8370cad1d412f80b84d143e1257",
+            "value_count": 71
+          },
+          {
+            "value_hash": "7fc56270e7a70fa81a5935b72eacbe29",
+            "value_count": 69
+          },
+          {
+            "value_hash": "9d5ed678fe57bcca610140957afab571",
+            "value_count": 62
+          }
+        ]
+      },
+      "comparison": {
+        "informational": true,
+        "side": "target",
+        "returned_values": 3,
+        "values_masked": true
+      }
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__profile__value",
+      "type": "column_profile",
+      "category": "profiling",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Informational BigQuery column profile",
+      "status": "PASS",
+      "evidence": {
+        "target": {
+          "row_count": 202.0,
+          "null_count": 0.0,
+          "distinct_count": 200.0,
+          "min_value": 4.81,
+          "max_value": 997.47
+        }
+      },
+      "comparison": {
+        "informational": true,
+        "profile": {
+          "target": {
+            "row_count": 202.0,
+            "null_count": 0.0,
+            "distinct_count": 200.0,
+            "min_value": 4.81,
+            "max_value": 997.47
+          }
+        }
+      }
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__profile__updated_at",
+      "type": "column_profile",
+      "category": "profiling",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Informational BigQuery column profile",
+      "status": "PASS",
+      "evidence": {
+        "target": {
+          "row_count": 202,
+          "null_count": 0.0,
+          "distinct_count": 1,
+          "min_value": "2026-06-20T06:32:12",
+          "max_value": "2026-06-20T06:32:12"
+        }
+      },
+      "comparison": {
+        "informational": true,
+        "profile": {
+          "target": {
+            "row_count": 202,
+            "null_count": 0.0,
+            "distinct_count": 1,
+            "min_value": "2026-06-20T06:32:12",
+            "max_value": "2026-06-20T06:32:12"
+          }
+        }
+      }
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__freshness",
+      "type": "freshness",
+      "category": "freshness",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "FAIL",
+      "evidence": {
+        "target": {
+          "max_timestamp": "2026-06-20T06:32:12"
+        }
+      },
+      "comparison": {
+        "source_timestamp": null,
+        "target_timestamp": "2026-06-20T06:32:12+00:00",
+        "signed_lag_minutes": -7244.767,
+        "absolute_lag_minutes": 7244.767,
+        "allowed_minutes": 1440.0,
+        "lagging_side": "target",
+        "reference_timestamp": "2026-06-25T07:16:58.006750+00:00"
+      }
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__context_required__record_id",
+      "type": "null_count",
+      "category": "business_rule",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Unique record identifier.",
+      "status": "PASS",
+      "evidence": {
+        "target": {
+          "null_count": 0.0
+        }
+      },
+      "comparison": {
+        "side": "target",
+        "null_count": 0.0,
+        "allowed": 0.0
+      }
+    }
+  ],
+  "rca": [
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__target_key_unique",
+      "conclusion": {
+        "conclusion": "The data quality check failed because the target column `record_id` in the `sample_bq_only_table` is not unique. Specifically, there are 2.0 duplicate groups and 2.0 duplicate rows found in the target data.",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The check failed due to a uniqueness violation on the target column `record_id`.",
+          "The failure evidence indicates 2.0 duplicate groups and 2.0 duplicate rows for the target data.",
+          "Diagnostic samples show that `record_id` 50 and `record_id` 150 each have a duplicate count of 2."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": [
+        {
+          "side": "target",
+          "sample": [
+            {
+              "record_id": 50,
+              "duplicate_count": 2
+            },
+            {
+              "record_id": 150,
+              "duplicate_count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "rule_id": "sample_bq_only_table__freshness",
+      "conclusion": {
+        "conclusion": "The data quality check failed because the target table, `sample_bq_only_table`, is not fresh. The maximum timestamp found in the `updated_at` column is `2026-06-20T06:32:12`, which is significantly older than the reference timestamp (`2026-06-25T07:16:58.006750+00:00`). The calculated lag is approximately 7244.77 minutes, far exceeding the allowed tolerance of 1440 minutes.",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The freshness check for `sample_bq_only_table` failed with a status of FAIL.",
+          "The maximum timestamp in the target table's `updated_at` column is `2026-06-20T06:32:12`.",
+          "The comparison shows an absolute lag of 7244.77 minutes, which is much greater than the allowed 1440 minutes.",
+          "The reference timestamp used for comparison is `2026-06-25T07:16:58.006750+00:00`."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": [
+        {
+          "pair_id": "sample_bq_only_table",
+          "rule_id": "sample_bq_only_table__freshness__rca_date_coverage",
+          "type": "date_coverage",
+          "category": "rca",
+          "severity": "error",
+          "origin": "generated",
+          "description": null,
+          "status": "PASS",
+          "evidence": {
+            "target": {
+              "min_value": "2026-06-20T06:32:12",
+              "max_value": "2026-06-20T06:32:12"
+            }
+          },
+          "comparison": {
+            "informational": true,
+            "side": "target"
+          }
+        }
+      ]
+    }
+  ],
+  "relationship_candidates": []
+}

@@ -1,4 +1,5 @@
-outputs/
+outputs/*/
+!outputs/20260625T071126Z/
 approvals/
 run_output.txt
 data/

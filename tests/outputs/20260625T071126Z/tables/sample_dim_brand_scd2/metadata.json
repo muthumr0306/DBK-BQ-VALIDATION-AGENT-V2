@@ -1,0 +1,87 @@
+{
+  "source": [
+    {
+      "name": "brand_sid",
+      "data_type": "INT64",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 1
+    },
+    {
+      "name": "brand_name",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 2
+    },
+    {
+      "name": "active_indicator",
+      "data_type": "BOOL",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 3
+    },
+    {
+      "name": "source_system",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 4
+    },
+    {
+      "name": "updated_at",
+      "data_type": "TIMESTAMP",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 5
+    }
+  ],
+  "target": [
+    {
+      "name": "brand_sid",
+      "data_type": "INT64",
+      "nullable": true,
+      "description": "Brand surrogate key.",
+      "ordinal_position": 1
+    },
+    {
+      "name": "brand_name",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 2
+    },
+    {
+      "name": "active_indicator",
+      "data_type": "BOOL",
+      "nullable": true,
+      "description": "Identifies the current SCD Type 2 brand record.",
+      "ordinal_position": 3
+    },
+    {
+      "name": "source_system",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 4
+    },
+    {
+      "name": "updated_at",
+      "data_type": "TIMESTAMP",
+      "nullable": true,
+      "description": "Timestamp of the latest brand update.",
+      "ordinal_position": 5
+    }
+  ],
+  "source_table": {
+    "table": "local.source.dim_brand_scd2",
+    "num_rows": 60,
+    "modified_at": "2026-06-25T07:11:49.165099+00:00"
+  },
+  "target_table": {
+    "table": "local.target.dim_brand_scd2",
+    "num_rows": 61,
+    "modified_at": "2026-06-25T07:11:49.164257+00:00",
+    "description": "Brand dimension with current and historical versions."
+  }
+}

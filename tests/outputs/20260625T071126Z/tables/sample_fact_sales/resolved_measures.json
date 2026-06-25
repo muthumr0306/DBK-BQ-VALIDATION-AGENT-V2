@@ -1,0 +1,40 @@
+[
+  {
+    "measure_id": "total_sales",
+    "definition_type": "measure",
+    "pair_id": "sample_fact_sales",
+    "source_table": null,
+    "target_table": null,
+    "source_expression": "sales_amount",
+    "target_expression": "sales_amount",
+    "business_name": "Total Sales",
+    "description": "Total posted sales amount. Target should be inflated by +15.00 (baked-in issue).",
+    "aggregation": "sum",
+    "tolerance_absolute": 0.01,
+    "tolerance_percentage": 0.5,
+    "currency": null,
+    "unit": null,
+    "date_column": {},
+    "group_by": {},
+    "source_filters": [
+      {
+        "column": "transaction_status",
+        "operator": "eq",
+        "value": "POSTED"
+      }
+    ],
+    "target_filters": [
+      {
+        "column": "transaction_status",
+        "operator": "eq",
+        "value": "POSTED"
+      }
+    ],
+    "enabled": true,
+    "severity": "error",
+    "approval_status": "approved",
+    "origin": "manual",
+    "confidence": 1.0,
+    "metadata_errors": []
+  }
+]

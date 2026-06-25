@@ -1,0 +1,153 @@
+[
+  {
+    "candidate_id": "c671a92d63ded877040e9e09c88f3584",
+    "relationship_id": "sales_market_override",
+    "pair_id": "sample_fact_sales",
+    "context_id": "sample_fact_sales",
+    "child_table": "local.target.fact_sales",
+    "child_columns": [
+      "market_sid"
+    ],
+    "parent_table": "your-gcp-project.analytics.dim_market",
+    "parent_columns": [
+      "market_sid"
+    ],
+    "child_filters": [],
+    "parent_filters": [],
+    "origin": "custom",
+    "match_type": "explicit",
+    "description": "Explicit relationship that overrides the registry candidate for market_sid.",
+    "publish_to_context": false,
+    "metadata_status": "FAIL",
+    "metadata_errors": [
+      "Parent column does not exist: market_sid"
+    ],
+    "metadata_warnings": [],
+    "ambiguous": false,
+    "confidence": 0.0,
+    "decision": "REJECT",
+    "type_pairs": [],
+    "types_compatible": false,
+    "description_similarity": 0.0,
+    "parent_unique": false,
+    "match_rate": 0.0,
+    "parent_profile": {},
+    "relationship_profile": {},
+    "confidence_evidence": {
+      "alias_score": 0.4,
+      "type_score": 0.0,
+      "parent_uniqueness_score": 0.0,
+      "profile_score": 0.0,
+      "description_score": 0.0
+    }
+  },
+  {
+    "candidate_id": "ff4ad912ac1a6f117430bee75a9ad621",
+    "relationship_id": "sales_market_composite",
+    "pair_id": "sample_fact_sales",
+    "context_id": "sample_fact_sales",
+    "child_table": "local.target.fact_sales",
+    "child_columns": [
+      "market_code",
+      "source_system"
+    ],
+    "parent_table": "your-gcp-project.analytics.dim_market",
+    "parent_columns": [
+      "market_code",
+      "source_system"
+    ],
+    "child_filters": [
+      {
+        "column": "transaction_status",
+        "operator": "eq",
+        "value": "POSTED"
+      }
+    ],
+    "parent_filters": [
+      {
+        "column": "active_indicator",
+        "operator": "eq",
+        "value": true
+      }
+    ],
+    "origin": "custom",
+    "match_type": "explicit",
+    "description": "Explicit composite relationship; overrides automatic candidates for these child columns.",
+    "publish_to_context": false,
+    "metadata_status": "FAIL",
+    "metadata_errors": [
+      "Child column does not exist: market_code",
+      "Child column does not exist: source_system",
+      "Parent filter column does not exist: active_indicator"
+    ],
+    "metadata_warnings": [],
+    "ambiguous": false,
+    "confidence": 0.0,
+    "decision": "REJECT",
+    "type_pairs": [],
+    "types_compatible": false,
+    "description_similarity": 0.0,
+    "parent_unique": false,
+    "match_rate": 0.0,
+    "parent_profile": {},
+    "relationship_profile": {},
+    "confidence_evidence": {
+      "alias_score": 0.4,
+      "type_score": 0.0,
+      "parent_uniqueness_score": 0.0,
+      "profile_score": 0.0,
+      "description_score": 0.0
+    }
+  },
+  {
+    "candidate_id": "8c7de686e23536311c250c19b5740edd",
+    "relationship_id": "brand_0",
+    "pair_id": "sample_fact_sales",
+    "context_id": "sample_fact_sales",
+    "child_table": "local.target.fact_sales",
+    "child_columns": [
+      "brand_sid"
+    ],
+    "parent_table": "your-gcp-project.analytics.dim_brand",
+    "parent_columns": [
+      "brand_sid"
+    ],
+    "child_filters": [],
+    "parent_filters": [
+      {
+        "column": "active_indicator",
+        "operator": "eq",
+        "value": true
+      }
+    ],
+    "origin": "registry",
+    "match_type": "exact",
+    "description": "Approved organizational brand dimension.",
+    "publish_to_context": false,
+    "metadata_status": "FAIL",
+    "metadata_errors": [
+      "Parent column does not exist: brand_sid",
+      "Parent filter column does not exist: active_indicator"
+    ],
+    "metadata_warnings": [],
+    "ambiguous": false,
+    "confidence": 0.4,
+    "decision": "REJECT",
+    "alias_similarity": 1.0,
+    "dimension": "brand",
+    "type_pairs": [],
+    "types_compatible": false,
+    "description_similarity": 0.0,
+    "parent_unique": false,
+    "match_rate": 0.0,
+    "parent_profile": {},
+    "relationship_profile": {},
+    "confidence_evidence": {
+      "alias_score": 0.4,
+      "type_score": 0.0,
+      "parent_uniqueness_score": 0.0,
+      "profile_score": 0.0,
+      "description_score": 0.0
+    }
+  }
+]

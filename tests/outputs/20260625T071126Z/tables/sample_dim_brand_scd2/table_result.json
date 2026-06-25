@@ -1,0 +1,2127 @@
+{
+  "summary": {
+    "pair_id": "sample_dim_brand_scd2",
+    "mode": "migration",
+    "source_table": "local.source.dim_brand_scd2",
+    "target_table": "local.target.dim_brand_scd2",
+    "status": "FAIL",
+    "last_stage": "rca",
+    "primary_keys": {
+      "source": [
+        "brand_sid"
+      ],
+      "target": [
+        "brand_sid"
+      ]
+    },
+    "audit_columns": {
+      "source": "updated_at",
+      "target": "updated_at",
+      "method": "configured_column"
+    },
+    "filters": {
+      "source": [
+        {
+          "column": "source_system",
+          "operator": "eq",
+          "value": "BRANDING FOUNDATION"
+        },
+        {
+          "column": "active_indicator",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "target": [
+        {
+          "column": "source_system",
+          "operator": "eq",
+          "value": "BRANDING FOUNDATION"
+        },
+        {
+          "column": "active_indicator",
+          "operator": "eq",
+          "value": true
+        }
+      ]
+    },
+    "measure_count": 0,
+    "relationship_candidates": 1,
+    "relationships_executable": 0,
+    "review_items": 0,
+    "non_blocking_reviews": 0,
+    "rule_count": 29,
+    "passed": 19,
+    "failed": 10,
+    "errors": 0
+  },
+  "mappings": [
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "source_column": "brand_sid",
+      "target_column": "brand_sid",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.297"
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "source_column": "brand_name",
+      "target_column": "brand_name",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.380"
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "source_column": "active_indicator",
+      "target_column": "active_indicator",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.105"
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "source_column": "source_system",
+      "target_column": "source_system",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.120"
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "source_column": "updated_at",
+      "target_column": "updated_at",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "only candidate"
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "sample_dim_brand_scd2__row_count",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "row_count",
+      "scope": "compare",
+      "category": "reconciliation",
+      "source_columns": [],
+      "target_columns": [],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Filtered source and target row counts match",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__schema__brand_sid",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "schema",
+      "scope": "compare",
+      "category": "schema",
+      "source_columns": [
+        "brand_sid"
+      ],
+      "target_columns": [
+        "brand_sid"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__null__brand_sid",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "null_count",
+      "scope": "compare",
+      "category": "completeness",
+      "source_columns": [
+        "brand_sid"
+      ],
+      "target_columns": [
+        "brand_sid"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__distinct__brand_sid",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "distinct_count",
+      "scope": "compare",
+      "category": "distribution",
+      "source_columns": [
+        "brand_sid"
+      ],
+      "target_columns": [
+        "brand_sid"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__schema__brand_name",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "schema",
+      "scope": "compare",
+      "category": "schema",
+      "source_columns": [
+        "brand_name"
+      ],
+      "target_columns": [
+        "brand_name"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__null__brand_name",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "null_count",
+      "scope": "compare",
+      "category": "completeness",
+      "source_columns": [
+        "brand_name"
+      ],
+      "target_columns": [
+        "brand_name"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__distinct__brand_name",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "distinct_count",
+      "scope": "compare",
+      "category": "distribution",
+      "source_columns": [
+        "brand_name"
+      ],
+      "target_columns": [
+        "brand_name"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__distribution__brand_name",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "value_distribution",
+      "scope": "compare",
+      "category": "distribution",
+      "source_columns": [
+        "brand_name"
+      ],
+      "target_columns": [
+        "brand_name"
+      ],
+      "parameters": {
+        "limit": 20
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__schema__active_indicator",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "schema",
+      "scope": "compare",
+      "category": "schema",
+      "source_columns": [
+        "active_indicator"
+      ],
+      "target_columns": [
+        "active_indicator"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__null__active_indicator",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "null_count",
+      "scope": "compare",
+      "category": "completeness",
+      "source_columns": [
+        "active_indicator"
+      ],
+      "target_columns": [
+        "active_indicator"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__distinct__active_indicator",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "distinct_count",
+      "scope": "compare",
+      "category": "distribution",
+      "source_columns": [
+        "active_indicator"
+      ],
+      "target_columns": [
+        "active_indicator"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__distribution__active_indicator",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "value_distribution",
+      "scope": "compare",
+      "category": "distribution",
+      "source_columns": [
+        "active_indicator"
+      ],
+      "target_columns": [
+        "active_indicator"
+      ],
+      "parameters": {
+        "limit": 20
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__schema__source_system",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "schema",
+      "scope": "compare",
+      "category": "schema",
+      "source_columns": [
+        "source_system"
+      ],
+      "target_columns": [
+        "source_system"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__null__source_system",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "null_count",
+      "scope": "compare",
+      "category": "completeness",
+      "source_columns": [
+        "source_system"
+      ],
+      "target_columns": [
+        "source_system"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__distinct__source_system",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "distinct_count",
+      "scope": "compare",
+      "category": "distribution",
+      "source_columns": [
+        "source_system"
+      ],
+      "target_columns": [
+        "source_system"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__distribution__source_system",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "value_distribution",
+      "scope": "compare",
+      "category": "distribution",
+      "source_columns": [
+        "source_system"
+      ],
+      "target_columns": [
+        "source_system"
+      ],
+      "parameters": {
+        "limit": 20
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__schema__updated_at",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "schema",
+      "scope": "compare",
+      "category": "schema",
+      "source_columns": [
+        "updated_at"
+      ],
+      "target_columns": [
+        "updated_at"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__null__updated_at",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "null_count",
+      "scope": "compare",
+      "category": "completeness",
+      "source_columns": [
+        "updated_at"
+      ],
+      "target_columns": [
+        "updated_at"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__distinct__updated_at",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "distinct_count",
+      "scope": "compare",
+      "category": "distribution",
+      "source_columns": [
+        "updated_at"
+      ],
+      "target_columns": [
+        "updated_at"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__target_key_unique",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "uniqueness",
+      "scope": "target",
+      "category": "uniqueness",
+      "source_columns": [],
+      "target_columns": [
+        "brand_sid"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__source_key_unique",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "uniqueness",
+      "scope": "source",
+      "category": "uniqueness",
+      "source_columns": [
+        "brand_sid"
+      ],
+      "target_columns": [],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__key_buckets",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "key_buckets",
+      "scope": "compare",
+      "category": "reconciliation",
+      "source_columns": [
+        "brand_sid"
+      ],
+      "target_columns": [
+        "brand_sid"
+      ],
+      "parameters": {
+        "buckets": 256
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__exact_keys_when_small",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "key_values",
+      "scope": "compare",
+      "category": "reconciliation",
+      "source_columns": [
+        "brand_sid"
+      ],
+      "target_columns": [
+        "brand_sid"
+      ],
+      "parameters": {
+        "limit": 5000
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Exact hashed key comparison when both filtered tables fit within the configured limit",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__mapped_rows_when_small",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "row_reconciliation",
+      "scope": "compare",
+      "category": "reconciliation",
+      "source_columns": [
+        "brand_sid",
+        "brand_name",
+        "active_indicator",
+        "source_system",
+        "updated_at"
+      ],
+      "target_columns": [
+        "brand_sid",
+        "brand_name",
+        "active_indicator",
+        "source_system",
+        "updated_at"
+      ],
+      "parameters": {
+        "source_keys": [
+          "brand_sid"
+        ],
+        "target_keys": [
+          "brand_sid"
+        ],
+        "limit": 5000
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Bounded mapped-row comparison; output contains hashes only",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__target_key_not_null__brand_sid",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "null_count",
+      "scope": "target",
+      "category": "completeness",
+      "source_columns": [],
+      "target_columns": [
+        "brand_sid"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Every primary-key component must not be null",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__source_key_not_null__brand_sid",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "null_count",
+      "scope": "source",
+      "category": "completeness",
+      "source_columns": [
+        "brand_sid"
+      ],
+      "target_columns": [],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Every source primary-key component must not be null",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__freshness",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "freshness",
+      "scope": "compare",
+      "category": "freshness",
+      "source_columns": [
+        "updated_at"
+      ],
+      "target_columns": [
+        "updated_at"
+      ],
+      "parameters": {},
+      "tolerance": {
+        "minutes": 1440
+      },
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__context_required__brand_sid",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "null_count",
+      "scope": "target",
+      "category": "business_rule",
+      "source_columns": [],
+      "target_columns": [
+        "brand_sid"
+      ],
+      "parameters": {},
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": "Brand surrogate key.",
+      "source_sql": null,
+      "target_sql": null
+    },
+    {
+      "rule_id": "sample_dim_brand_scd2__context_domain__active_indicator",
+      "pair_id": "sample_dim_brand_scd2",
+      "type": "domain",
+      "scope": "target",
+      "category": "business_rule",
+      "source_columns": [],
+      "target_columns": [
+        "active_indicator"
+      ],
+      "parameters": {
+        "values": [
+          true,
+          false
+        ]
+      },
+      "tolerance": {},
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "source_sql": null,
+      "target_sql": null
+    }
+  ],
+  "results": [
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__row_count",
+      "type": "row_count",
+      "category": "reconciliation",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Filtered source and target row counts match",
+      "status": "FAIL",
+      "evidence": {
+        "source": {
+          "row_count": 30
+        },
+        "target": {
+          "row_count": 31
+        }
+      },
+      "comparison": {
+        "source": 30.0,
+        "target": 31.0,
+        "difference": 1.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__schema__brand_sid",
+      "type": "schema",
+      "category": "schema",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source_type": "INT64",
+        "target_type": "INT64"
+      },
+      "comparison": {
+        "compatible": true
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__null__brand_sid",
+      "type": "null_count",
+      "category": "completeness",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source": {
+          "null_count": 0.0
+        },
+        "target": {
+          "null_count": 0.0
+        }
+      },
+      "comparison": {
+        "source": 0.0,
+        "target": 0.0,
+        "difference": 0.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distinct__brand_sid",
+      "type": "distinct_count",
+      "category": "distribution",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "FAIL",
+      "evidence": {
+        "source": {
+          "distinct_count": 30
+        },
+        "target": {
+          "distinct_count": 31
+        }
+      },
+      "comparison": {
+        "source": 30.0,
+        "target": 31.0,
+        "difference": 1.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__schema__brand_name",
+      "type": "schema",
+      "category": "schema",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source_type": "STRING",
+        "target_type": "STRING"
+      },
+      "comparison": {
+        "compatible": true
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__null__brand_name",
+      "type": "null_count",
+      "category": "completeness",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source": {
+          "null_count": 0.0
+        },
+        "target": {
+          "null_count": 0.0
+        }
+      },
+      "comparison": {
+        "source": 0.0,
+        "target": 0.0,
+        "difference": 0.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distinct__brand_name",
+      "type": "distinct_count",
+      "category": "distribution",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "FAIL",
+      "evidence": {
+        "source": {
+          "distinct_count": 30
+        },
+        "target": {
+          "distinct_count": 31
+        }
+      },
+      "comparison": {
+        "source": 30.0,
+        "target": 31.0,
+        "difference": 1.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distribution__brand_name",
+      "type": "value_distribution",
+      "category": "distribution",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "FAIL",
+      "evidence": {
+        "source": [
+          {
+            "value_hash": "6afe89f6d8ffa1cc509f6663378dc4b7",
+            "value_count": 1
+          },
+          {
+            "value_hash": "7fbed1e64560e24b09ac7caa9def37ed",
+            "value_count": 1
+          },
+          {
+            "value_hash": "928e880af84ba5a0cffd37e11db2bf52",
+            "value_count": 1
+          },
+          {
+            "value_hash": "c40bcaa712d609ad39d814862f538554",
+            "value_count": 1
+          },
+          {
+            "value_hash": "08c8fd568d7b4b80b15c1678b9d248d8",
+            "value_count": 1
+          },
+          {
+            "value_hash": "9c9e49a50f8176d4aaa241c44c6b0161",
+            "value_count": 1
+          },
+          {
+            "value_hash": "10eeae297a516cd4065959cbeaec1bc6",
+            "value_count": 1
+          },
+          {
+            "value_hash": "fead5bc04a26592c64e48bdde745a16e",
+            "value_count": 1
+          },
+          {
+            "value_hash": "8244f6c7b2e71520bf94b6f496deeff4",
+            "value_count": 1
+          },
+          {
+            "value_hash": "75a23c95165046e08dea656092e1cce5",
+            "value_count": 1
+          },
+          {
+            "value_hash": "c6ebb002e90bdb9b08d31cb5e5bc8d68",
+            "value_count": 1
+          },
+          {
+            "value_hash": "bf9ac678fb03f636af2f27f40afc39aa",
+            "value_count": 1
+          },
+          {
+            "value_hash": "97b0a39dffa8b070cfbec3dc01b733bd",
+            "value_count": 1
+          },
+          {
+            "value_hash": "d51fad09e730ad184babc44050dadab9",
+            "value_count": 1
+          },
+          {
+            "value_hash": "4d84d4289b39030a0795157c5f583b24",
+            "value_count": 1
+          },
+          {
+            "value_hash": "ff205729f94239225a2fd1a38bce3df3",
+            "value_count": 1
+          },
+          {
+            "value_hash": "8dbdde45a90a5faaa470faa55426c6ad",
+            "value_count": 1
+          },
+          {
+            "value_hash": "87710e6c6b80524daed8af0ad0c25162",
+            "value_count": 1
+          },
+          {
+            "value_hash": "8b9eb2726da0da6ff3049e1d6819ab06",
+            "value_count": 1
+          },
+          {
+            "value_hash": "c746bf0eac3e92fd6594436753652069",
+            "value_count": 1
+          }
+        ],
+        "target": [
+          {
+            "value_hash": "c6ebb002e90bdb9b08d31cb5e5bc8d68",
+            "value_count": 1
+          },
+          {
+            "value_hash": "bf9ac678fb03f636af2f27f40afc39aa",
+            "value_count": 1
+          },
+          {
+            "value_hash": "503af4d1b62b68e387f97f1f90162356",
+            "value_count": 1
+          },
+          {
+            "value_hash": "fe9e6d9755854657139aae796feb220b",
+            "value_count": 1
+          },
+          {
+            "value_hash": "40b42f5aba97caa38ffa2d94fc43ef77",
+            "value_count": 1
+          },
+          {
+            "value_hash": "97b0a39dffa8b070cfbec3dc01b733bd",
+            "value_count": 1
+          },
+          {
+            "value_hash": "9c9e49a50f8176d4aaa241c44c6b0161",
+            "value_count": 1
+          },
+          {
+            "value_hash": "10eeae297a516cd4065959cbeaec1bc6",
+            "value_count": 1
+          },
+          {
+            "value_hash": "fead5bc04a26592c64e48bdde745a16e",
+            "value_count": 1
+          },
+          {
+            "value_hash": "8244f6c7b2e71520bf94b6f496deeff4",
+            "value_count": 1
+          },
+          {
+            "value_hash": "75a23c95165046e08dea656092e1cce5",
+            "value_count": 1
+          },
+          {
+            "value_hash": "6afe89f6d8ffa1cc509f6663378dc4b7",
+            "value_count": 1
+          },
+          {
+            "value_hash": "7fbed1e64560e24b09ac7caa9def37ed",
+            "value_count": 1
+          },
+          {
+            "value_hash": "928e880af84ba5a0cffd37e11db2bf52",
+            "value_count": 1
+          },
+          {
+            "value_hash": "c40bcaa712d609ad39d814862f538554",
+            "value_count": 1
+          },
+          {
+            "value_hash": "08c8fd568d7b4b80b15c1678b9d248d8",
+            "value_count": 1
+          },
+          {
+            "value_hash": "d51fad09e730ad184babc44050dadab9",
+            "value_count": 1
+          },
+          {
+            "value_hash": "4d84d4289b39030a0795157c5f583b24",
+            "value_count": 1
+          },
+          {
+            "value_hash": "ff205729f94239225a2fd1a38bce3df3",
+            "value_count": 1
+          },
+          {
+            "value_hash": "c746bf0eac3e92fd6594436753652069",
+            "value_count": 1
+          }
+        ]
+      },
+      "comparison": {
+        "mismatch_count": 6,
+        "mismatches": {
+          "40b42f5aba97caa38ffa2d94fc43ef77": {
+            "source": 0,
+            "target": 1
+          },
+          "503af4d1b62b68e387f97f1f90162356": {
+            "source": 0,
+            "target": 1
+          },
+          "87710e6c6b80524daed8af0ad0c25162": {
+            "source": 1,
+            "target": 0
+          },
+          "8b9eb2726da0da6ff3049e1d6819ab06": {
+            "source": 1,
+            "target": 0
+          },
+          "8dbdde45a90a5faaa470faa55426c6ad": {
+            "source": 1,
+            "target": 0
+          },
+          "fe9e6d9755854657139aae796feb220b": {
+            "source": 0,
+            "target": 1
+          }
+        }
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__schema__active_indicator",
+      "type": "schema",
+      "category": "schema",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source_type": "BOOL",
+        "target_type": "BOOL"
+      },
+      "comparison": {
+        "compatible": true
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__null__active_indicator",
+      "type": "null_count",
+      "category": "completeness",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source": {
+          "null_count": 0.0
+        },
+        "target": {
+          "null_count": 0.0
+        }
+      },
+      "comparison": {
+        "source": 0.0,
+        "target": 0.0,
+        "difference": 0.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distinct__active_indicator",
+      "type": "distinct_count",
+      "category": "distribution",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source": {
+          "distinct_count": 1
+        },
+        "target": {
+          "distinct_count": 1
+        }
+      },
+      "comparison": {
+        "source": 1.0,
+        "target": 1.0,
+        "difference": 0.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distribution__active_indicator",
+      "type": "value_distribution",
+      "category": "distribution",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "FAIL",
+      "evidence": {
+        "source": [
+          {
+            "value_hash": "b326b5062b2f0e69046810717534cb09",
+            "value_count": 30
+          }
+        ],
+        "target": [
+          {
+            "value_hash": "b326b5062b2f0e69046810717534cb09",
+            "value_count": 31
+          }
+        ]
+      },
+      "comparison": {
+        "mismatch_count": 1,
+        "mismatches": {
+          "b326b5062b2f0e69046810717534cb09": {
+            "source": 30,
+            "target": 31
+          }
+        }
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__schema__source_system",
+      "type": "schema",
+      "category": "schema",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source_type": "STRING",
+        "target_type": "STRING"
+      },
+      "comparison": {
+        "compatible": true
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__null__source_system",
+      "type": "null_count",
+      "category": "completeness",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source": {
+          "null_count": 0.0
+        },
+        "target": {
+          "null_count": 0.0
+        }
+      },
+      "comparison": {
+        "source": 0.0,
+        "target": 0.0,
+        "difference": 0.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distinct__source_system",
+      "type": "distinct_count",
+      "category": "distribution",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source": {
+          "distinct_count": 1
+        },
+        "target": {
+          "distinct_count": 1
+        }
+      },
+      "comparison": {
+        "source": 1.0,
+        "target": 1.0,
+        "difference": 0.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distribution__source_system",
+      "type": "value_distribution",
+      "category": "distribution",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "FAIL",
+      "evidence": {
+        "source": [
+          {
+            "value_hash": "0f131be311b8ebe627015f34e9ad5d24",
+            "value_count": 30
+          }
+        ],
+        "target": [
+          {
+            "value_hash": "0f131be311b8ebe627015f34e9ad5d24",
+            "value_count": 31
+          }
+        ]
+      },
+      "comparison": {
+        "mismatch_count": 1,
+        "mismatches": {
+          "0f131be311b8ebe627015f34e9ad5d24": {
+            "source": 30,
+            "target": 31
+          }
+        }
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__schema__updated_at",
+      "type": "schema",
+      "category": "schema",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source_type": "TIMESTAMP",
+        "target_type": "TIMESTAMP"
+      },
+      "comparison": {
+        "compatible": true
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__null__updated_at",
+      "type": "null_count",
+      "category": "completeness",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source": {
+          "null_count": 0.0
+        },
+        "target": {
+          "null_count": 0.0
+        }
+      },
+      "comparison": {
+        "source": 0.0,
+        "target": 0.0,
+        "difference": 0.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distinct__updated_at",
+      "type": "distinct_count",
+      "category": "distribution",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "FAIL",
+      "evidence": {
+        "source": {
+          "distinct_count": 1
+        },
+        "target": {
+          "distinct_count": 2
+        }
+      },
+      "comparison": {
+        "source": 1.0,
+        "target": 2.0,
+        "difference": 1.0,
+        "allowed_difference": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__target_key_unique",
+      "type": "uniqueness",
+      "category": "uniqueness",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "target": {
+          "duplicate_groups": 0.0,
+          "duplicate_rows": 0.0
+        }
+      },
+      "comparison": {
+        "violations": {
+          "target": 0.0
+        }
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__source_key_unique",
+      "type": "uniqueness",
+      "category": "uniqueness",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source": {
+          "duplicate_groups": 0.0,
+          "duplicate_rows": 0.0
+        }
+      },
+      "comparison": {
+        "violations": {
+          "source": 0.0
+        }
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__key_buckets",
+      "type": "key_buckets",
+      "category": "reconciliation",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "FAIL",
+      "evidence": {
+        "source": [
+          {
+            "key_bucket": "07",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "16",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "19",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "1f",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "33",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "34",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "4e",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "63",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "64",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "66",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "6f",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "98",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "9a",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "9f",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "a1",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "a5",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "a6",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "a8",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "aa",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "b6",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "c0",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "c2",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "c7",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "c8",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "c9",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "d3",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "d6",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "d9",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "e3",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "f7",
+            "row_count": 1
+          }
+        ],
+        "target": [
+          {
+            "key_bucket": "07",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "16",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "19",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "1f",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "33",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "34",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "4e",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "63",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "64",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "66",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "6f",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "98",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "9a",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "9f",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "a1",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "a5",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "a6",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "a8",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "aa",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "b6",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "b7",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "c0",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "c2",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "c7",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "c8",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "c9",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "d3",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "d6",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "d9",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "e3",
+            "row_count": 1
+          },
+          {
+            "key_bucket": "f7",
+            "row_count": 1
+          }
+        ]
+      },
+      "comparison": {
+        "mismatch_count": 1,
+        "mismatches": {
+          "b7": {
+            "source": 0,
+            "target": 1
+          }
+        }
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__exact_keys_when_small",
+      "type": "key_values",
+      "category": "reconciliation",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Exact hashed key comparison when both filtered tables fit within the configured limit",
+      "status": "FAIL",
+      "evidence": {
+        "source": {
+          "returned_rows": 30,
+          "total_rows": 30,
+          "values_masked": true
+        },
+        "target": {
+          "returned_rows": 31,
+          "total_rows": 31,
+          "values_masked": true
+        }
+      },
+      "comparison": {
+        "source_key_count": 30,
+        "target_key_count": 31,
+        "missing_key_hashes": [],
+        "extra_key_hashes": [
+          "b706835de79a2b4e80506f582af3676a"
+        ],
+        "values_masked": true
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__mapped_rows_when_small",
+      "type": "row_reconciliation",
+      "category": "reconciliation",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Bounded mapped-row comparison; output contains hashes only",
+      "status": "FAIL",
+      "evidence": {
+        "values_masked": true,
+        "total_rows": {
+          "source": 30,
+          "target": 31
+        },
+        "source_key_count": 30,
+        "target_key_count": 31
+      },
+      "comparison": {
+        "missing_key_hashes": [],
+        "extra_key_hashes": [
+          "7382bd10b8f683f5cd8bfcc32d0601cc12ed0fe657d3e9af182620f6370604f1"
+        ],
+        "changed_key_hashes": [],
+        "duplicate_key_hashes": {
+          "source": [],
+          "target": []
+        },
+        "missing_count": 0,
+        "extra_count": 1,
+        "changed_count": 0,
+        "limit": 5000
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__target_key_not_null__brand_sid",
+      "type": "null_count",
+      "category": "completeness",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Every primary-key component must not be null",
+      "status": "PASS",
+      "evidence": {
+        "target": {
+          "null_count": 0.0
+        }
+      },
+      "comparison": {
+        "side": "target",
+        "null_count": 0.0,
+        "allowed": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__source_key_not_null__brand_sid",
+      "type": "null_count",
+      "category": "completeness",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Every source primary-key component must not be null",
+      "status": "PASS",
+      "evidence": {
+        "source": {
+          "null_count": 0.0
+        }
+      },
+      "comparison": {
+        "side": "source",
+        "null_count": 0.0,
+        "allowed": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__freshness",
+      "type": "freshness",
+      "category": "freshness",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "source": {
+          "max_timestamp": "2026-06-25T05:32:12"
+        },
+        "target": {
+          "max_timestamp": "2026-06-25T05:32:12"
+        }
+      },
+      "comparison": {
+        "source_timestamp": "2026-06-25T05:32:12+00:00",
+        "target_timestamp": "2026-06-25T05:32:12+00:00",
+        "signed_lag_minutes": 0.0,
+        "absolute_lag_minutes": 0.0,
+        "allowed_minutes": 1440.0,
+        "lagging_side": "neither",
+        "reference_timestamp": "2026-06-25T05:32:12+00:00"
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__context_required__brand_sid",
+      "type": "null_count",
+      "category": "business_rule",
+      "severity": "error",
+      "origin": "generated",
+      "description": "Brand surrogate key.",
+      "status": "PASS",
+      "evidence": {
+        "target": {
+          "null_count": 0.0
+        }
+      },
+      "comparison": {
+        "side": "target",
+        "null_count": 0.0,
+        "allowed": 0.0
+      }
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__context_domain__active_indicator",
+      "type": "domain",
+      "category": "business_rule",
+      "severity": "error",
+      "origin": "generated",
+      "description": null,
+      "status": "PASS",
+      "evidence": {
+        "target": {
+          "invalid_count": 0.0
+        }
+      },
+      "comparison": {
+        "violations": {
+          "target": 0.0
+        }
+      }
+    }
+  ],
+  "rca": [
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__row_count",
+      "conclusion": {
+        "conclusion": "The data quality check failed because the row count for `sample_dim_brand_scd2` did not match between the source (30 rows) and the target (31 rows). Additionally, a date coverage check failed, indicating that the source data only contains a single date value ('2026-06-25T05:32:12'), while the target data covers a wider range, starting from '2026-06-20T06:32:12'.",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The row count check for `sample_dim_brand_scd2` failed: Source had 30 rows, and the target had 31 rows (Difference: 1.0).",
+          "The date coverage check for `sample_dim_brand_scd2` failed: Source data only has a single date value ('2026-06-25T05:32:12'), but the target data covers a range from '2026-06-20T06:32:12' to '2026-06-25T05:32:12'."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": [
+        {
+          "pair_id": "sample_dim_brand_scd2",
+          "rule_id": "sample_dim_brand_scd2__row_count__rca_date_coverage",
+          "type": "date_coverage",
+          "category": "rca",
+          "severity": "error",
+          "origin": "generated",
+          "description": null,
+          "status": "FAIL",
+          "evidence": {
+            "source": {
+              "min_value": "2026-06-25T05:32:12",
+              "max_value": "2026-06-25T05:32:12"
+            },
+            "target": {
+              "min_value": "2026-06-20T06:32:12",
+              "max_value": "2026-06-25T05:32:12"
+            }
+          },
+          "comparison": {
+            "source": "2026-06-25T05:32:12",
+            "target": "2026-06-20T06:32:12",
+            "exact": true
+          }
+        }
+      ]
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distinct__brand_sid",
+      "conclusion": {
+        "conclusion": "The data quality check failed because the distinct count of `brand_sid` in the target dataset (31) is different from the distinct count in the source dataset (30). Specifically, the target has one more distinct `brand_sid` than the source, exceeding the allowed difference of 0.0.",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The check was a distinct count comparison on the `brand_sid` column for the `sample_dim_brand_scd2` pair.",
+          "The source dataset had a distinct count of 30 for `brand_sid`.",
+          "The target dataset had a distinct count of 31 for `brand_sid`.",
+          "The difference between the source and target is 1.0, which exceeds the allowed difference of 0.0."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": []
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distinct__brand_name",
+      "conclusion": {
+        "conclusion": "The data quality check failed because the number of distinct brand names in the target dataset (31) is different from the number of distinct brand names in the source dataset (30).",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The check was a distinct count comparison on the 'brand_name' column for the 'sample_dim_brand_scd2' pair.",
+          "The source dataset had 30 distinct brand names.",
+          "The target dataset had 31 distinct brand names.",
+          "The difference is 1.0, and the allowed difference is 0.0, indicating a failure."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": []
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distribution__brand_name",
+      "conclusion": {
+        "conclusion": "The data-quality check for value distribution on the `brand_name` column failed because there were 6 mismatches in the distribution of values between the source and target datasets. Specifically, the values corresponding to hashes `40b42f5aba97caa38ffa2d94fc43ef77`, `503af4d1b62b68e387f97f1f90162356`, and `fe9e6d9755854657139aae796feb220b` were present in the target but not in the source (source count: 0, target count: 1). Conversely, the values corresponding to hashes `87710e6c6b80524daed8af0ad0c25162`, `8b9eb2726da0da6ff3049e1d6819ab06`, and `8dbdde45a90a5faaa470faa55426c6ad` were present in the source but not in the target (source count: 1, target count: 0).",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The check failed due to a value distribution mismatch on the `brand_name` column.",
+          "There are 6 specific mismatches identified between the source and target datasets.",
+          "Three values were found in the target but missing from the source (e.g., hash `40b42f5aba97caa38ffa2d94fc43ef77`).",
+          "Three values were found in the source but missing from the target (e.g., hash `87710e6c6b80524daed8af0ad0c25162`)."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": []
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distribution__active_indicator",
+      "conclusion": {
+        "conclusion": "The data quality check for the 'active_indicator' column in the 'sample_dim_brand_scd2' pair failed because the distribution of values differs between the source and target systems. Specifically, the value represented by hash 'b326b5062b2f0e69046810717534cb09' has a count of 30 in the source but a count of 31 in the target, indicating a mismatch of 1 record for this value.",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The rule 'sample_dim_brand_scd2__distribution__active_indicator' checks the value distribution of 'active_indicator' in the 'sample_dim_brand_scd2' pair.",
+          "The check failed (status: FAIL) due to a mismatch in value counts between the source and target.",
+          "The specific mismatch is for the value hash 'b326b5062b2f0e69046810717534cb09', which has a count of 30 in the source and 31 in the target."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": []
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distribution__source_system",
+      "conclusion": {
+        "conclusion": "The data quality check for the distribution of the 'source_system' column in the 'sample_dim_brand_scd2' pair failed because the count of a specific value differed between the source and target systems. Specifically, the value represented by hash '0f131be311b8ebe627015f34e9ad5d24' appeared 30 times in the source and 31 times in the target, resulting in a mismatch count of 1.",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The rule 'sample_dim_brand_scd2__distribution__source_system' checks the distribution of the 'source_system' column.",
+          "The check failed (status: FAIL) due to a value distribution mismatch.",
+          "The mismatch occurred for the value hash '0f131be311b8ebe627015f34e9ad5d24', which had a count of 30 in the source and 31 in the target."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": []
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__distinct__updated_at",
+      "conclusion": {
+        "conclusion": "The data quality check failed because the distinct count of the `updated_at` column in the target dataset (2) does not match the distinct count in the source dataset (1).",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The check was a distinct count comparison on the `updated_at` column for the `sample_dim_brand_scd2` pair.",
+          "The source dataset had a distinct count of 1 for `updated_at`.",
+          "The target dataset had a distinct count of 2 for `updated_at`.",
+          "The difference between the source and target distinct counts is 1.0, and the allowed difference is 0.0, indicating a failure."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": []
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__key_buckets",
+      "conclusion": {
+        "conclusion": "The key bucket check failed because the target dataset contains a key bucket ('b7') that is missing from the source dataset. Specifically, the comparison found 1 mismatch: 'b7' exists in the target but not in the source.",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The rule 'sample_dim_brand_scd2__key_buckets' is a key bucket reconciliation check for the 'brand_sid' column.",
+          "The failure indicates a mismatch in key buckets between the source and target datasets.",
+          "The comparison details show that 'b7' is present in the target dataset (row_count: 1) but has a source count of 0.",
+          "The diagnostics confirm this mismatch, listing 'b7' as a mismatched bucket and providing an extra key hash for it."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": [
+        {
+          "pair_id": "sample_dim_brand_scd2",
+          "rule_id": "sample_dim_brand_scd2__key_buckets__rca_date_coverage",
+          "type": "date_coverage",
+          "category": "rca",
+          "severity": "error",
+          "origin": "generated",
+          "description": null,
+          "status": "FAIL",
+          "evidence": {
+            "source": {
+              "min_value": "2026-06-25T05:32:12",
+              "max_value": "2026-06-25T05:32:12"
+            },
+            "target": {
+              "min_value": "2026-06-20T06:32:12",
+              "max_value": "2026-06-25T05:32:12"
+            }
+          },
+          "comparison": {
+            "source": "2026-06-25T05:32:12",
+            "target": "2026-06-20T06:32:12",
+            "exact": true
+          }
+        },
+        {
+          "mismatched_buckets": [
+            "b7"
+          ],
+          "missing_key_hashes": [],
+          "extra_key_hashes": [
+            "b706835de79a2b4e80506f582af3676a"
+          ],
+          "values_masked": true
+        }
+      ]
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__exact_keys_when_small",
+      "conclusion": {
+        "conclusion": "The data quality check failed because the number of unique keys in the source table (30) did not match the number of unique keys in the target table (31). Specifically, the target table contains an extra key hash ('b706835de79a2b4e80506f582af3676a') that is not present in the source table.",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The key comparison check (sample_dim_brand_scd2__exact_keys_when_small) failed because the source key count was 30 and the target key count was 31.",
+          "The comparison identified one extra key hash in the target table: 'b706835de79a2b4e80506f582af3676a' that is missing from the source table."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": [
+        {
+          "pair_id": "sample_dim_brand_scd2",
+          "rule_id": "sample_dim_brand_scd2__exact_keys_when_small__rca_date_coverage",
+          "type": "date_coverage",
+          "category": "rca",
+          "severity": "error",
+          "origin": "generated",
+          "description": null,
+          "status": "FAIL",
+          "evidence": {
+            "source": {
+              "min_value": "2026-06-25T05:32:12",
+              "max_value": "2026-06-25T05:32:12"
+            },
+            "target": {
+              "min_value": "2026-06-20T06:32:12",
+              "max_value": "2026-06-25T05:32:12"
+            }
+          },
+          "comparison": {
+            "source": "2026-06-25T05:32:12",
+            "target": "2026-06-20T06:32:12",
+            "exact": true
+          }
+        }
+      ]
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "rule_id": "sample_dim_brand_scd2__mapped_rows_when_small",
+      "conclusion": {
+        "conclusion": "The data quality check failed because the target table (`sample_dim_brand_scd2`) contained one extra key hash that was not present in the source table. Specifically, one extra key hash was found in the target, indicating a row exists in the target that does not have a corresponding record in the source.",
+        "confidence": 1.0,
+        "evidence_summary": [
+          "The check is a bounded mapped-row comparison (row_reconciliation) for `sample_dim_brand_scd2`.",
+          "The reconciliation found 30 rows in the source and 31 rows in the target.",
+          "The comparison identified 1 extra key hash in the target table, which is represented by the hash: '7382bd10b8f683f5cd8bfcc32d0601cc12ed0fe657d3e9af182620f6370604f1'.",
+          "The reconciliation found 0 missing keys, 0 changed keys, and 0 duplicate keys."
+        ],
+        "inconclusive": false
+      },
+      "diagnostics": [
+        {
+          "pair_id": "sample_dim_brand_scd2",
+          "rule_id": "sample_dim_brand_scd2__mapped_rows_when_small__rca_date_coverage",
+          "type": "date_coverage",
+          "category": "rca",
+          "severity": "error",
+          "origin": "generated",
+          "description": null,
+          "status": "FAIL",
+          "evidence": {
+            "source": {
+              "min_value": "2026-06-25T05:32:12",
+              "max_value": "2026-06-25T05:32:12"
+            },
+            "target": {
+              "min_value": "2026-06-20T06:32:12",
+              "max_value": "2026-06-25T05:32:12"
+            }
+          },
+          "comparison": {
+            "source": "2026-06-25T05:32:12",
+            "target": "2026-06-20T06:32:12",
+            "exact": true
+          }
+        }
+      ]
+    }
+  ],
+  "relationship_candidates": [
+    {
+      "candidate_id": "20591a1a7e1119fff1e502cd3da4c1ba",
+      "relationship_id": "brand_0",
+      "pair_id": "sample_dim_brand_scd2",
+      "context_id": "sample_dim_brand_scd2",
+      "child_table": "local.target.dim_brand_scd2",
+      "child_columns": [
+        "brand_sid"
+      ],
+      "parent_table": "your-gcp-project.analytics.dim_brand",
+      "parent_columns": [
+        "brand_sid"
+      ],
+      "child_filters": [],
+      "parent_filters": [
+        {
+          "column": "active_indicator",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "origin": "registry",
+      "match_type": "exact",
+      "description": "Approved organizational brand dimension.",
+      "publish_to_context": false,
+      "metadata_status": "FAIL",
+      "metadata_errors": [
+        "Parent column does not exist: brand_sid",
+        "Parent filter column does not exist: active_indicator"
+      ],
+      "metadata_warnings": [],
+      "ambiguous": false,
+      "confidence": 0.4,
+      "decision": "REJECT",
+      "alias_similarity": 1.0,
+      "dimension": "brand",
+      "type_pairs": [],
+      "types_compatible": false,
+      "description_similarity": 0.0,
+      "parent_unique": false,
+      "match_rate": 0.0,
+      "parent_profile": {},
+      "relationship_profile": {},
+      "confidence_evidence": {
+        "alias_score": 0.4,
+        "type_score": 0.0,
+        "parent_uniqueness_score": 0.0,
+        "profile_score": 0.0,
+        "description_score": 0.0
+      }
+    }
+  ]
+}

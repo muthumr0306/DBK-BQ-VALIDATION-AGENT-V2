@@ -1,0 +1,73 @@
+{
+  "source": [
+    {
+      "name": "market_sid",
+      "data_type": "INT64",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 1
+    },
+    {
+      "name": "market_name",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 2
+    },
+    {
+      "name": "region",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 3
+    },
+    {
+      "name": "updated_at",
+      "data_type": "TIMESTAMP",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 4
+    }
+  ],
+  "target": [
+    {
+      "name": "market_sid",
+      "data_type": "INT64",
+      "nullable": true,
+      "description": "Market surrogate key.",
+      "ordinal_position": 1
+    },
+    {
+      "name": "market_name",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 2
+    },
+    {
+      "name": "region",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 3
+    },
+    {
+      "name": "updated_at",
+      "data_type": "TIMESTAMP",
+      "nullable": true,
+      "description": "Timestamp of the latest market update.",
+      "ordinal_position": 4
+    }
+  ],
+  "source_table": {
+    "table": "local.source.dim_market",
+    "num_rows": 10,
+    "modified_at": "2026-06-25T07:16:57.525662+00:00"
+  },
+  "target_table": {
+    "table": "local.target.dim_market",
+    "num_rows": 10,
+    "modified_at": "2026-06-25T07:16:57.524777+00:00",
+    "description": "Simple market reference dimension."
+  }
+}

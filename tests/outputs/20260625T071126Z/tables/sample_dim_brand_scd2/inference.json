@@ -1,0 +1,138 @@
+{
+  "mappings": [
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "source_column": "brand_sid",
+      "target_column": "brand_sid",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.297"
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "source_column": "brand_name",
+      "target_column": "brand_name",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.380"
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "source_column": "active_indicator",
+      "target_column": "active_indicator",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.105"
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "source_column": "source_system",
+      "target_column": "source_system",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.120"
+    },
+    {
+      "pair_id": "sample_dim_brand_scd2",
+      "source_column": "updated_at",
+      "target_column": "updated_at",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "only candidate"
+    }
+  ],
+  "primary_keys": {
+    "source": [
+      "brand_sid"
+    ],
+    "target": [
+      "brand_sid"
+    ]
+  },
+  "audit_columns": {
+    "source": "updated_at",
+    "target": "updated_at",
+    "method": "configured_column"
+  },
+  "filters": {
+    "source": [
+      {
+        "column": "source_system",
+        "operator": "eq",
+        "value": "BRANDING FOUNDATION"
+      },
+      {
+        "column": "active_indicator",
+        "operator": "eq",
+        "value": true
+      }
+    ],
+    "target": [
+      {
+        "column": "source_system",
+        "operator": "eq",
+        "value": "BRANDING FOUNDATION"
+      },
+      {
+        "column": "active_indicator",
+        "operator": "eq",
+        "value": true
+      }
+    ]
+  },
+  "relationships": [
+    {
+      "candidate_id": "20591a1a7e1119fff1e502cd3da4c1ba",
+      "relationship_id": "brand_0",
+      "pair_id": "sample_dim_brand_scd2",
+      "context_id": "sample_dim_brand_scd2",
+      "child_table": "local.target.dim_brand_scd2",
+      "child_columns": [
+        "brand_sid"
+      ],
+      "parent_table": "your-gcp-project.analytics.dim_brand",
+      "parent_columns": [
+        "brand_sid"
+      ],
+      "child_filters": [],
+      "parent_filters": [
+        {
+          "column": "active_indicator",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "origin": "registry",
+      "match_type": "exact",
+      "description": "Approved organizational brand dimension.",
+      "publish_to_context": false,
+      "metadata_status": "FAIL",
+      "metadata_errors": [
+        "Parent column does not exist: brand_sid",
+        "Parent filter column does not exist: active_indicator"
+      ],
+      "metadata_warnings": [],
+      "ambiguous": false,
+      "confidence": 0.4,
+      "decision": "REJECT",
+      "alias_similarity": 1.0,
+      "dimension": "brand",
+      "type_pairs": [],
+      "types_compatible": false,
+      "description_similarity": 0.0,
+      "parent_unique": false,
+      "match_rate": 0.0,
+      "parent_profile": {},
+      "relationship_profile": {},
+      "confidence_evidence": {
+        "alias_score": 0.4,
+        "type_score": 0.0,
+        "parent_uniqueness_score": 0.0,
+        "profile_score": 0.0,
+        "description_score": 0.0
+      }
+    }
+  ],
+  "measures": [],
+  "reviews": []
+}

@@ -1,0 +1,40 @@
+{
+  "source": [],
+  "target": [
+    {
+      "name": "record_id",
+      "data_type": "INT64",
+      "nullable": true,
+      "description": "Unique record identifier.",
+      "ordinal_position": 1
+    },
+    {
+      "name": "category",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 2
+    },
+    {
+      "name": "value",
+      "data_type": "FLOAT64",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 3
+    },
+    {
+      "name": "updated_at",
+      "data_type": "TIMESTAMP",
+      "nullable": true,
+      "description": "Timestamp of the latest BigQuery update.",
+      "ordinal_position": 4
+    }
+  ],
+  "source_table": {},
+  "target_table": {
+    "table": "local.target.bq_only_table",
+    "num_rows": 202,
+    "modified_at": "2026-06-25T07:16:57.914433+00:00",
+    "description": "Example standalone BigQuery data-quality target."
+  }
+}

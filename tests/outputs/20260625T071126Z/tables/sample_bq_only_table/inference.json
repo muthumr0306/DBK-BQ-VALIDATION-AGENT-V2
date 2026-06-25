@@ -1,0 +1,54 @@
+{
+  "mappings": [
+    {
+      "pair_id": "sample_bq_only_table",
+      "source_column": "record_id",
+      "target_column": "record_id",
+      "confidence": 1.0,
+      "status": "SELF",
+      "rationale": "BigQuery-only mode"
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "source_column": "category",
+      "target_column": "category",
+      "confidence": 1.0,
+      "status": "SELF",
+      "rationale": "BigQuery-only mode"
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "source_column": "value",
+      "target_column": "value",
+      "confidence": 1.0,
+      "status": "SELF",
+      "rationale": "BigQuery-only mode"
+    },
+    {
+      "pair_id": "sample_bq_only_table",
+      "source_column": "updated_at",
+      "target_column": "updated_at",
+      "confidence": 1.0,
+      "status": "SELF",
+      "rationale": "BigQuery-only mode"
+    }
+  ],
+  "primary_keys": {
+    "source": [],
+    "target": [
+      "record_id"
+    ]
+  },
+  "audit_columns": {
+    "source": null,
+    "target": "updated_at",
+    "method": "configured_column"
+  },
+  "filters": {
+    "source": [],
+    "target": []
+  },
+  "relationships": [],
+  "measures": [],
+  "reviews": []
+}

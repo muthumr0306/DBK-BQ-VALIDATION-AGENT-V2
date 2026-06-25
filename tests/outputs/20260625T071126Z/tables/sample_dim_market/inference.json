@@ -1,0 +1,56 @@
+{
+  "mappings": [
+    {
+      "pair_id": "sample_dim_market",
+      "source_column": "market_sid",
+      "target_column": "market_sid",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.315"
+    },
+    {
+      "pair_id": "sample_dim_market",
+      "source_column": "market_name",
+      "target_column": "market_name",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.458"
+    },
+    {
+      "pair_id": "sample_dim_market",
+      "source_column": "region",
+      "target_column": "region",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "name/type/description score; second_best=0.056"
+    },
+    {
+      "pair_id": "sample_dim_market",
+      "source_column": "updated_at",
+      "target_column": "updated_at",
+      "confidence": 0.85,
+      "status": "AUTO",
+      "rationale": "only candidate"
+    }
+  ],
+  "primary_keys": {
+    "source": [
+      "market_sid"
+    ],
+    "target": [
+      "market_sid"
+    ]
+  },
+  "audit_columns": {
+    "source": "updated_at",
+    "target": "updated_at",
+    "method": "configured_column"
+  },
+  "filters": {
+    "source": [],
+    "target": []
+  },
+  "relationships": [],
+  "measures": [],
+  "reviews": []
+}

@@ -1,0 +1,101 @@
+{
+  "source": [
+    {
+      "name": "sale_id",
+      "data_type": "INT64",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 1
+    },
+    {
+      "name": "brand_sid",
+      "data_type": "INT64",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 2
+    },
+    {
+      "name": "market_sid",
+      "data_type": "INT64",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 3
+    },
+    {
+      "name": "sales_amount",
+      "data_type": "FLOAT64",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 4
+    },
+    {
+      "name": "transaction_status",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 5
+    },
+    {
+      "name": "updated_at",
+      "data_type": "TIMESTAMP",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 6
+    }
+  ],
+  "target": [
+    {
+      "name": "sale_id",
+      "data_type": "FLOAT64",
+      "nullable": true,
+      "description": "Unique sales transaction identifier.",
+      "ordinal_position": 1
+    },
+    {
+      "name": "brand_sid",
+      "data_type": "INT64",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 2
+    },
+    {
+      "name": "market_sid",
+      "data_type": "INT64",
+      "nullable": true,
+      "description": null,
+      "ordinal_position": 3
+    },
+    {
+      "name": "sales_amount",
+      "data_type": "FLOAT64",
+      "nullable": true,
+      "description": "Posted sales revenue amount.",
+      "ordinal_position": 4
+    },
+    {
+      "name": "transaction_status",
+      "data_type": "STRING",
+      "nullable": true,
+      "description": "Sales transaction processing status.",
+      "ordinal_position": 5
+    },
+    {
+      "name": "updated_at",
+      "data_type": "TIMESTAMP",
+      "nullable": true,
+      "description": "Timestamp of the latest data update.",
+      "ordinal_position": 6
+    }
+  ],
+  "source_table": {
+    "table": "local.source.fact_sales",
+    "num_rows": 1000,
+    "modified_at": "2026-06-25T07:11:27.127662+00:00"
+  },
+  "target_table": {
+    "table": "local.target.fact_sales",
+    "num_rows": 997,
+    "modified_at": "2026-06-25T07:11:27.126736+00:00",
+    "description": "Sales transactions migrated from Databricks to BigQuery."
+  }
+}

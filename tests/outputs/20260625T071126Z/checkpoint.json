@@ -1,0 +1,18 @@
+{
+  "current_stage": "RUN",
+  "current_pair_id": null,
+  "current_status": "RUNNING",
+  "updated_at": "2026-06-25T07:17:55.189868+00:00",
+  "run_id": "20260625T071126Z",
+  "last_completed_stage": "RUN",
+  "last_completed_pair_id": null,
+  "last_completed_status": "COMPLETED_WITH_FAILURES",
+  "candidates": 1,
+  "executable": 0,
+  "reviews": 0,
+  "rule_count": 9,
+  "passed": 7,
+  "failed": 2,
+  "errors": 0,
+  "rca_records": 2
+}
