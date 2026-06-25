@@ -146,6 +146,7 @@ class LLMConfig(BaseModel):
     project_env: str = "GCP_PROJECT_ID"
     location: str = "us-central1"
     api_key_env: str | None = None
+    base_url: str | None = None  # for OpenAI-compatible endpoints (e.g. Ollama)
     timeout_seconds: int = 90
     max_retries: int = 2
 

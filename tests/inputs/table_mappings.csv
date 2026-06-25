@@ -1,0 +1,5 @@
+pair_id,enabled,mode,source_catalog,source_schema,source_table,target_project,target_dataset,target_table,criticality
+sample_fact_sales,true,migration,local,source,fact_sales,local,target,fact_sales,high
+sample_dim_brand_scd2,true,migration,local,source,dim_brand_scd2,local,target,dim_brand_scd2,medium
+sample_dim_market,true,migration,local,source,dim_market,local,target,dim_market,medium
+sample_bq_only_table,true,bigquery_only,,,,local,target,bq_only_table,low

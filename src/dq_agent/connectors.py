@@ -6,6 +6,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -255,7 +256,123 @@ class BigQueryConnector(WarehouseConnector):
             self._client = None
 
 
+class LocalConnector(WarehouseConnector):
+    """DuckDB-backed connector that reads local CSV files. Activated by LOCAL_DATA_DIR env var."""
+
+    # dialect is set per-instance: source side uses databricks, target uses bigquery
+    dialect = "bigquery"
+
+    _TYPE_MAP: dict[str, str] = {
+        "INTEGER": "INT64", "BIGINT": "INT64", "HUGEINT": "INT64",
+        "SMALLINT": "INT64", "TINYINT": "INT64", "UBIGINT": "INT64",
+        "DOUBLE": "FLOAT64", "FLOAT": "FLOAT64", "REAL": "FLOAT64",
+        "VARCHAR": "STRING", "BOOLEAN": "BOOL", "BOOL": "BOOL",
+        "TIMESTAMP": "TIMESTAMP", "TIMESTAMPTZ": "TIMESTAMP",
+        "DATE": "DATE", "DECIMAL": "NUMERIC", "NUMERIC": "NUMERIC",
+    }
+
+    def __init__(self, limits: QueryLimits, data_dir: str, side: str) -> None:
+        super().__init__(limits)
+        self._data_dir = Path(data_dir)
+        self._side = side
+        # Match the dialect the SQLCompiler uses for each side
+        self.dialect = "databricks" if side == "source" else "bigquery"
+        self._db: Any = None
+        self._name_map: dict[str, str] = {}  # qualified_name → duckdb table name
+
+    def _conn(self) -> Any:
+        if self._db is None:
+            try:
+                import duckdb
+            except ImportError as exc:
+                raise RuntimeError("Install duckdb to use LocalConnector") from exc
+            self._db = duckdb.connect()
+            # MD5() in DuckDB returns a VARCHAR hex string; UNHEX/FROM_HEX converts it
+            # to BLOB which DuckDB's SUBSTRING doesn't accept. Redefine them as no-ops
+            # so SUBSTRING(UNHEX(MD5(x)), n, m) works as SUBSTRING(MD5(x), n, m).
+            self._db.execute("CREATE OR REPLACE MACRO unhex(s) AS CAST(s AS VARCHAR)")
+            self._db.execute("CREATE OR REPLACE MACRO from_hex(s) AS CAST(s AS VARCHAR)")
+        return self._db
+
+    def _duck(self, table_name: str) -> str:
+        return f"{self._side}_{table_name}"
+
+    def _load(self, table_name: str, qualified_name: str) -> None:
+        duck = self._duck(table_name)
+        if duck not in self._name_map.values():
+            csv_path = self._data_dir / f"{self._side}_{table_name}.csv"
+            if not csv_path.exists():
+                raise FileNotFoundError(f"Mock CSV not found: {csv_path}")
+            self._conn().execute(
+                f"CREATE TABLE IF NOT EXISTS {duck} AS "
+                f"SELECT * FROM read_csv_auto('{csv_path.as_posix()}')"
+            )
+        self._name_map[qualified_name] = duck
+
+    def get_columns(self, pair: TablePair, side: str) -> list[ColumnMetadata]:
+        table_name = pair.source_table if side == "source" else pair.target_table
+        qualified = pair.source_name if side == "source" else pair.target_name
+        if not table_name or not qualified:
+            return []
+        self._load(table_name, qualified)
+        rows = self._conn().execute(f"DESCRIBE {self._duck(table_name)}").fetchall()
+        return [
+            ColumnMetadata(
+                name=row[0],
+                data_type=self._TYPE_MAP.get(row[1].upper().split("(")[0], row[1]),
+                nullable=row[2] != "NO",
+                ordinal_position=i + 1,
+            )
+            for i, row in enumerate(rows)
+        ]
+
+    def get_table_metadata(self, qualified_name: str) -> dict[str, Any]:
+        duck = self._name_map.get(qualified_name)
+        if not duck:
+            return {"table": qualified_name}
+        count = self._conn().execute(f"SELECT COUNT(*) FROM {duck}").fetchone()
+        return {
+            "table": qualified_name,
+            "num_rows": count[0] if count else None,
+            "modified_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    def execute(self, sql: str) -> QueryResult:
+        import re as _re
+        import sqlglot
+        from sqlglot.errors import ErrorLevel
+
+        # Substitute BQ qualified names (backtick or plain) before transpiling
+        for qualified, duck in self._name_map.items():
+            parts = qualified.split(".")
+            sql = sql.replace(".".join(f"`{p}`" for p in parts), duck)
+            sql = sql.replace(qualified, duck)
+
+        try:
+            duckdb_sql = sqlglot.transpile(sql, read=self.dialect, write="duckdb", error_level=ErrorLevel.RAISE)[0]
+        except Exception:
+            # Fall back to the (already name-substituted) original SQL; DuckDB handles backticks
+            duckdb_sql = sql
+
+        # Strip any ANSI escape codes sqlglot may have embedded in the SQL string
+        duckdb_sql = _re.sub(r"\x1b\[[0-9;]*[mGKHF]", "", duckdb_sql)
+
+        frame = self._conn().execute(duckdb_sql).fetchdf()
+        return QueryResult(frame=frame)
+
+    def close(self) -> None:
+        if self._db is not None:
+            self._db.close()
+            self._db = None
+
+
 def make_connectors(limits: QueryLimits, bq_project: str | None = None) -> dict[str, WarehouseConnector]:
+    data_dir = os.getenv("LOCAL_DATA_DIR")
+    if data_dir:
+        return {
+            "source": LocalConnector(limits, data_dir, "source"),
+            "target": LocalConnector(limits, data_dir, "target"),
+        }
     return {
         "source": DatabricksConnector(limits),
         "target": BigQueryConnector(limits, project=bq_project),

@@ -1,0 +1,30 @@
+project_name: mock_test
+default_mode: migration
+
+table_mappings: tests/inputs/table_mappings.csv
+column_mappings: tests/inputs/column_mappings.csv
+business_context: inputs/business_context.yaml
+human_tests: inputs/human_tests.yaml
+relationships: inputs/relationships.yaml
+measures: tests/inputs/measures.yaml
+
+outputs_dir: tests/outputs
+
+confidence:
+  auto_accept: 0.85
+  review: 0.65
+
+query_limits:
+  max_result_rows: 5000
+  max_bytes_billed: 10737418240
+  timeout_seconds: 30
+
+context_store:
+  enabled: false
+
+approvals:
+  root: tests/approvals
+
+max_rca_rounds: 2
+fail_fast: false
+log_level: INFO

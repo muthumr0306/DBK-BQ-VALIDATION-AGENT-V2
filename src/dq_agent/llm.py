@@ -97,22 +97,34 @@ class OpenAIAdapter(LLMAdapter):
         except ImportError as exc:
             raise RuntimeError("Install openai to use the OpenAI adapter") from exc
         key_env = config.api_key_env or "OPENAI_API_KEY"
-        if not os.getenv(key_env):
+        api_key = os.getenv(key_env) or ("ollama" if config.base_url else None)
+        if not api_key:
             raise RuntimeError(f"Set {key_env} for the OpenAI adapter")
-        self._client = OpenAI(api_key=os.environ[key_env], timeout=config.timeout_seconds)
+        self._client = OpenAI(
+            api_key=api_key,
+            base_url=config.base_url or None,
+            timeout=config.timeout_seconds,
+        )
 
     def _complete(self, task: str, context: dict[str, Any], schema: dict[str, Any]) -> str:
-        response = self._client.responses.create(
+        # Use chat.completions — compatible with Ollama and standard OpenAI
+        response = self._client.chat.completions.create(
             model=self.config.model,
-            instructions=SYSTEM_POLICY,
-            input=_request_text(task, context, schema),
+            messages=[
+                {"role": "system", "content": SYSTEM_POLICY},
+                {"role": "user", "content": _request_text(task, context, schema)},
+            ],
             temperature=self.config.temperature,
-            max_output_tokens=self.config.max_output_tokens,
-            text={"format": {"type": "json_schema", "name": "dq_response", "schema": schema}},
+            max_tokens=self.config.max_output_tokens,
+            response_format={"type": "json_object"},
         )
-        if not response.output_text:
-            raise RuntimeError("OpenAI returned no text")
-        return response.output_text
+        text = (response.choices[0].message.content or "").strip()
+        if not text:
+            raise RuntimeError("OpenAI/Ollama returned no text")
+        # Strip markdown code fences if the model wrapped the JSON
+        if text.startswith("```"):
+            text = text.strip("`").removeprefix("json").strip()
+        return text
 
 
 class AnthropicAdapter(LLMAdapter):

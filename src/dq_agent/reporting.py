@@ -157,7 +157,11 @@ def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, A
     profile_frame = _frame(profiles)
     profile_frame.to_csv(output_dir / "data_profiling.csv", index=False)
     if not profile_frame.empty:
-        profile_frame.to_parquet(output_dir / "data_profiling.parquet", index=False)
+        # Cast object columns to string so pyarrow doesn't choke on mixed-type evidence values
+        _pf = profile_frame.astype(
+            {c: "string" for c in profile_frame.select_dtypes(include="object").columns}
+        )
+        _pf.to_parquet(output_dir / "data_profiling.parquet", index=False)
     _frame(human_results).to_csv(output_dir / "human_test_results.csv", index=False)
     _frame(relationship_candidates).to_csv(output_dir / "relationship_candidates.csv", index=False)
     _frame(row_reconciliation).to_csv(output_dir / "row_reconciliation.csv", index=False)
