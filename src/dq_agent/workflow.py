@@ -101,6 +101,24 @@ class RCAWordingResponse(BaseModel):
     recommended_action: str
 
 
+class LLMTestCase(BaseModel):
+    test_id: str
+    type: str
+    scope: Literal["source", "target", "both", "compare"] = "target"
+    source_columns: list[str] = Field(default_factory=list)
+    target_columns: list[str] = Field(default_factory=list)
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    tolerance: dict[str, Any] = Field(default_factory=dict)
+    severity: str = "warning"
+    description: str = ""
+    rationale: str = ""
+    confidence: float = 0.0
+
+
+class LLMTestGenerationResponse(BaseModel):
+    tests: list[LLMTestCase] = Field(default_factory=list)
+
+
 def _name(value: str) -> str:
     return re.sub(r"[^a-z0-9]", "", value.lower())
 
@@ -342,6 +360,8 @@ class DQWorkflow:
             reviews.extend(relationship_reviews)
             measures, measure_reviews = self._resolve_measures(pair, metadata, mappings, context, table_dir)
             reviews.extend(measure_reviews)
+            llm_rules, llm_rule_proposals = self._infer_business_rules(pair, metadata, context, keys)
+            reviews.extend(llm_rule_proposals)
             summary.update({
                 "primary_keys": keys, "audit_columns": audit, "filters": filters,
                 "measure_count": len(measures),
@@ -371,7 +391,8 @@ class DQWorkflow:
                 return self._finalize_table(table_dir, summary, mappings, rules, results, rca, relationship_candidates), reviews
 
             rules = self._generate_rules(
-                pair, metadata, mappings, context, keys, audit, resolved_relationships
+                pair, metadata, mappings, context, keys, audit, resolved_relationships,
+                extra_rules=llm_rules,
             )
             write_json(table_dir / "generated_rules.json", [rule.model_dump() for rule in rules])
             summary["rule_count"] = len(rules)
@@ -1792,6 +1813,7 @@ class DQWorkflow:
         keys: dict[str, list[str]],
         audit: dict[str, Any],
         relationships: list[dict[str, Any]],
+        extra_rules: list[RuleSpec] | None = None,
     ) -> list[RuleSpec]:
         rules: list[RuleSpec] = []
         target_types = {item["name"].lower(): normalized_type(item["data_type"]) for item in metadata["target"]}
@@ -2028,6 +2050,8 @@ class DQWorkflow:
                     ))
                 else:
                     rules.append(self._human_rule(test))
+        if extra_rules:
+            rules.extend(extra_rules)
         return rules
 
     def _validate_human_test(
@@ -2091,6 +2115,158 @@ class DQWorkflow:
             tolerance=test.tolerance, severity=test.severity, origin="human",
             source_sql=test.source_sql, target_sql=test.target_sql, description=test.description,
         )
+
+    @staticmethod
+    def _llm_test_to_rulespec(test: LLMTestCase, pair_id: str) -> RuleSpec:
+        return RuleSpec(
+            rule_id=f"{pair_id}__{test.test_id}",
+            pair_id=pair_id,
+            type=test.type,
+            scope=test.scope,
+            category="llm_generated",
+            source_columns=test.source_columns,
+            target_columns=test.target_columns,
+            parameters=test.parameters,
+            tolerance=test.tolerance,
+            severity=test.severity,
+            origin="llm_generated",
+            description=test.description,
+        )
+
+    # ── LLM business-rule inference ───────────────────────────────────────────
+
+    _BUSINESS_RULE_CONFIDENCE_THRESHOLD = 0.80
+
+    def _infer_business_rules(
+        self,
+        pair: TablePair,
+        metadata: dict[str, Any],
+        context: dict[str, Any],
+        keys: dict[str, list[str]],
+    ) -> tuple[list[RuleSpec], list[dict[str, Any]]]:
+        """Call LLM to generate business-specific test cases for this table.
+
+        Returns (high_confidence_rulespecs, low_confidence_proposals).
+        High-confidence rules execute in the current run as origin=llm_generated.
+        Low-confidence proposals land in approval_proposals.json for human review.
+        """
+        if not self.config.llm.enabled:
+            return [], []
+        adapter = self.llm
+        if not adapter:
+            return [], []
+
+        target_cols = {c["name"]: c for c in metadata.get("target", [])}
+        col_context = context.get("columns", {}) or {}
+        pk_target = keys.get("target", [])
+
+        # Build per-column context block for the prompt
+        column_info = []
+        for col_name, col_meta in target_cols.items():
+            ctx = col_context.get(col_name, col_context.get(col_name.lower(), {})) or {}
+            entry: dict[str, Any] = {
+                "name": col_name,
+                "type": col_meta.get("data_type", "unknown"),
+                "nullable": col_meta.get("nullable", True),
+                "description": ctx.get("description") or col_meta.get("description"),
+                "role": ctx.get("role"),
+            }
+            if ctx.get("accepted_values"):
+                entry["accepted_values"] = ctx["accepted_values"]
+            if ctx.get("minimum") is not None:
+                entry["minimum"] = ctx["minimum"]
+            if ctx.get("maximum") is not None:
+                entry["maximum"] = ctx["maximum"]
+            column_info.append(entry)
+
+        # Collect existing constraints to avoid duplicates
+        existing_constraints: list[str] = []
+        for col_name, ctx in col_context.items():
+            if not isinstance(ctx, dict):
+                continue
+            if ctx.get("accepted_values"):
+                existing_constraints.append(
+                    f"{col_name}: domain check already configured for {ctx['accepted_values']}"
+                )
+            if ctx.get("minimum") is not None:
+                existing_constraints.append(f"{col_name}: minimum={ctx['minimum']} already configured")
+            if ctx.get("maximum") is not None:
+                existing_constraints.append(f"{col_name}: maximum={ctx['maximum']} already configured")
+            if ctx.get("required"):
+                existing_constraints.append(f"{col_name}: not-null check already configured")
+
+        prompt_context: dict[str, Any] = {
+            "table_pair": pair.pair_id,
+            "table_description": context.get("description", ""),
+            "target_table": pair.target_name,
+            "primary_key_columns": pk_target,
+            "columns": column_info,
+            "existing_constraints_already_checked": existing_constraints,
+            "allowed_rule_types": ["predicate", "domain", "null_count", "aggregate", "custom_sql"],
+            "instructions": (
+                "Generate 3 to 8 business-specific data quality checks for this table. "
+                "Focus on: business invariants (e.g. end_date >= start_date), expected value "
+                "ranges based on domain knowledge, cross-column consistency, and format/pattern "
+                "validation for IDs or codes. "
+                "Do NOT reproduce constraints already listed in existing_constraints_already_checked. "
+                "Do NOT generate uniqueness or schema checks — those are already generated. "
+                "For each rule provide: test_id (snake_case, unique), type (from allowed_rule_types), "
+                "scope (target or compare), target_columns (list), parameters (type-specific), "
+                "description (plain English), severity (warning or error), "
+                "confidence (0.0-1.0 reflecting certainty this rule is correct for this domain). "
+                "For predicate type, parameters must be: "
+                "{\"predicate\": {\"column\": \"<col>\", \"operator\": \"<op>\", \"value\": <val>}} "
+                "where operator is one of: eq, ne, gt, gte, lt, lte, is_null, not_null, in, not_in. "
+                "For domain type, parameters must be: "
+                "{\"domain\": {\"column\": \"<col>\", \"values\": [...]}}. "
+                "For null_count type, parameters must be: {\"max_nulls\": 0}. "
+                "For aggregate type, parameters must be: "
+                "{\"aggregate\": {\"column\": \"<col>\", \"function\": \"<func>\", \"operator\": \"<op>\", \"value\": <val>}}. "
+                "For custom_sql type, set target_sql to a SELECT returning a column named invalid_count."
+            ),
+        }
+
+        self._event("info", "INFER_BUSINESS_RULES_STARTED", pair_id=pair.pair_id)
+        try:
+            response = adapter.complete_structured(
+                "Generate business-specific data quality test cases for this table.",
+                prompt_context,
+                LLMTestGenerationResponse,
+            )
+        except Exception as exc:
+            self._event("warning", "INFER_BUSINESS_RULES_FAILED", pair_id=pair.pair_id, error=str(exc))
+            return [], []
+
+        threshold = self._BUSINESS_RULE_CONFIDENCE_THRESHOLD
+        high_conf: list[RuleSpec] = []
+        proposals: list[dict[str, Any]] = []
+
+        seen_ids: set[str] = set()
+        for test in response.tests:
+            if not test.test_id or not test.type:
+                continue
+            # Deduplicate
+            full_id = f"{pair.pair_id}__{test.test_id}"
+            if full_id in seen_ids:
+                continue
+            seen_ids.add(full_id)
+
+            if test.confidence >= threshold:
+                high_conf.append(self._llm_test_to_rulespec(test, pair.pair_id))
+            else:
+                proposals.append(self._review(
+                    pair, "business_rule", test.test_id,
+                    test.model_dump(),
+                    test.confidence,
+                    {"rationale": test.rationale},
+                    blocking=False,
+                ))
+
+        self._event(
+            "info", "INFER_BUSINESS_RULES_COMPLETED", pair_id=pair.pair_id,
+            auto_approved=len(high_conf), proposals=len(proposals),
+        )
+        return high_conf, proposals
 
     def _execute_rule(
         self,

@@ -215,6 +215,100 @@ def write_measures(proposals: list[dict], dry_run: bool) -> int:
     return len(new_blocks)
 
 
+# ── business_rule writer ──────────────────────────────────────────────────────
+
+HUMAN_TESTS_YAML = ROOT / "inputs" / "human_tests.yaml"
+BUSINESS_RULE_MIN_CONFIDENCE = 0.80
+
+
+def should_approve_business_rule(p: dict) -> tuple[bool, str]:
+    score = float(p.get("confidence", 0))
+    if score < BUSINESS_RULE_MIN_CONFIDENCE:
+        return False, f"score {score:.3f} < {BUSINESS_RULE_MIN_CONFIDENCE}"
+    return True, f"score={score:.3f}"
+
+
+def _business_rule_to_yaml_block(pair_id: str, body: dict, indent: int = 2) -> str:
+    pad  = " " * indent
+    pad2 = " " * (indent + 2)
+    test_id  = body.get("test_id", "llm_rule")
+    rule_type = body.get("type", "predicate")
+    scope    = body.get("scope", "target")
+    tgt_cols = body.get("target_columns", [])
+    src_cols = body.get("source_columns", [])
+    params   = body.get("parameters", {})
+    severity = body.get("severity", "warning")
+    desc     = body.get("description", "")
+
+    lines = [f"{pad}- test_id: {pair_id}__{test_id}"]
+    lines.append(f"{pad2}pair_id: {pair_id}")
+    lines.append(f"{pad2}enabled: true")
+    lines.append(f"{pad2}type: {rule_type}")
+    lines.append(f"{pad2}scope: {scope}")
+    lines.append(f"{pad2}severity: {severity}")
+    if tgt_cols:
+        lines.append(f"{pad2}target_columns: {json.dumps(tgt_cols)}")
+    if src_cols:
+        lines.append(f"{pad2}source_columns: {json.dumps(src_cols)}")
+    if params:
+        lines.append(f"{pad2}parameters:")
+        for k, v in params.items():
+            lines.append(f"{pad2}  {k}: {json.dumps(v)}")
+    if desc:
+        safe_desc = desc.replace('"', "'")
+        lines.append(f'{pad2}description: "{safe_desc}"')
+    lines.append(f"{pad2}publish_to_context: false")
+    return "\n".join(lines)
+
+
+def write_business_rules(proposals: list[dict], dry_run: bool) -> int:
+    existing: set[str] = set()
+    content = HUMAN_TESTS_YAML.read_text(encoding="utf-8") if HUMAN_TESTS_YAML.exists() else "tests:\n"
+    for line in content.splitlines():
+        s = line.strip()
+        if s.startswith("test_id:"):
+            existing.add(s.split(":", 1)[1].strip())
+
+    new_blocks = []
+    for p in proposals:
+        body    = json.loads(p["proposal"])
+        pair_id = p["pair_id"]
+        full_id = f"{pair_id}__{body.get('test_id', '')}"
+        if full_id in existing:
+            continue
+        new_blocks.append((pair_id, body))
+        existing.add(full_id)
+
+    if not new_blocks:
+        return 0
+
+    if dry_run:
+        print(f"    [DRY RUN] would append {len(new_blocks)} rule(s) to {HUMAN_TESTS_YAML.name}")
+        for pair_id, body in new_blocks:
+            print(f"      {pair_id}: {body.get('test_id')}  ({body.get('type')}) -- {body.get('description', '')[:60]}")
+        return len(new_blocks)
+
+    with open(HUMAN_TESTS_YAML, "a", encoding="utf-8") as f:
+        for pair_id, body in new_blocks:
+            f.write("\n" + _business_rule_to_yaml_block(pair_id, body) + "\n")
+
+    print(f"    Wrote {len(new_blocks)} rule(s) to {HUMAN_TESTS_YAML.name}")
+    return len(new_blocks)
+
+
+def print_business_rule_review(proposals: list[dict]) -> None:
+    for p in proposals:
+        body  = json.loads(p["proposal"])
+        score = p.get("confidence", 0)
+        print(f"\n  [business_rule] {p['pair_id']}: {body.get('test_id')}  score={score:.2f}")
+        print(f"    Type    : {body.get('type')}  scope={body.get('scope')}")
+        print(f"    Columns : {body.get('target_columns')}")
+        print(f"    Params  : {body.get('parameters')}")
+        print(f"    Desc    : {body.get('description', '')[:80]}")
+        print(f"    Rationale: {body.get('rationale', '')[:80]}")
+        print(f"    Action  : Run with --approve-all or add manually to inputs/human_tests.yaml")
+
+
 # ── manual-review printer ─────────────────────────────────────────────────────
 
 def print_pk_review(proposals: list[dict]) -> None:
@@ -288,6 +382,7 @@ def main() -> int:
 
     col_approve, col_review   = [], []
     meas_approve, meas_review = [], []
+    biz_approve, biz_review   = [], []
     pk_review                 = []
 
     for p in pending:
@@ -298,6 +393,9 @@ def main() -> int:
         elif cat == "measure":
             ok, _ = should_approve_measure(p)
             (meas_approve if ok else meas_review).append(p)
+        elif cat == "business_rule":
+            ok, _ = should_approve_business_rule(p)
+            (biz_approve if ok else biz_review).append(p)
         elif cat == "primary_key":
             pk_review.append(p)
 
@@ -322,9 +420,18 @@ def main() -> int:
         write_measures(meas_approve, args.dry_run)
 
     print()
+    print(f"BUSINESS RULES    auto={len(biz_approve)}  review={len(biz_review)}")
+    if biz_approve:
+        for p in biz_approve:
+            _, reason = should_approve_business_rule(p)
+            body = json.loads(p["proposal"])
+            print(f"  [OK] {p['pair_id']}: {body.get('test_id')}  ({body.get('type')})  ({reason})")
+        write_business_rules(biz_approve, args.dry_run)
+
+    print()
     print(f"PRIMARY KEYS      auto=0  review={len(pk_review)}  (never auto-approved)")
 
-    needs_review = pk_review or col_review or meas_review
+    needs_review = pk_review or col_review or meas_review or biz_review
     if needs_review:
         print(f"\n{sep}")
         print("MANUAL REVIEW REQUIRED")
@@ -334,9 +441,11 @@ def main() -> int:
             print_col_review(col_review)
         if meas_review:
             print_measure_review(meas_review)
+        if biz_review:
+            print_business_rule_review(biz_review)
 
-    total_auto   = len(col_approve) + len(meas_approve)
-    total_manual = len(pk_review) + len(col_review) + len(meas_review)
+    total_auto   = len(col_approve) + len(meas_approve) + len(biz_approve)
+    total_manual = len(pk_review) + len(col_review) + len(meas_review) + len(biz_review)
     print(f"\n{sep}")
     print(f"Auto-approved: {total_auto}   Needs manual review: {total_manual}")
 
