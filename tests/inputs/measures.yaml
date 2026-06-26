@@ -77,3 +77,34 @@ measures:
     severity: error
     approval_status: approved
     publish_to_context: false
+
+  - measure_id: order_amount_total
+    definition_type: measure
+    pair_id: shipping_segment_test
+    source_expression: order_amount
+    target_expression: amt
+    business_name: Total Order Amount
+    aggregation: sum
+    group_by:
+      source: [fulfillment_channel]
+      target: [channel]
+    tolerance_absolute: 0.01
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: paid_amt_total
+    definition_type: measure
+    pair_id: paid_amt_test
+    source_expression: paid_amt
+    target_expression: paid_amt
+    business_name: Total Paid Amount
+    aggregation: sum
+    tolerance_absolute: 0.01
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false

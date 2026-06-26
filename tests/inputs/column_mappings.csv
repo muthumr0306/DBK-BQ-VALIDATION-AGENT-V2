@@ -17,3 +17,10 @@ valuemismatch_test,fiscal_week,fiscal_wk,approved,
 valuemismatch_test,plan_type,PlanType,approved,
 valuemismatch_test,plan_qty,plan_quantity,approved,
 valuemismatch_test,last_updated_date,last_update_ts,approved,
+shipping_segment_test,order_id,order_key,approved,
+shipping_segment_test,fulfillment_channel,channel,approved,dimension for RCA grouping
+shipping_segment_test,order_amount,amt,approved,
+shipping_segment_test,order_ts,load_ts,approved,
+paid_amt_test,order_id,order_id,approved,
+paid_amt_test,paid_amt,paid_amt,approved,value-mismatch target column
+paid_amt_test,updated_at,updated_at,approved,

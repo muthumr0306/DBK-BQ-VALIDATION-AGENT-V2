@@ -248,3 +248,64 @@ tables:
       target: []
     scd2:
       enabled: false
+
+  shipping_segment_test:
+    publish_to_context: false
+    description: Orders fact with a fulfillment channel dimension. Target is missing the shipping segment.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [order_id]
+      target: [order_key]
+    audit_columns:
+      source: order_ts
+      target: load_ts
+    freshness_sla_minutes: 1440
+    columns:
+      order_key:
+        description: Order surrogate key.
+        role: primary_key
+        required: true
+      channel:
+        description: Fulfillment channel (shipping, pickup, digital).
+        accepted_values: [shipping, pickup, digital]
+      amt:
+        description: Order amount.
+        role: measure
+        minimum: 0
+      load_ts:
+        description: Load timestamp.
+        role: audit
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  paid_amt_test:
+    publish_to_context: false
+    description: Orders keyed by order_id. Target has drifted paid_amt values on matching keys.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [order_id]
+      target: [order_id]
+    audit_columns:
+      source: updated_at
+      target: updated_at
+    freshness_sla_minutes: 1440
+    columns:
+      order_id:
+        description: Order identifier.
+        role: primary_key
+        required: true
+      paid_amt:
+        description: Amount paid for the order.
+        role: measure
+        minimum: 0
+      updated_at:
+        description: Load timestamp.
+        role: audit
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
