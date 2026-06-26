@@ -149,6 +149,7 @@ class LLMConfig(BaseModel):
     base_url: str | None = None  # for OpenAI-compatible endpoints (e.g. Ollama)
     timeout_seconds: int = 90
     max_retries: int = 2
+    preflight: bool = True
 
     def resolved_project(self) -> str | None:
         return self.project or os.getenv(self.project_env)

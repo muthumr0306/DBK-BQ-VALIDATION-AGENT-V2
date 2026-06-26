@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import time
+import urllib.error
+import urllib.request
 from abc import ABC, abstractmethod
 from typing import Any, TypeVar
 
@@ -153,6 +156,86 @@ class AnthropicAdapter(LLMAdapter):
         if text.startswith("```"):
             text = text.strip("`").removeprefix("json").strip()
         return text
+
+
+class _WarmupPayload(BaseModel):
+    ok: bool = True
+
+
+def _ollama_root(base_url: str) -> str:
+    url = base_url.rstrip("/")
+    if url.endswith("/v1"):
+        url = url[:-3]
+    return url.rstrip("/")
+
+
+def ensure_ollama_running(base_url: str, timeout_seconds: float = 30.0) -> None:
+    root = _ollama_root(base_url)
+    health_url = f"{root}/"
+
+    def _ping() -> bool:
+        try:
+            with urllib.request.urlopen(health_url, timeout=3):
+                return True
+        except Exception:
+            return False
+
+    if _ping():
+        return
+
+    try:
+        subprocess.Popen(
+            ["ollama", "serve"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except FileNotFoundError:
+        raise RuntimeError(
+            "Ollama is not running and the 'ollama' binary was not found on PATH. "
+            "Start Ollama manually or install it from https://ollama.ai"
+        )
+
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        time.sleep(1.0)
+        if _ping():
+            return
+
+    raise RuntimeError(
+        f"Ollama did not respond at {health_url} within {timeout_seconds:.0f}s "
+        "after attempting to start it. Check that 'ollama serve' launched correctly."
+    )
+
+
+def ensure_model_available(base_url: str, model: str, timeout_seconds: float = 120.0) -> None:
+    root = _ollama_root(base_url)
+    tags_url = f"{root}/api/tags"
+
+    try:
+        with urllib.request.urlopen(tags_url, timeout=10) as resp:
+            data = json.loads(resp.read().decode())
+    except Exception as exc:
+        raise RuntimeError(f"Could not reach Ollama tags endpoint {tags_url}: {exc}") from exc
+
+    available = {m.get("name", "") for m in data.get("models", [])}
+    # Also match implicit :latest tag when no tag is specified in the config
+    base_name = model.split(":")[0]
+    if model in available or f"{base_name}:latest" in available:
+        return
+
+    result = subprocess.run(
+        ["ollama", "pull", model],
+        timeout=timeout_seconds,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"'ollama pull {model}' failed with return code {result.returncode}")
+
+
+def warmup_model(adapter: LLMAdapter) -> None:
+    try:
+        adapter.complete_structured("ping", {}, _WarmupPayload)
+    except Exception:
+        pass  # best-effort; first real call will load the model if warmup failed
 
 
 def make_llm_adapter(config: LLMConfig) -> LLMAdapter | None:
