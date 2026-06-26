@@ -61,6 +61,7 @@ from .reporting import (
     write_run_summary,
     write_table_report,
 )
+from .tiered_reports import load_reporting_config, write_tiered_reports
 
 
 STAGES = ["metadata", "inference", "rules", "execution", "rca", "reports"]
@@ -258,6 +259,20 @@ class DQWorkflow:
             measures=str(self.config.path(self.config.project.measures)),
         )
         try:
+            llm_cfg = self.config.llm
+            if llm_cfg.enabled and llm_cfg.provider == "openai" and llm_cfg.base_url and llm_cfg.preflight:
+                from .llm import ensure_model_available, ensure_ollama_running, warmup_model
+                t0 = datetime.now(timezone.utc)
+                self._event("info", "llm_preflight_started", model=llm_cfg.model, base_url=llm_cfg.base_url)
+                ensure_ollama_running(llm_cfg.base_url)
+                self._event("info", "ollama_server_ready", base_url=llm_cfg.base_url)
+                ensure_model_available(llm_cfg.base_url, llm_cfg.model)
+                self._event("info", "model_available", model=llm_cfg.model)
+                adapter = self.llm
+                if adapter:
+                    warmup_model(adapter)
+                elapsed = (datetime.now(timezone.utc) - t0).total_seconds()
+                self._event("info", "llm_warmup_completed", model=llm_cfg.model, elapsed_seconds=round(elapsed, 2))
             for pair in self.table_pairs:
                 result, reviews = self._process_pair(pair, stop_after)
                 table_outputs.append(result)
@@ -275,6 +290,14 @@ class DQWorkflow:
             )
             write_consolidated_reports(self.output_dir, table_outputs)
             write_run_summary(self.output_dir, manifest, table_outputs, all_reviews)
+            write_tiered_reports(
+                run_id=run_id,
+                run_timestamp=manifest.get("started_at", ""),
+                output_dir=self.output_dir,
+                table_outputs=table_outputs,
+                approval_proposals=all_reviews,
+                config=load_reporting_config(),
+            )
             self._event("info", "reports_written", output_dir=str(self.output_dir))
             table_statuses = [row["summary"].get("status") for row in table_outputs]
             if "ERROR" in table_statuses:
@@ -1986,6 +2009,8 @@ class DQWorkflow:
                 description="Freshness based on warehouse table modification metadata",
             ))
         for domain in context.get("domains", []):
+            if not domain.get("values"):
+                continue
             rules.append(RuleSpec(
                 rule_id=f"{pair.pair_id}__domain__{domain['target_column']}", pair_id=pair.pair_id,
                 type="domain", scope="target", category="validity",
@@ -1999,7 +2024,7 @@ class DQWorkflow:
                     type="null_count", scope="target", category="business_rule",
                     target_columns=[column_name], description=details.get("description"),
                 ))
-            if isinstance(details.get("accepted_values"), list):
+            if isinstance(details.get("accepted_values"), list) and details["accepted_values"]:
                 rules.append(RuleSpec(
                     rule_id=f"{pair.pair_id}__context_domain__{column_name}", pair_id=pair.pair_id,
                     type="domain", scope="target", category="business_rule",
@@ -2252,7 +2277,19 @@ class DQWorkflow:
             seen_ids.add(full_id)
 
             if test.confidence >= threshold:
-                high_conf.append(self._llm_test_to_rulespec(test, pair.pair_id))
+                # Skip unexecutable rules — send to proposals instead
+                unexecutable = (
+                    test.type == "custom_sql"  # LLM never supplies raw SQL — always proposal
+                    or (test.type == "domain" and not test.parameters.get("values"))
+                )
+                if unexecutable:
+                    proposals.append(self._review(
+                        pair, "business_rule", test.test_id,
+                        test.model_dump(), test.confidence,
+                        {"rationale": test.rationale}, blocking=False,
+                    ))
+                else:
+                    high_conf.append(self._llm_test_to_rulespec(test, pair.pair_id))
             else:
                 proposals.append(self._review(
                     pair, "business_rule", test.test_id,

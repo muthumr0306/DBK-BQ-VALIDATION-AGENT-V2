@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from pathlib import Path
 from typing import Any, Literal
@@ -456,10 +457,17 @@ def compare_reconciliation_results(
             "measure_value_target": target_row.get("measure_value"),
             "row_count_target": target_row.get("row_count"),
         }])
+    def _num(value: Any) -> float:
+        # Outer joins produce NaN for groups missing on one side; NaN is truthy,
+        # so `value or 0` does not catch it. Coerce NaN/None to 0.0.
+        if value is None or (isinstance(value, float) and math.isnan(value)):
+            return 0.0
+        return float(value)
+
     rows: list[dict[str, Any]] = []
     for raw in combined.to_dict("records"):
-        source_value = float(raw.get("measure_value_source") or 0)
-        target_value = float(raw.get("measure_value_target") or 0)
+        source_value = _num(raw.get("measure_value_source"))
+        target_value = _num(raw.get("measure_value_target"))
         difference = abs(source_value - target_value)
         percentage = difference / abs(source_value) * 100 if source_value else (0.0 if target_value == 0 else 100.0)
         allowed_absolute = float(measure.get("tolerance_absolute") or 0)
@@ -469,8 +477,8 @@ def compare_reconciliation_results(
             "measure_id": measure["measure_id"], "grouping_id": grouping["grouping_id"],
             "group_values": {column: raw.get(column) for column in group_columns},
             "source_result": source_value, "target_result": target_value,
-            "source_rows": int(raw.get("row_count_source") or 0),
-            "target_rows": int(raw.get("row_count_target") or 0),
+            "source_rows": int(_num(raw.get("row_count_source"))),
+            "target_rows": int(_num(raw.get("row_count_target"))),
             "absolute_difference": round(difference, 6),
             "percentage_difference": round(percentage, 6),
             "tolerance_absolute": allowed_absolute, "tolerance_percentage": allowed_percentage,

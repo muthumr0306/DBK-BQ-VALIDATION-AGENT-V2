@@ -1,0 +1,4 @@
+run_id,table_pair_id,source_table,target_table,verdict,verdict_reason,rows_total,total_rows_affected,pct_rows_affected,total_value_at_risk,checks_total,checks_passed,checks_failed,checks_error,checks_pending_approval,critical_count,warning_count,info_count,structural_failure_count,recon_failed,business_rule_failed,llm_failed,worst_check_id
+run_2026_06_25,weekly_plan,prod.gdp.weekly_sku_store_plan,gcp-proj.gdp.weekly_sku_store_plan,FAIL,"Structural pk_in_source_not_target failure: 10,000 rows affected (always NO-GO regardless of %).",120000,10108,0.0842,452700,7,2,4,0,1,2,2,3,2,3,1,0,weekly_plan__pk_src_not_tgt
+run_2026_06_25,sku_master,prod.gdp.sku_master,gcp-proj.gdp.sku_master,WARN,No structural failures; 0.4% rows affected (below 1% NO-GO threshold).,8500,34,0.004,0,5,4,1,0,0,0,1,4,0,0,1,0,sku_master__desc_null
+run_2026_06_25,store_dim,prod.gdp.store_dim,gcp-proj.gdp.store_dim,PASS,All checks passed.,450,0,0.0,0,4,4,0,0,0,0,0,4,0,0,0,0,

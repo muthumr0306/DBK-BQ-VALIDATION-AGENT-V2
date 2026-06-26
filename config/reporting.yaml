@@ -1,0 +1,11 @@
+verdict:
+  critical_pct_rows: 0.01        # >1% rows affected => critical
+  critical_value_at_risk: 100000 # >$100k => critical
+  structural_check_types:        # always NO_GO regardless of magnitude
+    - pk_in_source_not_target
+    - pk_in_target_not_source
+    - duplicate_keys
+    - grain_breakage
+    - target_key_unique          # uniqueness violation on PK is structural
+
+example_failing_keys_limit: 5   # cap on example keys shown per check

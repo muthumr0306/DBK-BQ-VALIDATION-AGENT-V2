@@ -1,0 +1,2 @@
+run_id,run_timestamp,overall_verdict,tables_total,tables_go,tables_caveats,tables_nogo,total_rows_affected,total_value_at_risk,total_critical,total_warning,total_pending_approval,headline
+run_2026_06_25,2026-06-25T09:30:00Z,FAIL,3,1,1,1,10142,452700,2,3,1,"NO-GO: 1 of 3 tables has critical structural issues. 10,142 rows / ~$452.7K affected. 1 AI-suggested test pending review."

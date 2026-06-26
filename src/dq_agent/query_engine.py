@@ -103,15 +103,24 @@ class SQLCompiler:
             return f"`{qualified_name}`"
         return ".".join(f"`{part}`" for part in parts)
 
-    @staticmethod
-    def literal(value: Any) -> str:
+    # SQL function calls that should be emitted unquoted (not as string literals)
+    _SQL_FUNCTIONS = re.compile(
+        r"^(CURRENT_TIMESTAMP|CURRENT_DATE|CURRENT_TIME|NOW|GETDATE)\s*\(\s*\)$",
+        re.IGNORECASE,
+    )
+
+    @classmethod
+    def literal(cls, value: Any) -> str:
         if value is None:
             return "NULL"
         if isinstance(value, bool):
             return "TRUE" if value else "FALSE"
         if isinstance(value, (int, float)):
             return str(value)
-        return "'" + str(value).replace("'", "''") + "'"
+        s = str(value)
+        if cls._SQL_FUNCTIONS.match(s):
+            return s
+        return "'" + s.replace("'", "''") + "'"
 
     def predicate(self, item: dict[str, Any], alias: str | None = None) -> str:
         column = self.identifier(item["column"])
@@ -193,7 +202,9 @@ class SQLCompiler:
                 f"GROUP BY value_hash ORDER BY value_count DESC LIMIT {limit}"
             )
         if rule_type == "domain":
-            values = rule.parameters.get("values", [])
+            values = rule.parameters.get("values") or []
+            if not values:
+                raise ValueError(f"Domain rule {rule.rule_id} has an empty values list — skipping")
             invalid = f"{columns[0]} IS NOT NULL AND {columns[0]} NOT IN ({', '.join(self.literal(v) for v in values)})"
             return f"SELECT SUM(CASE WHEN {invalid} THEN 1 ELSE 0 END) AS invalid_count FROM {table}{where}"
         if rule_type == "predicate":
