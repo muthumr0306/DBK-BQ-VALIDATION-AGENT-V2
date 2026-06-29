@@ -1,0 +1,3 @@
+# Optional run-specific filters. A supplied side replaces reusable context filters
+# for that side; an omitted side continues to use developer-managed context.
+tables: {}

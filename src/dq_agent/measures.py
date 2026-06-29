@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import json
+import math
 import re
 from pathlib import Path
 from typing import Any, Literal
 
 import pandas as pd
 import yaml
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .config import AppConfig, TablePair
 from .context_utils import make_context_record
@@ -43,8 +43,8 @@ class MeasureSettings(BaseModel):
 
 
 class DiagnosticSettings(BaseModel):
-    maximum_steps_per_failure: int = Field(default=3, ge=0, le=10)
-    maximum_llm_calls_per_failure: int = Field(default=1, ge=0, le=3)
+    maximum_steps_per_failure: int = Field(default=3, ge=1, le=10)
+    maximum_llm_calls_per_failure: int = Field(default=1, ge=1, le=10)
     maximum_failed_samples: int = Field(default=50, ge=1, le=500)
     allowed_types: list[str] = Field(default_factory=lambda: [
         "date_distribution", "aggregate_by_dimension", "null_distribution",
@@ -82,7 +82,6 @@ class MeasureDefinition(BaseModel):
     enabled: bool = True
     severity: str = "error"
     approval_status: Literal["approved", "pending", "disabled"] = "approved"
-    publish_to_context: bool = False
 
     @field_validator("source_expression", "target_expression")
     @classmethod
@@ -107,6 +106,7 @@ class MeasureConfiguration(BaseModel):
 
 
 class DiagnosticRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     query_type: Literal["date_distribution", "aggregate_by_dimension", "null_distribution"]
     purpose: str
     grouping_id: str | None = None
@@ -240,7 +240,6 @@ def infer_measure_candidates(
             "enabled": True,
             "severity": "error",
             "approval_status": "inferred",
-            "publish_to_context": False,
             "origin": "inference",
             "confidence": confidence,
             "evidence": {
@@ -263,7 +262,7 @@ def infer_measure_candidates(
 
 
 def definition_payload(definition: MeasureDefinition, origin: str, confidence: float = 1.0) -> dict[str, Any]:
-    return {**definition.model_dump(exclude={"publish_to_context"}), "origin": origin, "confidence": confidence}
+    return {**definition.model_dump(), "origin": origin, "confidence": confidence}
 
 
 def resolve_measure_precedence(
@@ -274,7 +273,7 @@ def resolve_measure_precedence(
 ) -> list[dict[str, Any]]:
     priorities = {"manual": 4, "trusted": 3, "business_context": 2, "inference": 1}
     candidates: list[dict[str, Any]] = []
-    selectors = {pair.pair_id, pair.context_id, pair.source_name, pair.target_name, None}
+    selectors = {pair.pair_id, pair.source_name, pair.target_name, None}
     for definition in configuration.measures:
         if definition.pair_id not in selectors:
             continue
@@ -456,10 +455,15 @@ def compare_reconciliation_results(
             "measure_value_target": target_row.get("measure_value"),
             "row_count_target": target_row.get("row_count"),
         }])
+    def _num(value: Any) -> float:
+        if value is None or (isinstance(value, float) and math.isnan(value)):
+            return 0.0
+        return float(value)
+
     rows: list[dict[str, Any]] = []
     for raw in combined.to_dict("records"):
-        source_value = float(raw.get("measure_value_source") or 0)
-        target_value = float(raw.get("measure_value_target") or 0)
+        source_value = _num(raw.get("measure_value_source"))
+        target_value = _num(raw.get("measure_value_target"))
         difference = abs(source_value - target_value)
         percentage = difference / abs(source_value) * 100 if source_value else (0.0 if target_value == 0 else 100.0)
         allowed_absolute = float(measure.get("tolerance_absolute") or 0)
@@ -469,37 +473,14 @@ def compare_reconciliation_results(
             "measure_id": measure["measure_id"], "grouping_id": grouping["grouping_id"],
             "group_values": {column: raw.get(column) for column in group_columns},
             "source_result": source_value, "target_result": target_value,
-            "source_rows": int(raw.get("row_count_source") or 0),
-            "target_rows": int(raw.get("row_count_target") or 0),
+            "source_rows": int(_num(raw.get("row_count_source"))),
+            "target_rows": int(_num(raw.get("row_count_target"))),
             "absolute_difference": round(difference, 6),
             "percentage_difference": round(percentage, 6),
             "tolerance_absolute": allowed_absolute, "tolerance_percentage": allowed_percentage,
             "status": "PASS" if passed else "FAIL",
         })
     return rows
-
-
-def default_diagnostic_requests(
-    measure: dict[str, Any],
-    groupings: list[dict[str, Any]],
-    settings: DiagnosticSettings,
-) -> list[DiagnosticRequest]:
-    requests: list[DiagnosticRequest] = []
-    if "date_distribution" in settings.allowed_types and (measure.get("date_column") or {}).get("source"):
-        requests.append(DiagnosticRequest(
-            query_type="date_distribution", purpose="Compare measure coverage by year", granularity="year",
-        ))
-    dimension = next((item for item in groupings if item["grouping_id"] not in {"overall", "by_year", "by_month"}), None)
-    if "aggregate_by_dimension" in settings.allowed_types and dimension:
-        requests.append(DiagnosticRequest(
-            query_type="aggregate_by_dimension", purpose="Find dimensions contributing most to the difference",
-            grouping_id=dimension["grouping_id"],
-        ))
-    if "null_distribution" in settings.allowed_types:
-        requests.append(DiagnosticRequest(
-            query_type="null_distribution", purpose="Compare null measure values",
-        ))
-    return requests[: settings.maximum_steps_per_failure]
 
 
 def validate_diagnostic_request(
@@ -550,89 +531,6 @@ def diagnostic_sql(
     )
 
 
-def evidence_based_rca(
-    failure: dict[str, Any],
-    diagnostic_evidence: list[dict[str, Any]],
-) -> dict[str, Any]:
-    investigated = [item["request"]["query_type"] for item in diagnostic_evidence]
-    observed: list[str] = []
-    classification = "UNABLE_TO_DETERMINE"
-    confidence = 0.25
-    explanation = "The configured diagnostics did not establish a supported cause."
-    action = "Review the approved measure expression, filters, and additional grouping context."
-    for item in diagnostic_evidence:
-        request = item["request"]
-        source = item.get("source", [])
-        target = item.get("target", [])
-        if request["query_type"] in {"date_distribution", "aggregate_by_dimension"}:
-            source_map = {
-                json.dumps({k: v for k, v in row.items() if k.startswith("group_")}, sort_keys=True):
-                float(row.get("measure_value") or 0) for row in source
-            }
-            target_map = {
-                json.dumps({k: v for k, v in row.items() if k.startswith("group_")}, sort_keys=True):
-                float(row.get("measure_value") or 0) for row in target
-            }
-            source_groups, target_groups = set(source_map), set(target_map)
-            missing_target = sorted(source_groups - target_groups)
-            extra_target = sorted(target_groups - source_groups)
-            if missing_target or extra_target:
-                observed.append(
-                    f"{request['query_type']} found {len(missing_target)} source-only and {len(extra_target)} target-only groups"
-                )
-                classification = "STRONGLY_SUPPORTED_LIKELY_CAUSE"
-                confidence = 0.88
-                explanation = (
-                    f"The measure mismatch is concentrated in unmatched {request['query_type']} groups: "
-                    f"source-only={missing_target[:5]}, target-only={extra_target[:5]}."
-                )
-                action = "Review ingestion coverage and filters for the listed groups."
-                break
-            differences = sorted(
-                (
-                    {"group": group, "source": source_map[group], "target": target_map[group],
-                     "difference": abs(source_map[group] - target_map[group])}
-                    for group in source_groups & target_groups
-                    if source_map[group] != target_map[group]
-                ),
-                key=lambda row: row["difference"], reverse=True,
-            )
-            if differences:
-                observed.append(f"{request['query_type']} largest differences: {differences[:5]}")
-                classification = "STRONGLY_SUPPORTED_LIKELY_CAUSE"
-                confidence = 0.82
-                explanation = (
-                    f"The measure mismatch is concentrated in these {request['query_type']} groups: "
-                    f"{differences[:5]}."
-                )
-                action = "Review transformation logic and filters for the highest-difference groups."
-                break
-        if request["query_type"] == "null_distribution" and source and target:
-            source_nulls = int(source[0].get("null_count") or 0)
-            target_nulls = int(target[0].get("null_count") or 0)
-            if source_nulls != target_nulls:
-                observed.append(f"Null counts differ: source={source_nulls}, target={target_nulls}")
-                classification = "POSSIBLE_CAUSE_REQUIRES_EVIDENCE"
-                confidence = 0.6
-                explanation = f"Measure null counts differ between source ({source_nulls}) and target ({target_nulls})."
-                action = "Inspect null-handling transformations before treating this as the root cause."
-    return {
-        "failed_test": failure.get("rule_id"),
-        "measure_id": failure.get("measure_id"),
-        "investigated_hypotheses": investigated,
-        "diagnostic_references": [item.get("query_references", {}) for item in diagnostic_evidence],
-        "evidence_observed": observed,
-        "source_result": failure.get("source_result"),
-        "target_result": failure.get("target_result"),
-        "confidence": confidence,
-        "classification": classification,
-        "explanation": explanation,
-        "recommended_action": action,
-        "human_review_required": classification != "CONFIRMED_CAUSE",
-        "reusable_candidate": classification == "STRONGLY_SUPPORTED_LIKELY_CAUSE",
-    }
-
-
 def measure_context_record(
     measure: dict[str, Any],
     config: AppConfig,
@@ -645,7 +543,7 @@ def measure_context_record(
     return make_context_record(
         config, run_id, str(measure.get("definition_type", "measure")),
         f"{pair_id}:{measure['measure_id']}", payload,
-        source_file, True, pair_id=pair_id, context_id=pair_id,
+        source_file, pair_id=pair_id,
         target_table=measure.get("target_table"), source_table=measure.get("source_table"),
         column_name=str(measure.get("target_expression") or ""),
         confidence=float(measure.get("confidence") or 0), origin=origin,
@@ -660,8 +558,8 @@ def rca_context_record(
 ) -> dict[str, Any]:
     return make_context_record(
         config, run_id, "rca_learning", f"{pair.pair_id}:{rca['measure_id']}:{rca.get('rule_id', rca['classification'])}",
-        rca, f"workflow:{run_id}", True, pair_id=pair.pair_id,
-        context_id=pair.context_id or pair.pair_id, target_table=pair.target_name,
+        rca, f"workflow:{run_id}", pair_id=pair.pair_id,
+        target_table=pair.target_name,
         source_table=pair.source_name, confidence=float(rca.get("confidence") or 0),
         origin="AGENT_INFERENCE",
     )

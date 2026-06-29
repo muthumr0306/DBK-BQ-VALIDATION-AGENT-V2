@@ -1,0 +1,22 @@
+patterns:
+  - id: missing_or_extra_keys
+    applies_to: [migration, relationship]
+    diagnostics: [missing_keys, extra_keys, column_profile]
+  - id: schema_omission
+    applies_to: [migration]
+    diagnostics: [column_profile]
+  - id: null_or_duplicate_regression
+    applies_to: [migration, bigquery_only]
+    diagnostics: [null_distribution, duplicate_distribution]
+  - id: grouped_date_coverage_mismatch
+    applies_to: [migration]
+    diagnostics: [date_coverage, grouped_metric]
+  - id: scd_or_filter_mismatch
+    applies_to: [migration, relationship]
+    diagnostics: [filter_impact, inactive_members]
+  - id: relationship_gap
+    applies_to: [relationship]
+    diagnostics: [missing_keys, inactive_members]
+  - id: measure_drift
+    applies_to: [migration]
+    diagnostics: [grouped_metric, column_profile]

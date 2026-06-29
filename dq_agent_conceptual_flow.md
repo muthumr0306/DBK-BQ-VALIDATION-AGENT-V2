@@ -16,7 +16,8 @@ The following flowchart illustrates the high-level trajectory of the entire vali
 
 ```mermaid
 flowchart TD
-    A[Configuration & Mappings Loading] --> B[Retrieve Trusted Context Layer]
+    P[Configured LLM Capability Preflight] --> A[Configuration & Mappings Loading]
+    A --> B[Retrieve Trusted Context Layer]
     B --> C[Metadata Collection & Table Profiling]
     C --> D[Column Mapping & PK Inference]
     D --> E[Audit & SCD Type 2 Inference]
@@ -28,8 +29,8 @@ flowchart TD
     J --> K{Evidence Sufficient?}
     I -- Yes --> L[Human Approval Routing]
     K -- Yes/No --> L
-    L --> M[Trusted Context Publication]
-    M --> N[Final Consolidated Reporting]
+    L --> M[Single Consolidated Report]
+    L -. Approved later .-> N[Versioned Context Learning]
 ```
 
 ---
@@ -38,11 +39,12 @@ flowchart TD
 
 ### 1. Validation initiation
 
-A validation run begins by reading table pairs from the master `table_mappings` configuration. The agent processes multiple table pairs in a single batch, allowing for scalable execution.
+A validation run begins with a mandatory capability check for the configured LLM backend, model, endpoint, and structured-output support. This happens before any warehouse access. The agent then reads enabled table pairs from `table_mappings.xlsx` and can process multiple pairs in one batch.
 
 *   **Databricks-to-BigQuery migration mode:** The agent expects both source (Databricks) and target (BigQuery) coordinates. It compares structural schema, row counts, and detailed data points between the two systems.
 *   **BigQuery-only mode:** The agent skips the source comparison and focuses solely on target-side data quality rules, profiling, and referential integrity against other BigQuery tables.
-*   **Scopes and flags:** Global feature flags (e.g., enabling/disabling LLMs) and table-level flags (e.g., specific custom configurations) determine what inferences run and what limits are placed on queries.
+*   **Offline verification:** Existing sample metadata supports configuration, retrieval, planning, SQL-compilation, and notebook smoke checks without warehouse access.
+*   **Configuration:** `llm.yaml` selects a provider and model without application changes. Project and pair configuration determine inference and query limits; agent reasoning is not silently replaced when the LLM is unavailable.
 
 ### 2. Configuration and input loading
 
@@ -54,16 +56,17 @@ The agent loads and merges various inputs to build its foundation before touchin
 *   Custom table relationships and Measure/KPI definitions
 *   Human-added test cases
 
-**Precedence Order:** Explicitly provided configuration always overrides automatically inferred or historically approved context. If a user defines a specific Primary Key in the `business_context.yaml`, the agent will use it over any previous context or metadata inference.
+**Precedence Order:** Explicitly provided configuration always overrides automatically inferred or historically approved context. If a user defines a primary key in `context_layer/tables.yaml`, the agent uses it over previous learned context or metadata inference.
 
 ### 3. Persistent context layer setup and retrieval
 
-The context layer is a persistent memory store (typically held in a dedicated BigQuery dataset) that retains approved business logic.
+Versioned YAML is the canonical context layer. A rebuildable local SQLite database supplies indexed records, FTS5 lexical search, and relationship edges for the POC.
 
 *   **What is stored:** Mappings, primary keys, SCD behaviors, relationships, measures, and RCA learnings.
 *   **Separation of trust:** Trusted context is active and approved. Pending or rejected proposals are isolated and never influence current validation reasoning.
-*   **Retrieval:** The agent retrieves only context relevant to the specific table pairs currently in the run, distinguishing between source-side context (Databricks logic) and target-side context (BigQuery logic). Unrelated context cannot pollute the current table.
+*   **Retrieval:** Exact pair/table/column matches, relationship neighbors, lexical relevance, schema overlap, approval state, and trust weights are combined into a bounded context package. Every item carries a provenance ID used in reasoning and audit evidence.
 *   **Reuse:** If `fact_sales` was previously validated and a human approved that `transaction_date` is the audit column, the agent immediately reuses this fact without needing re-inference.
+*   **Replaceability:** Workflow code depends on `ContextRetriever`, so a semantic sidecar such as ChromaDB or Vertex AI Vector Search can later be added without replacing the YAML source of truth.
 
 ```mermaid
 flowchart TD
@@ -198,6 +201,7 @@ With the table fully understood, the agent generates a Validation Plan.
 
 *   **Generic checks:** Row counts, null checks, uniqueness, freshness.
 *   **Context-aware checks:** SCD active-record validations, referential integrity against dimensions, measure reconciliations.
+*   **LLM-generated business rules:** The LLM is used to dynamically infer context-specific business rules that go beyond standard metrics.
 *   **Human-added tests:** Appended directly into the validation plan.
 
 Each rule explicitly records its source, confidence, and whether human approval is required. Context prevents the agent from running generic, useless rules (e.g., it won't check uniqueness on a known non-key column).
@@ -224,59 +228,61 @@ flowchart TD
 
 ### 13. RCA trigger and investigation flow
 
-When a test fails, the Root Cause Analysis (RCA) engine is triggered.
+When a test fails, an explicit, bounded RCA investigation state is created.
 
-1.  Collects failed validation metadata.
-2.  Generates hypotheses (e.g., "Is the data missing from a specific date range?").
-3.  Selects from allowed diagnostic types (e.g., date coverage, dimension distribution, duplicate analysis).
-4.  Generates parameterized diagnostic queries.
-5.  Compares diagnostic results from Databricks and BigQuery.
-6.  Evaluates evidence to confirm or deny the hypothesis.
+1.  Retrieve relevant business context and register the original validation evidence.
+2.  Ask the LLM to rank hypotheses and select the next typed diagnostic intent.
+3.  Validate the intent, identifiers, approved relationships, remaining query budget, and duplicate-step history.
+4.  Compile SQL from an allowlisted diagnostic template; the LLM never supplies executable SQL.
+5.  Enforce read-only parsing, BigQuery dry-run byte limits, timeouts, row/group limits, and approved table scope.
+6.  Execute source/target diagnostics and normalize the result into a new evidence record.
+7.  Return evidence to the LLM to conclude, continue, or request human review.
+8.  Stop on a supported conclusion, maximum depth/cost, repeated action, or need for human judgment.
 
 ```mermaid
 flowchart TD
     A[Failed Validation Identified] --> B[Collect Metadata & Context]
-    B --> C[Generate Hypotheses]
-    C --> D[Select Diagnostic Types]
-    D --> E[Generate Controlled Diagnostic Queries]
-    E --> F[Execute & Compare Results]
-    F --> G[Evaluate Evidence]
-    G --> H[Classify Root Cause]
-    H --> I[Produce Human-Readable RCA]
-    I --> J[Request Approval / Investigation]
+    B --> C[LLM Ranks Hypotheses]
+    C --> D[LLM Selects Typed Diagnostic Intent]
+    D --> E[Guard & Compile Allowlisted SQL]
+    E --> F[Execute & Normalize Evidence]
+    F --> G{Enough Evidence?}
+    G -- No --> C
+    G -- Yes --> H[Classify Root Cause]
+    G -- Limit/Uncertain --> I[Request Human Review]
 ```
 
 ### 14. Evidence-aware RCA classification
 
 The agent classifies its RCA findings to prevent hallucinated conclusions:
-*   **Confirmed root cause:** Hard numerical evidence proves the issue (e.g., "Databricks ends Dec 2025, BigQuery ends Jun 2026").
-*   **Strongly supported:** High probability based on data distribution.
-*   **Requires evidence / Inconclusive:** The agent admits it cannot find the root cause and requests human intervention.
+*   **Confirmed:** Direct evidence proves the explanation.
+*   **Likely:** Multiple observations make the explanation probable, but not proven.
+*   **Possible:** Evidence is suggestive but incomplete.
+*   **Undetermined:** The budget was exhausted, the intent was unsafe or unsupported, or evidence remained insufficient.
 
 ### 15. Human approval and context-learning flow
 
 Any decision lacking high deterministic confidence (mappings, keys, new measures, RCA learnings) is packaged into an approval payload.
 
-*   These move through states: Pending → Reviewed → Approved/Rejected.
-*   Only Approved information enters the trusted context. This prevents the agent from blindly learning from its own unverified guesses.
+*   Workbooks move through folders: `pending` → `reviewed` → `processed` → `archive`.
+*   Only rows explicitly marked `APPROVE` or `OVERRIDE` are written to `context_layer/learned_context.yaml`; rejected rows never influence retrieval.
 
 ### 16. Reporting flow
 
-The run concludes by consolidating all results into actionable artifacts.
+The run concludes with exactly one user-facing workbook at `outputs/<run_id>/dq_validation_report.xlsx`.
 
-*   It produces a Run-level summary, Table-level reports, Rule-level pass/fail metrics.
-*   It generates specific reports for mappings, relationships, measures, failed tests, and RCA conclusions.
-*   It outputs the `approval-pending` workbooks for humans to review.
+*   Its sheets cover summary, tables, mappings, schema, counts, freshness, profiles, business rules, human tests, relationships, measures, RCA, failures, approvals, and errors.
+*   SQL, diagnostic evidence, manifests, events, checkpoints, and developer logs remain under `logs/<run_id>/`.
+*   At most one review workbook is created per run under `approvals/pending/`.
 
 ```mermaid
 flowchart TD
     A[Test Results & RCAs] --> B[Consolidate Data]
-    B --> C[Run-level Summary]
-    B --> D[Table-level Reports]
-    B --> E[Failed Test & RCA Reports]
-    B --> F[Approval Pending Reports]
-    C & D & E & F --> G[Final Output Generation]
-    F --> H[Update Context Publication]
+    B --> C[One Multi-sheet Validation Workbook]
+    B --> D[Developer Evidence Under Logs]
+    B --> E{Review Needed?}
+    E -- Yes --> F[One Pending Approval Workbook]
+    F -. Later approval .-> G[Update Learned Context YAML]
 ```
 
 ---
@@ -285,8 +291,8 @@ flowchart TD
 
 Throughout the agent, the golden rule of precedence applies strictly:
 
-1.  **Explicit User Configuration:** (e.g., `business_context.yaml`, `column_mappings.xlsx`) is absolute truth.
-2.  **Approved Trusted Context:** Past human approvals retrieved from the context database.
+1.  **Explicit User Configuration:** (e.g., `context_layer/tables.yaml`, `column_mappings.xlsx`) is absolute truth.
+2.  **Approved Trusted Context:** Versioned configured knowledge and past human approvals retrieved through the local index.
 3.  **High-Confidence Deterministic Inference:** Data profiling, registry matches, and metadata rules with strict thresholds.
 4.  **Human Approval:** If confidence is low, execution pauses for the specific decision.
 5.  **Unresolved/Skipped:** If entirely incapable of finding an answer, the specific rule or validation is skipped gracefully without crashing the whole table process.

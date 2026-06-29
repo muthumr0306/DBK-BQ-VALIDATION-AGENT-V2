@@ -73,7 +73,6 @@ class CustomRelationship(BaseModel):
     child_filters: list[dict[str, Any]] = Field(default_factory=list)
     parent_filters: list[dict[str, Any]] = Field(default_factory=list)
     description: str | None = None
-    publish_to_context: bool = False
 
     @model_validator(mode="after")
     def validate_columns(self) -> "CustomRelationship":
@@ -112,7 +111,7 @@ def feature_flag_for_pair(
     table_setting = context.get("relationship_inference", {}).get("enabled")
     if table_setting is not None:
         return bool(table_setting), "business_context"
-    selectors = [pair.pair_id, pair.context_id, pair.target_name]
+    selectors = [pair.pair_id, pair.target_name]
     for selector in selectors:
         if selector and selector in relationship_config.table_overrides:
             return relationship_config.table_overrides[selector].auto_inference_enabled, f"table_override:{selector}"
@@ -152,7 +151,6 @@ def _candidate(
         "candidate_id": stable_id(pair.pair_id, child_columns, parent_table, parent_columns, origin),
         "relationship_id": relationship_id,
         "pair_id": pair.pair_id,
-        "context_id": pair.context_id or pair.pair_id,
         "child_table": pair.target_name,
         "child_columns": child_columns,
         "parent_table": parent_table,
@@ -162,7 +160,6 @@ def _candidate(
         "origin": origin,
         "match_type": details.pop("match_type", origin),
         "description": details.pop("description", None),
-        "publish_to_context": bool(details.pop("publish_to_context", False)),
         "metadata_status": "NOT_CHECKED",
         "metadata_errors": [],
         "metadata_warnings": [],
@@ -183,12 +180,12 @@ def discover_relationship_candidates(
     candidates: list[dict[str, Any]] = []
 
     for custom in relationship_config.custom_relationships:
-        if not custom.enabled or custom.child_table not in {pair.pair_id, pair.context_id, pair.target_name}:
+        if not custom.enabled or custom.child_table not in {pair.pair_id, pair.target_name}:
             continue
         candidates.append(_candidate(
             pair, custom.id, custom.child_columns, custom.parent_table, custom.parent_columns,
             "custom", child_filters=custom.child_filters, parent_filters=custom.parent_filters,
-            description=custom.description, publish_to_context=custom.publish_to_context,
+            description=custom.description,
             match_type="explicit",
         ))
 
@@ -488,15 +485,15 @@ def candidates_to_context_records(
 ) -> pd.DataFrame:
     records: list[dict[str, Any]] = []
     for candidate in candidates:
-        needs_approval = candidate.get("decision") == "REVIEW" or bool(candidate.get("publish_to_context"))
+        needs_approval = candidate.get("decision") == "REVIEW"
         if not needs_approval:
             continue
         relationship = candidate_to_relationship(candidate)
         records.append(make_context_record(
             config, run_id, "relationship",
             f"{candidate['pair_id']}:{','.join(candidate['child_columns'])}:{candidate['parent_table']}:{','.join(candidate['parent_columns'])}",
-            relationship, config.project.relationships, True,
-            pair_id=candidate["pair_id"], context_id=candidate["context_id"],
+            relationship, config.project.relationships,
+            pair_id=candidate["pair_id"],
             target_table=candidate["child_table"], column_name=",".join(candidate["child_columns"]),
             confidence=float(candidate.get("confidence") or 0),
             origin="CONFIGURATION" if candidate.get("origin") == "custom" else "AGENT_INFERENCE",

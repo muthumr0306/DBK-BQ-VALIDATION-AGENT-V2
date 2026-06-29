@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import pandas as pd
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .config import (
     AppConfig,
@@ -24,16 +24,17 @@ from .config import (
     load_business_context,
     load_column_mappings,
     load_human_tests,
+    load_runtime_overrides,
     load_table_pairs,
 )
 from .connectors import ColumnMetadata, WarehouseConnector, make_connectors
+from .context_store import ContextRetriever, make_context_retriever
+from .context_utils import write_approval_workbook
 from .llm import LLMAdapter, make_llm_adapter
 from .measures import (
     DiagnosticRequest,
     compare_reconciliation_results,
-    default_diagnostic_requests,
     diagnostic_sql,
-    evidence_based_rca,
     infer_measure_candidates,
     load_measure_configuration,
     measure_profile_sql,
@@ -58,7 +59,6 @@ from .reporting import (
     configure_logging,
     write_consolidated_reports,
     write_json,
-    write_table_report,
 )
 
 
@@ -73,31 +73,118 @@ CURRENT_FLAG_NAMES = {
 }
 
 
-class MappingChoice(BaseModel):
+class AgentResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class MappingChoice(AgentResponse):
     source_column: str
     target_column: str
-    confidence: float
+    confidence: float = Field(ge=0, le=1)
     rationale: str
 
 
-class MappingRerankResponse(BaseModel):
+class MappingRerankResponse(AgentResponse):
     choices: list[MappingChoice] = Field(default_factory=list)
 
 
-class RCAResponse(BaseModel):
-    conclusion: str
-    confidence: float
-    evidence_summary: list[str] = Field(default_factory=list)
-    inconclusive: bool = False
+class ColumnUnderstanding(AgentResponse):
+    column: str
+    role: Literal["identifier", "measure", "dimension", "flag", "date", "audit", "attribute", "unknown"]
+    business_meaning: str
+    confidence: float = Field(ge=0, le=1)
+    evidence_ids: list[str] = Field(default_factory=list)
 
 
-class DiagnosticPlanResponse(BaseModel):
-    requests: list[DiagnosticRequest] = Field(default_factory=list)
+class TableUnderstandingResponse(AgentResponse):
+    table_type: Literal["fact", "dimension", "bridge", "reference", "aggregate", "audit", "unknown"]
+    business_entity: str
+    purpose: str
+    columns: list[ColumnUnderstanding] = Field(default_factory=list)
+    confidence: float = Field(ge=0, le=1)
+    evidence_ids: list[str] = Field(default_factory=list)
 
 
-class RCAWordingResponse(BaseModel):
-    explanation: str
-    recommended_action: str
+class BusinessRuleProposal(AgentResponse):
+    rule_id: str
+    description: str
+    rule_type: Literal["null_count", "domain", "predicate", "aggregate"]
+    scope: Literal["source", "target", "compare"] = "target"
+    source_columns: list[str] = Field(default_factory=list)
+    target_columns: list[str] = Field(default_factory=list)
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    tolerance: dict[str, Any] = Field(default_factory=dict)
+    evidence_ids: list[str] = Field(default_factory=list)
+    confidence: float = Field(ge=0, le=1)
+    approval_required: bool = True
+    rationale: str
+
+
+class BusinessRuleResponse(AgentResponse):
+    rules: list[BusinessRuleProposal] = Field(default_factory=list)
+
+
+class SCDFilterProposal(AgentResponse):
+    is_scd2: bool
+    source_filters: list[dict[str, Any]] = Field(default_factory=list)
+    target_filters: list[dict[str, Any]] = Field(default_factory=list)
+    evidence_ids: list[str] = Field(default_factory=list)
+    confidence: float = Field(ge=0, le=1)
+    requires_review: bool = True
+    rationale: str
+
+
+class MeasureSemanticDecision(AgentResponse):
+    target_column: str
+    is_measure: bool
+    business_meaning: str
+    aggregation: Literal["sum", "avg", "min", "max", "count"] = "sum"
+    grouping_dimensions: list[str] = Field(default_factory=list)
+    evidence_ids: list[str] = Field(default_factory=list)
+    confidence: float = Field(ge=0, le=1)
+    requires_review: bool = True
+
+
+class MeasureSemanticResponse(AgentResponse):
+    decisions: list[MeasureSemanticDecision] = Field(default_factory=list)
+
+
+class MeasureInvestigationDecision(AgentResponse):
+    hypotheses: list[str] = Field(default_factory=list)
+    rejected_hypotheses: list[str] = Field(default_factory=list)
+    supporting_evidence_ids: list[str] = Field(default_factory=list)
+    enough_evidence: bool = False
+    classification: Literal["confirmed", "likely", "possible", "undetermined"] = "undetermined"
+    conclusion: str = ""
+    confidence: float = Field(default=0.0, ge=0, le=1)
+    human_review_required: bool = False
+    next_request: DiagnosticRequest | None = None
+
+
+class InvestigationAction(AgentResponse):
+    intent: Literal[
+        "date_coverage", "null_distribution", "duplicate_distribution",
+        "value_distribution", "missing_keys", "extra_keys", "inactive_members",
+        "masked_failed_samples", "filter_impact", "column_profile",
+        "relationship_gap", "grouped_metric", "stop",
+    ]
+    side: Literal["source", "target", "both"] = "both"
+    columns: list[str] = Field(default_factory=list)
+    rationale: str
+    expected_evidence: str
+
+
+class InvestigationDecision(AgentResponse):
+    hypotheses: list[str] = Field(default_factory=list)
+    rejected_hypotheses: list[str] = Field(default_factory=list)
+    supporting_evidence_ids: list[str] = Field(default_factory=list)
+    contradicting_evidence_ids: list[str] = Field(default_factory=list)
+    enough_evidence: bool = False
+    classification: Literal["confirmed", "likely", "possible", "undetermined"] = "undetermined"
+    conclusion: str = ""
+    confidence: float = Field(default=0.0, ge=0, le=1)
+    human_review_required: bool = False
+    next_action: InvestigationAction
 
 
 def _name(value: str) -> str:
@@ -129,37 +216,30 @@ class DQWorkflow:
         root: str | Path = ".",
         project_file: str = "config/project.yaml",
         llm_file: str = "config/llm.yaml",
-        effective_inputs: dict[str, Any] | None = None,
     ):
         self.config: AppConfig = load_app_config(root, project_file, llm_file)
-        if effective_inputs is None:
-            self.table_pairs = load_table_pairs(self.config)
-            self.column_mappings = load_column_mappings(self.config)
-            self.business_context = load_business_context(self.config)
-            self.human_tests = load_human_tests(self.config)
-        else:
-            self.table_pairs = [TablePair.model_validate(row) for row in effective_inputs.get("table_mappings", [])]
-            self.column_mappings = [ColumnMapping.model_validate(row) for row in effective_inputs.get("column_mappings", [])]
-            self.business_context = effective_inputs.get("business_context", {"tables": {}})
-            self.human_tests = [
-                HumanTest.model_validate(row)
-                for row in effective_inputs.get("human_tests", {}).get("tests", [])
-                if row.get("enabled", True)
-            ]
+        self.table_pairs = load_table_pairs(self.config)
+        self.column_mappings = load_column_mappings(self.config)
+        self.business_context = load_business_context(self.config)
+        self.human_tests = load_human_tests(self.config)
+        self.runtime_overrides = load_runtime_overrides(self.config)
         self.connectors: dict[str, WarehouseConnector] | None = None
         self._llm: LLMAdapter | None | Literal[False] = False
+        self.context_retriever: ContextRetriever = make_context_retriever(self.config)
         self.guard = QueryGuard()
         self.measure_config = load_measure_configuration(self.config)
         self.relationship_config = load_relationship_configuration(self.config)
         self._table_metadata_cache: dict[str, dict[str, Any]] = {}
         self._relationship_profile_cache: dict[str, dict[str, Any]] = {}
         self.output_dir: Path | None = None
+        self.log_dir: Path | None = None
         self.logger: logging.Logger | None = None
 
     @property
-    def llm(self) -> LLMAdapter | None:
+    def llm(self) -> LLMAdapter:
         if self._llm is False:
             self._llm = make_llm_adapter(self.config.llm)
+        assert self._llm is not None
         return self._llm
 
     def _connectors(self) -> dict[str, WarehouseConnector]:
@@ -169,7 +249,7 @@ class DQWorkflow:
         return self.connectors
 
     def _event(self, level: str, event: str, **details: Any) -> None:
-        if not self.output_dir or not self.logger:
+        if not self.log_dir or not self.logger:
             return
         payload = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -177,13 +257,13 @@ class DQWorkflow:
             "event": event,
             **_jsonable(details),
         }
-        append_jsonl(self.output_dir / "events.jsonl", payload)
+        append_jsonl(self.log_dir / "events.jsonl", payload)
         getattr(self.logger, level.lower(), self.logger.info)(f"{event} | {details}")
 
     def _checkpoint(self, stage: str, pair_id: str | None = None, status: str = "COMPLETED", **details: Any) -> None:
-        if not self.output_dir:
+        if not self.log_dir:
             return
-        path = self.output_dir / "checkpoint.json"
+        path = self.log_dir / "checkpoint.json"
         payload: dict[str, Any] = {}
         if path.exists():
             try:
@@ -210,9 +290,16 @@ class DQWorkflow:
         if stop_after not in STAGES:
             raise ValueError(f"stop_after must be one of {STAGES}")
         run_id = run_id or self._run_id()
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", run_id):
+            raise ValueError("run_id must contain only letters, digits, dot, underscore, and hyphen")
         self.output_dir = self.config.path(self.config.project.outputs_dir) / run_id
+        self.log_dir = self.config.path(self.config.project.logs_dir) / run_id
+        if self.output_dir.exists() and any(self.output_dir.iterdir()):
+            raise FileExistsError(f"Output run directory is not empty: {self.output_dir}")
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.logger = configure_logging(self.output_dir, self.config.project.log_level)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        self.logger = configure_logging(self.log_dir, self.config.project.log_level)
+        self.context_retriever = make_context_retriever(self.config, logger=self.logger)
         manifest: dict[str, Any] = {
             "run_id": run_id,
             "project": self.config.project.project_name,
@@ -221,41 +308,48 @@ class DQWorkflow:
             "status": "RUNNING",
             "tables": [],
         }
-        write_json(self.output_dir / "manifest.json", manifest)
+        write_json(self.log_dir / "manifest.json", manifest)
         self._checkpoint("RUN", status="RUNNING", run_id=run_id)
         table_outputs: list[dict[str, Any]] = []
         all_reviews: list[dict[str, Any]] = []
         self._event(
             "info", "run_started", run_id=run_id, table_count=len(self.table_pairs),
-            llm_provider=self.config.llm.provider, llm_model=self.config.llm.model,
+            llm_backend=self.config.llm.backend, llm_api_family=self.config.llm.api_family,
+            llm_model=self.config.llm.model, llm_configuration="config/llm.yaml",
         )
         self._event(
             "info", "inputs_loaded",
             table_mappings=str(self.config.path(self.config.project.table_mappings)),
             column_mappings=str(self.config.path(self.config.project.column_mappings)),
-            business_context=str(self.config.path(self.config.project.business_context)),
+            context_tables=str(self.config.path(self.config.project.context_tables)),
             human_tests=str(self.config.path(self.config.project.human_tests)),
             relationships=str(self.config.path(self.config.project.relationships)),
             measures=str(self.config.path(self.config.project.measures)),
         )
         try:
+            sync_result = self.context_retriever.sync()
+            self._event("info", "context_synchronized", **sync_result)
+            self._event(
+                "info", "llm_preflight_started", backend=self.config.llm.backend,
+                api_family=self.config.llm.api_family, model=self.config.llm.model,
+            )
+            health = self.llm.health_check()
+            self._event("info", "llm_preflight_succeeded", **health.__dict__)
             for pair in self.table_pairs:
                 result, reviews = self._process_pair(pair, stop_after)
                 table_outputs.append(result)
                 all_reviews.extend(reviews)
                 manifest["tables"].append(result["summary"])
-                write_json(self.output_dir / "manifest.json", manifest)
-            proposal_path = self.output_dir / "approval_proposals.json"
-            write_json(proposal_path, all_reviews)
+                write_json(self.log_dir / "manifest.json", manifest)
             manifest["approval_proposals"] = len(all_reviews)
-            manifest["approval_proposals_file"] = str(proposal_path)
-            self._event("info", "file_written", path=str(proposal_path), rows=len(all_reviews))
-            self._event(
-                "info", "CREATE_APPROVAL_ITEM", path=str(proposal_path),
-                rows=len(all_reviews), item_types=sorted({str(item.get("category")) for item in all_reviews}),
-            )
-            write_consolidated_reports(self.output_dir, table_outputs)
-            self._event("info", "reports_written", output_dir=str(self.output_dir))
+            if all_reviews:
+                approval_path = (
+                    self.config.path(self.config.project.approvals.root)
+                    / "pending" / f"{run_id}_approvals.xlsx"
+                )
+                write_approval_workbook(approval_path, pd.DataFrame(all_reviews))
+                manifest["approval_workbook"] = str(approval_path)
+                self._event("info", "approval_workbook_written", path=str(approval_path), rows=len(all_reviews))
             table_statuses = [row["summary"].get("status") for row in table_outputs]
             if "ERROR" in table_statuses:
                 manifest["status"] = "COMPLETED_WITH_ERRORS"
@@ -277,7 +371,13 @@ class DQWorkflow:
             raise
         finally:
             manifest["completed_at"] = datetime.now(timezone.utc).isoformat()
-            write_json(self.output_dir / "manifest.json", manifest)
+            if self.log_dir:
+                write_json(self.log_dir / "manifest.json", manifest)
+            if self.output_dir:
+                workbook = write_consolidated_reports(
+                    self.output_dir, table_outputs, all_reviews, manifest
+                )
+                self._event("info", "report_written", path=str(workbook))
             if self.connectors:
                 for connector in self.connectors.values():
                     connector.close()
@@ -293,8 +393,8 @@ class DQWorkflow:
     def _process_pair(
         self, pair: TablePair, stop_after: str
     ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-        assert self.output_dir is not None
-        table_dir = self.output_dir / "tables" / pair.pair_id
+        assert self.log_dir is not None
+        table_dir = self.log_dir / "tables" / pair.pair_id
         table_dir.mkdir(parents=True, exist_ok=True)
         summary: dict[str, Any] = {
             "pair_id": pair.pair_id,
@@ -323,7 +423,33 @@ class DQWorkflow:
                 return self._finalize_table(table_dir, summary, mappings, rules, results, rca, relationship_candidates), reviews
 
             context = self._context(pair)
+            context_package = self.context_retriever.context_package({
+                "pair_id": pair.pair_id,
+                "source_table": pair.source_name,
+                "target_table": pair.target_name,
+                "description": context.get("description"),
+                "table_type": context.get("table_type"),
+                "business_entity": context.get("business_entity"),
+                "columns": [item["name"] for item in metadata.get("target", [])],
+            })
+            context["retrieved_context"] = context_package["records"]
+            related_relationships = [
+                item["payload"] for item in context_package["records"]
+                if item.get("context_type") == "relationship"
+            ]
+            related_measures = [
+                {**item["payload"], "origin": "trusted"} for item in context_package["records"]
+                if item.get("context_type") == "measure"
+            ]
+            if related_relationships:
+                context["relationships"] = [*context.get("relationships", []), *related_relationships]
+            if related_measures:
+                context["measures"] = [*context.get("measures", []), *related_measures]
             metadata = self._enrich_metadata_with_context(metadata, context)
+            understanding = self._understand_table(pair, metadata, context_package)
+            metadata["understanding"] = understanding
+            context.setdefault("table_type", understanding.get("table_type"))
+            context.setdefault("business_entity", understanding.get("business_entity"))
             write_json(table_dir / "metadata.json", metadata)
             self._event("info", "inference_started", pair_id=pair.pair_id)
             mappings, mapping_reviews = self._resolve_mappings(pair, metadata)
@@ -340,8 +466,12 @@ class DQWorkflow:
             reviews.extend(relationship_reviews)
             measures, measure_reviews = self._resolve_measures(pair, metadata, mappings, context, table_dir)
             reviews.extend(measure_reviews)
+            llm_rules, llm_rule_reviews = self._infer_business_rules(pair, metadata, context, keys)
+            reviews.extend(llm_rule_reviews)
             summary.update({
                 "primary_keys": keys, "audit_columns": audit, "filters": filters,
+                "table_type": understanding.get("table_type"),
+                "business_entity": understanding.get("business_entity"),
                 "measure_count": len(measures),
                 "relationship_candidates": len(relationship_candidates),
                 "relationships_executable": len(resolved_relationships),
@@ -369,7 +499,8 @@ class DQWorkflow:
                 return self._finalize_table(table_dir, summary, mappings, rules, results, rca, relationship_candidates), reviews
 
             rules = self._generate_rules(
-                pair, metadata, mappings, context, keys, audit, resolved_relationships
+                pair, metadata, mappings, context, keys, audit, resolved_relationships,
+                extra_rules=llm_rules,
             )
             write_json(table_dir / "generated_rules.json", [rule.model_dump() for rule in rules])
             summary["rule_count"] = len(rules)
@@ -405,7 +536,20 @@ class DQWorkflow:
             failed = [row for row in results if row["status"] == "FAIL"]
             standard_failures = [row for row in failed if row.get("type") != "measure_reconciliation"]
             measure_failures = [row for row in failed if row.get("type") == "measure_reconciliation"]
-            rca = self._perform_rca(pair, standard_failures, rules, audit, filters, table_dir)
+            rca = self._perform_rca(
+                pair, standard_failures, rules, audit, filters, table_dir, metadata, context
+            )
+            for investigation in rca:
+                conclusion = investigation.get("conclusion", {})
+                if conclusion.get("human_review_required") or (
+                    conclusion.get("classification") in {"confirmed", "likely"}
+                    and float(conclusion.get("confidence") or 0) >= self.config.project.confidence.review
+                ):
+                    reviews.append(self._review(
+                        pair, "rca_learning", str(investigation.get("rule_id")), conclusion,
+                        float(conclusion.get("confidence") or 0),
+                        investigation.get("diagnostics", []), blocking=False,
+                    ))
             measure_rca, rca_reviews = self._investigate_measure_failures(
                 pair, measure_failures, measures, measure_groupings, filters, context, table_dir
             )
@@ -439,9 +583,6 @@ class DQWorkflow:
         relationship_candidates: list[dict[str, Any]],
     ) -> dict[str, Any]:
         rule_rows = [rule.model_dump() for rule in rules]
-        write_table_report(
-            table_dir, summary, mappings, rule_rows, results, rca, relationship_candidates
-        )
         self._event("info", "table_finished", pair_id=summary["pair_id"], status=summary["status"])
         return {
             "summary": summary, "mappings": mappings, "rules": rule_rows,
@@ -517,7 +658,48 @@ class DQWorkflow:
 
     def _context(self, pair: TablePair) -> dict[str, Any]:
         tables = self.business_context.get("tables", {})
-        return tables.get(pair.context_id or pair.pair_id, {}) or {}
+        context = json.loads(json.dumps(tables.get(pair.pair_id, {}) or {}, default=str))
+        override = (self.runtime_overrides.get("tables") or {}).get(pair.pair_id, {}) or {}
+        if "filters" in override:
+            filters = dict(context.get("filters") or {})
+            for side in ("source", "target"):
+                if side in (override.get("filters") or {}):
+                    filters[side] = list(override["filters"][side] or [])
+            context["filters"] = filters
+        return context
+
+    def _understand_table(
+        self,
+        pair: TablePair,
+        metadata: dict[str, Any],
+        context_package: dict[str, Any],
+    ) -> dict[str, Any]:
+        response = self.llm.complete_structured(
+            "Classify the table and important column business roles using only supplied metadata and context.",
+            {
+                "pair_id": pair.pair_id,
+                "mode": pair.mode,
+                "source_table": pair.source_name,
+                "target_table": pair.target_name,
+                "source_columns": metadata.get("source", []),
+                "target_columns": metadata.get("target", []),
+                "retrieved_context": context_package.get("records", []),
+            },
+            TableUnderstandingResponse,
+        )
+        available = {str(item["name"]).lower() for item in metadata.get("target", [])}
+        columns = [
+            item.model_dump() for item in response.columns
+            if item.column.lower() in available
+        ]
+        result = response.model_dump()
+        result["columns"] = columns
+        self._event(
+            "info", "table_understanding_completed", pair_id=pair.pair_id,
+            table_type=result["table_type"], business_entity=result["business_entity"],
+            confidence=result["confidence"],
+        )
+        return result
 
     def _inference_id(self, pair_id: str, category: str, subject: str) -> str:
         raw = f"{pair_id}|{category}|{subject}".encode("utf-8")
@@ -536,13 +718,21 @@ class DQWorkflow:
         inference_id = self._inference_id(pair.pair_id, category, subject)
         return {
             "inference_id": inference_id,
+            "item_id": inference_id,
             "pair_id": pair.pair_id,
+            "table_name": pair.target_name,
             "category": category,
+            "item_type": category,
             "subject": subject,
+            "column_name": subject if subject != "table" else None,
             "proposal": json.dumps(proposal, default=str),
+            "proposed_value": json.dumps(proposal, default=str),
             "confidence": round(confidence, 4),
             "evidence": json.dumps(evidence, default=str),
             "status": "PENDING",
+            "approval_status": "PENDING",
+            "why_approval_required": "Confidence, evidence, or governance policy requires human review",
+            "user_action_required": "Approve, reject, or override the proposed value",
             "blocking": blocking,
         }
 
@@ -592,7 +782,7 @@ class DQWorkflow:
                 resolved.append({
                     "pair_id": pair.pair_id, "source_column": source.name,
                     "target_column": mapping.target_column, "confidence": 1.0,
-                    "status": "MANUAL", "rationale": mapping.comments or "Approved manual mapping",
+                    "status": "MANUAL", "rationale": "Approved manual mapping",
                 })
                 continue
             candidates = [target for target in targets if target.name.lower() not in used]
@@ -603,37 +793,33 @@ class DQWorkflow:
             if not ranked:
                 continue
             confidence, target = ranked[0]
-            if confidence < self.config.project.confidence.auto_accept and self.config.llm.enabled:
-                try:
-                    adapter = self.llm
-                    if adapter:
-                        response = adapter.complete_structured(
-                            "Choose the best one-to-one target column for the source column.",
-                            {
-                                "source": source.as_dict(),
-                                "candidates": [item[1].as_dict() | {"deterministic_score": item[0]} for item in ranked[:5]],
-                            },
-                            MappingRerankResponse,
-                        )
-                        valid = {candidate.name.lower(): candidate for candidate in candidates}
-                        choice = next(
-                            (item for item in response.choices if item.source_column.lower() == source.name.lower()
-                             and item.target_column.lower() in valid),
-                            None,
-                        )
-                        if choice:
-                            target = valid[choice.target_column.lower()]
-                            source_group = normalized_type(source.data_type)
-                            target_group = normalized_type(target.data_type)
-                            compatible = source_group == target_group or {
-                                source_group, target_group
-                            } <= {"integer", "decimal"} or {
-                                source_group, target_group
-                            } <= {"date", "timestamp"}
-                            llm_confidence = min(choice.confidence, 0.95 if compatible else 0.64)
-                            confidence = max(confidence, llm_confidence)
-                except Exception as exc:
-                    self._event("warning", "llm_mapping_unavailable", pair_id=pair.pair_id, column=source.name, error=str(exc))
+            if confidence < self.config.project.confidence.auto_accept:
+                response = self.llm.complete_structured(
+                    "Choose the best one-to-one target column for the source column.",
+                    {
+                        "source": source.as_dict(),
+                        "candidates": [item[1].as_dict() | {"deterministic_score": item[0]} for item in ranked[:5]],
+                        "table_understanding": metadata.get("understanding", {}),
+                    },
+                    MappingRerankResponse,
+                )
+                valid = {candidate.name.lower(): candidate for candidate in candidates}
+                choice = next(
+                    (item for item in response.choices if item.source_column.lower() == source.name.lower()
+                     and item.target_column.lower() in valid),
+                    None,
+                )
+                if choice:
+                    target = valid[choice.target_column.lower()]
+                    source_group = normalized_type(source.data_type)
+                    target_group = normalized_type(target.data_type)
+                    compatible = source_group == target_group or {
+                        source_group, target_group
+                    } <= {"integer", "decimal"} or {
+                        source_group, target_group
+                    } <= {"date", "timestamp"}
+                    llm_confidence = min(choice.confidence, 0.95 if compatible else 0.64)
+                    confidence = max(confidence, llm_confidence)
             status = "AUTO" if confidence >= self.config.project.confidence.auto_accept else "PENDING"
             row = {
                 "pair_id": pair.pair_id, "source_column": source.name,
@@ -956,26 +1142,12 @@ class DQWorkflow:
         side = "target"  # audit columns are resolved on target for the pair
 
         # ── Retrieve trusted context records ─────────────────────────────
-        try:
-            from .context_store import read_context
-
-            if not self.config.project.context_store.enabled:
-                self._event(
-                    "info", "audit_column_context_disabled",
-                    pair_id=pair.pair_id,
-                )
-                return None
-
-            trusted = read_context(self.config, "trusted_context_current")
-        except Exception as exc:
-            self._event(
-                "warning", "audit_column_context_unavailable",
-                pair_id=pair.pair_id,
-                error=str(exc),
-            )
-            return None
-
-        if trusted.empty:
+        trusted = self.context_retriever.search({
+            "pair_id": pair.pair_id, "target_table": pair.target_name,
+            "columns": [column.name for column in date_columns],
+            "description": "audit freshness update ingestion timestamp",
+        })
+        if not trusted:
             self._event(
                 "info", "audit_column_context_empty",
                 pair_id=pair.pair_id,
@@ -988,20 +1160,16 @@ class DQWorkflow:
         source_audit_names: list[str] = []
         target_audit_names: list[str] = []
 
-        for row in trusted.to_dict("records"):
+        for row in trusted:
             # Only business_context records carry audit_columns
-            if str(row.get("context_type", "")) != "business_context":
+            if str(row.get("context_type", "")) != "table":
                 continue
             # Only TRUSTED + active (the view already filters status=TRUSTED,
             # but be defensive)
-            if str(row.get("status", "")).upper() not in {"TRUSTED", ""}:
+            if str(row.get("status", "ACTIVE")).upper() != "ACTIVE":
                 continue
 
-            payload_raw = row.get("payload_json") or row.get("payload") or "{}"
-            try:
-                payload = json.loads(payload_raw) if isinstance(payload_raw, str) else (payload_raw or {})
-            except (json.JSONDecodeError, TypeError):
-                continue
+            payload = row.get("payload") or {}
 
             audit = payload.get("audit_columns")
             if not isinstance(audit, dict):
@@ -1207,7 +1375,7 @@ class DQWorkflow:
                 None,
             )
             if not end_column:
-                return filters, []
+                return self._resolve_scd_with_llm(pair, metadata, mappings, context, filters)
             mapping_by_target = {row["target_column"].lower(): row["source_column"] for row in mappings}
             source_end = mapping_by_target.get(end_column.name.lower())
             profile = self._profile_scd_end_date(pair, end_column.name, table_dir)
@@ -1221,7 +1389,7 @@ class DQWorkflow:
                 year_match = re.match(r"^(\d{4})", str(maximum_value or ""))
                 maximum_year = int(year_match.group(1)) if year_match else 0
                 if maximum_year < 2999:
-                    return filters, []
+                    return self._resolve_scd_with_llm(pair, metadata, mappings, context, filters)
                 sentinel = str(maximum_value)
                 if normalized_type(end_column.data_type) == "date":
                     sentinel = sentinel[:10]
@@ -1245,7 +1413,7 @@ class DQWorkflow:
         profile = self._profile_scd_flag(pair, flag.name, table_dir)
         active_value = self._active_flag_value(flag, profile)
         if active_value is None:
-            return filters, []
+            return self._resolve_scd_with_llm(pair, metadata, mappings, context, filters)
         proposal = {
             "source": [{"column": source_flag, "operator": "eq", "value": active_value}] if source_flag else [],
             "target": [{"column": flag.name, "operator": "eq", "value": active_value}],
@@ -1263,6 +1431,44 @@ class DQWorkflow:
             {"column": flag.as_dict(), "profile": profile, "active_value": active_value},
         )
         return filters, [review]
+
+    def _resolve_scd_with_llm(
+        self,
+        pair: TablePair,
+        metadata: dict[str, Any],
+        mappings: list[dict[str, Any]],
+        context: dict[str, Any],
+        filters: dict[str, list[dict[str, Any]]],
+    ) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
+        retrieved = context.get("retrieved_context", [])
+        response = self.llm.complete_structured(
+            "Determine whether this table uses SCD Type 2 and propose only evidence-supported current-record filters.",
+            {
+                "pair_id": pair.pair_id, "mode": pair.mode,
+                "metadata": metadata, "mappings": mappings,
+                "configured_filters": filters, "retrieved_context": retrieved,
+            },
+            SCDFilterProposal,
+        )
+        if not response.is_scd2:
+            return filters, []
+        proposal = {"source": response.source_filters, "target": response.target_filters}
+        self._validate_filters(pair, metadata, proposal)
+        trusted_ids = {str(item.get("record_id")) for item in retrieved}
+        evidence_valid = bool(response.evidence_ids) and set(response.evidence_ids) <= trusted_ids
+        if (
+            response.confidence >= self.config.project.confidence.auto_accept
+            and evidence_valid and not response.requires_review
+            and (pair.mode != "migration" or bool(response.source_filters))
+        ):
+            filters["source"].extend(response.source_filters)
+            filters["target"].extend(response.target_filters)
+            return filters, []
+        return filters, [self._review(
+            pair, "scd2_current_filter", "table", proposal, response.confidence,
+            {"rationale": response.rationale, "evidence_ids": response.evidence_ids},
+            blocking=True,
+        )]
 
     @staticmethod
     def _validate_filters(
@@ -1482,6 +1688,53 @@ class DQWorkflow:
             inferred = infer_measure_candidates(
                 pair, metadata, mappings, profiles, settings.max_inferred_per_table
             )
+            semantic = self.llm.complete_structured(
+                "Review numeric candidates for business measure semantics and safe aggregation/grouping suggestions.",
+                {
+                    "pair_id": pair.pair_id,
+                    "table_understanding": metadata.get("understanding", {}),
+                    "candidates": inferred,
+                    "retrieved_context": context.get("retrieved_context", []),
+                    "target_columns": metadata.get("target", []),
+                    "instructions": "Reject identifiers, keys, codes, years, status values, flags, and sequence columns.",
+                },
+                MeasureSemanticResponse,
+            )
+            decision_by_column = {item.target_column.lower(): item for item in semantic.decisions}
+            trusted_ids = {str(item.get("record_id")) for item in context.get("retrieved_context", [])}
+            refined: list[dict[str, Any]] = []
+            mapping_by_target = {str(item["target_column"]).lower(): str(item["source_column"]) for item in mappings}
+            for candidate in inferred:
+                decision = decision_by_column.get(str(candidate["target_expression"]).lower())
+                if not decision or not decision.is_measure:
+                    continue
+                valid_groups = {
+                    str(item["name"]).lower(): str(item["name"])
+                    for item in metadata.get("target", [])
+                }
+                target_groups = [valid_groups[name.lower()] for name in decision.grouping_dimensions if name.lower() in valid_groups]
+                source_groups = [mapping_by_target.get(name.lower()) for name in target_groups]
+                candidate["business_name"] = decision.business_meaning
+                candidate["description"] = decision.business_meaning
+                candidate["aggregation"] = decision.aggregation
+                candidate["group_by"] = {
+                    "target": target_groups,
+                    "source": [name for name in source_groups if name],
+                } if target_groups and (pair.mode != "migration" or all(source_groups)) else {}
+                context_evidence_valid = bool(decision.evidence_ids) and set(decision.evidence_ids) <= trusted_ids
+                profile_evidence_valid = bool((candidate.get("evidence") or {}).get("profile"))
+                evidence_valid = context_evidence_valid or profile_evidence_valid
+                confidence = max(
+                    float(candidate.get("confidence") or 0),
+                    min(decision.confidence, 0.95 if evidence_valid else 0.84),
+                )
+                candidate["confidence"] = confidence if evidence_valid else min(confidence, 0.84)
+                candidate["evidence"]["semantic_reasoning"] = decision.model_dump()
+                candidate["evidence"]["semantic_evidence_valid"] = evidence_valid
+                if decision.requires_review or not evidence_valid:
+                    candidate["approval_status"] = "pending"
+                refined.append(candidate)
+            inferred = refined
 
         resolved = resolve_measure_precedence(pair, self.measure_config, context, inferred)
         reviews: list[dict[str, Any]] = []
@@ -1647,54 +1900,6 @@ class DQWorkflow:
         )
         return _jsonable(output), groupings_by_measure
 
-    def _plan_measure_diagnostics(
-        self,
-        failure: dict[str, Any],
-        measure: dict[str, Any],
-        groupings: list[dict[str, Any]],
-        approved_learnings: list[dict[str, Any]],
-    ) -> list[DiagnosticRequest]:
-        settings = self.measure_config.diagnostics
-        planned = default_diagnostic_requests(measure, groupings, settings)
-        learned_types = [
-            query_type
-            for learning in approved_learnings
-            if str(learning.get("measure_id")) == str(measure["measure_id"])
-            for query_type in learning.get("investigated_hypotheses", [])
-            if query_type in settings.allowed_types
-        ]
-        if learned_types:
-            planned.sort(key=lambda request: (request.query_type not in learned_types, request.query_type))
-        if self.config.llm.enabled and settings.maximum_llm_calls_per_failure > 0:
-            try:
-                adapter = self.llm
-                if adapter:
-                    response = adapter.complete_structured(
-                        "Select useful diagnostic intents from the allowlist. Do not produce SQL or identifiers.",
-                        {
-                            "failure": failure,
-                            "measure_id": measure["measure_id"],
-                            "allowed_types": settings.allowed_types,
-                            "approved_grouping_ids": [item["grouping_id"] for item in groupings],
-                            "has_approved_date_columns": bool((measure.get("date_column") or {}).get("source")),
-                            "maximum_steps": settings.maximum_steps_per_failure,
-                            "approved_reusable_learnings": approved_learnings,
-                        },
-                        DiagnosticPlanResponse,
-                    )
-                    valid: list[DiagnosticRequest] = []
-                    for request in response.requests[: settings.maximum_steps_per_failure]:
-                        validate_diagnostic_request(request, measure, groupings, settings)
-                        valid.append(request)
-                    if valid:
-                        planned = valid
-            except Exception as exc:
-                self._event(
-                    "warning", "PLAN_RCA_DIAGNOSTIC_LLM_UNAVAILABLE",
-                    pair_id=failure.get("pair_id"), measure_id=measure["measure_id"], error=str(exc),
-                )
-        return planned[: settings.maximum_steps_per_failure]
-
     def _investigate_measure_failures(
         self,
         pair: TablePair,
@@ -1719,15 +1924,49 @@ class DQWorkflow:
             if not measure:
                 continue
             groupings = groupings_by_measure.get(str(measure["measure_id"]), [])
-            requests = self._plan_measure_diagnostics(
-                failure, measure, groupings, list(context.get("rca_learnings", []))
-            )
-            self._event(
-                "info", "PLAN_RCA_DIAGNOSTIC", pair_id=pair.pair_id,
-                measure_id=measure["measure_id"], requests=[item.model_dump() for item in requests],
-            )
             evidence: list[dict[str, Any]] = []
-            for index, request in enumerate(requests):
+            seen_requests: set[str] = set()
+            final: MeasureInvestigationDecision | None = None
+            maximum_calls = min(
+                settings.maximum_llm_calls_per_failure,
+                self.config.project.max_llm_calls_per_failure,
+            )
+            maximum_diagnostics = min(
+                settings.maximum_steps_per_failure, max(0, maximum_calls - 1)
+            )
+            for index in range(maximum_calls):
+                decision = self.llm.complete_structured(
+                    "Investigate this failed governed measure. Rank hypotheses, then conclude or choose one allowlisted diagnostic request. Never provide SQL or new identifiers.",
+                    {
+                        "pair_id": pair.pair_id,
+                        "failure": failure,
+                        "measure": measure,
+                        "approved_groupings": groupings,
+                        "allowed_types": settings.allowed_types,
+                        "retrieved_rca_learnings": context.get("rca_learnings", []),
+                        "evidence_ledger": evidence,
+                        "step": index + 1,
+                        "maximum_llm_calls": maximum_calls,
+                        "remaining_diagnostic_budget": maximum_diagnostics - len(seen_requests),
+                    },
+                    MeasureInvestigationDecision,
+                )
+                final = decision
+                if decision.enough_evidence or decision.human_review_required or decision.next_request is None:
+                    break
+                request = decision.next_request
+                if len(seen_requests) >= maximum_diagnostics:
+                    final.classification = "undetermined"
+                    final.human_review_required = True
+                    final.conclusion = "Diagnostic budget exhausted; the final reasoning call did not reach a supported conclusion."
+                    break
+                signature = request.model_dump_json()
+                if signature in seen_requests:
+                    final.classification = "undetermined"
+                    final.human_review_required = True
+                    final.conclusion = "Investigation stopped because the model repeated a diagnostic request."
+                    break
+                seen_requests.add(signature)
                 try:
                     validate_diagnostic_request(request, measure, groupings, settings)
                     self._event(
@@ -1750,32 +1989,154 @@ class DQWorkflow:
                         frames[side] = self._controlled_execute(side, sql, allowed, table_dir, label)
                         references[side] = str(table_dir / "sql" / f"{label}.sql")
                     evidence.append({
+                        "evidence_id": f"measure_diagnostic_{index + 1}",
                         "request": request.model_dump(),
                         "source": frames["source"].head(settings.maximum_failed_samples).to_dict("records"),
                         "target": frames["target"].head(settings.maximum_failed_samples).to_dict("records"),
                         "query_references": references,
                     })
                 except Exception as exc:
-                    evidence.append({"request": request.model_dump(), "error": str(exc)})
+                    evidence.append({
+                        "evidence_id": f"measure_guardrail_rejection_{index + 1}",
+                        "request": request.model_dump(), "error": str(exc),
+                    })
                     self._event(
                         "warning", "EXECUTE_DIAGNOSTIC_QUERY_FAILED", pair_id=pair.pair_id,
                         measure_id=measure["measure_id"], query_type=request.query_type, error=str(exc),
                     )
-            rca = evidence_based_rca(failure, evidence)
-            rca.update({"pair_id": pair.pair_id, "rule_id": rule_id, "diagnostics": evidence})
+                    final.classification = "undetermined"
+                    final.human_review_required = True
+                    final.conclusion = "The requested measure diagnostic was rejected by deterministic safety controls."
+                    break
+            if final is None:
+                continue
+            known_ids = {str(item["evidence_id"]) for item in evidence}
+            final.supporting_evidence_ids = [
+                item for item in final.supporting_evidence_ids if item in known_ids
+            ]
+            if not final.enough_evidence and not final.human_review_required:
+                final.classification = "undetermined"
+                final.human_review_required = True
+                final.conclusion = final.conclusion or "Measure investigation limit reached without sufficient evidence."
+            if final.classification == "confirmed" and not final.supporting_evidence_ids:
+                final.classification = "possible"
+                final.human_review_required = True
+            conclusion_payload = {
+                "classification": final.classification, "conclusion": final.conclusion,
+                "confidence": final.confidence, "hypotheses": final.hypotheses,
+                "rejected_hypotheses": final.rejected_hypotheses,
+                "supporting_evidence_ids": final.supporting_evidence_ids,
+                "human_review_required": final.human_review_required,
+            }
+            rca = {
+                "pair_id": pair.pair_id, "rule_id": rule_id,
+                "conclusion": conclusion_payload, "diagnostics": evidence,
+            }
             output.append(rca)
             self._event(
                 "info", "GENERATE_EVIDENCE_BASED_RCA", pair_id=pair.pair_id,
-                measure_id=measure["measure_id"], classification=rca["classification"],
-                confidence=rca["confidence"], evidence=rca["evidence_observed"],
+                measure_id=measure["measure_id"], classification=final.classification,
+                confidence=final.confidence, evidence=final.supporting_evidence_ids,
             )
-            if rca.get("reusable_candidate"):
+            if final.human_review_required or (
+                final.classification in {"confirmed", "likely"}
+                and final.confidence >= self.config.project.confidence.review
+            ):
                 reviews.append(self._review(
-                    pair, "rca_learning", str(measure["measure_id"]), rca,
-                    float(rca["confidence"]), evidence, blocking=False,
+                    pair, "rca_learning", str(measure["measure_id"]), conclusion_payload,
+                    float(final.confidence), evidence, blocking=False,
                 ))
         write_json(table_dir / "measure_diagnostics.json", output)
         return _jsonable(output), reviews
+
+    def _infer_business_rules(
+        self,
+        pair: TablePair,
+        metadata: dict[str, Any],
+        context: dict[str, Any],
+        keys: dict[str, list[str]],
+    ) -> tuple[list[RuleSpec], list[dict[str, Any]]]:
+        retrieved = list(context.get("retrieved_context", []))
+        response = self.llm.complete_structured(
+            "Propose business-specific validation rules. Use only supported templates; never produce SQL.",
+            {
+                "pair_id": pair.pair_id, "mode": pair.mode,
+                "source_table": pair.source_name, "target_table": pair.target_name,
+                "metadata": metadata, "primary_keys": keys,
+                "explicit_context": {key: value for key, value in context.items() if key != "retrieved_context"},
+                "retrieved_context": retrieved,
+                "supported_rule_types": ["null_count", "domain", "predicate", "aggregate"],
+                "evidence_gate": {
+                    "minimum_confidence": self.config.project.confidence.auto_accept,
+                    "requires_verified_context_record": True,
+                },
+            },
+            BusinessRuleResponse,
+        )
+        available = {
+            "source": {str(item["name"]).lower() for item in metadata.get("source", [])},
+            "target": {str(item["name"]).lower() for item in metadata.get("target", [])},
+        }
+        trusted_ids = {str(item.get("record_id")) for item in retrieved}
+        rules: list[RuleSpec] = []
+        reviews: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for proposal in response.rules[:12]:
+            if proposal.rule_id in seen:
+                continue
+            seen.add(proposal.rule_id)
+            source_columns = proposal.source_columns
+            target_columns = proposal.target_columns
+            metadata_valid = all(name.lower() in available["source"] for name in source_columns) and all(
+                name.lower() in available["target"] for name in target_columns
+            )
+            if pair.mode == "bigquery_only" and proposal.scope in {"source", "compare"}:
+                metadata_valid = False
+            parameters_valid = True
+            if proposal.rule_type == "domain":
+                parameters_valid = bool(proposal.parameters.get("values"))
+            elif proposal.rule_type == "predicate":
+                predicate = proposal.parameters.get("predicate")
+                predicate_column = str(predicate.get("column", "")).lower() if isinstance(predicate, dict) else ""
+                required_sides = ["target"] if proposal.scope == "target" else (
+                    ["source"] if proposal.scope == "source" else ["source", "target"]
+                )
+                parameters_valid = bool(predicate_column) and all(
+                    predicate_column in available[side] for side in required_sides
+                )
+            elif proposal.rule_type == "aggregate":
+                parameters_valid = str(proposal.parameters.get("aggregate", "sum")).lower() in {"sum", "avg", "min", "max"}
+            evidence_valid = bool(proposal.evidence_ids) and set(proposal.evidence_ids) <= trusted_ids
+            rule = RuleSpec(
+                rule_id=f"{pair.pair_id}__llm__{proposal.rule_id}", pair_id=pair.pair_id,
+                type=proposal.rule_type, scope=proposal.scope, category="llm_generated",
+                source_columns=source_columns, target_columns=target_columns,
+                parameters=proposal.parameters, tolerance=proposal.tolerance,
+                severity="warning", origin="llm_generated", description=proposal.description,
+            )
+            auto_execute = (
+                proposal.confidence >= self.config.project.confidence.auto_accept
+                and evidence_valid and metadata_valid and parameters_valid
+                and not proposal.approval_required
+            )
+            if auto_execute:
+                rules.append(rule)
+            else:
+                reviews.append(self._review(
+                    pair, "business_rule", proposal.rule_id, proposal.model_dump(),
+                    proposal.confidence,
+                    {
+                        "rationale": proposal.rationale, "evidence_ids": proposal.evidence_ids,
+                        "metadata_valid": metadata_valid, "parameters_valid": parameters_valid,
+                        "evidence_valid": evidence_valid,
+                    },
+                    blocking=False,
+                ))
+        self._event(
+            "info", "business_rule_inference_completed", pair_id=pair.pair_id,
+            auto_executed=len(rules), approval_required=len(reviews),
+        )
+        return rules, reviews
 
     def _generate_rules(
         self,
@@ -1786,6 +2147,7 @@ class DQWorkflow:
         keys: dict[str, list[str]],
         audit: dict[str, Any],
         relationships: list[dict[str, Any]],
+        extra_rules: list[RuleSpec] | None = None,
     ) -> list[RuleSpec]:
         rules: list[RuleSpec] = []
         target_types = {item["name"].lower(): normalized_type(item["data_type"]) for item in metadata["target"]}
@@ -1843,7 +2205,25 @@ class DQWorkflow:
                         source_columns=[source], target_columns=[target],
                     ),
                 ])
-                if target_types.get(target.lower()) in {"string", "boolean"}:
+                type_group = target_types.get(target.lower(), "other")
+                metrics = ["row_count", "null_count", "distinct_count"]
+                if type_group in {"integer", "decimal"}:
+                    metrics.extend(["min_value", "max_value", "average_value", "sum_value"])
+                elif type_group in {"date", "timestamp"}:
+                    metrics.extend(["min_value", "max_value"])
+                rules.append(RuleSpec(
+                    rule_id=f"{pair.pair_id}__profile_compare__{target}", pair_id=pair.pair_id,
+                    type="column_profile", scope="compare", category="profiling",
+                    source_columns=[source], target_columns=[target],
+                    parameters={"metrics": metrics, "type_group": type_group},
+                    tolerance={
+                        "absolute": self.config.project.profiling.numeric_absolute_tolerance,
+                        "percentage": self.config.project.profiling.numeric_percentage_tolerance,
+                    },
+                    description="Type-aware Databricks and BigQuery column profile comparison",
+                ))
+                column_details = (context.get("columns", {}) or {}).get(target, {}) or {}
+                if target_types.get(target.lower()) == "boolean" or column_details.get("low_cardinality") or column_details.get("accepted_values"):
                     rules.append(RuleSpec(
                         rule_id=f"{pair.pair_id}__distribution__{target}", pair_id=pair.pair_id,
                         type="value_distribution", scope="compare", category="distribution",
@@ -1924,7 +2304,8 @@ class DQWorkflow:
                         }},
                         description="Informational BigQuery column profile",
                     ))
-                    if type_group in {"string", "boolean"}:
+                    details = (context.get("columns", {}) or {}).get(item["name"], {}) or {}
+                    if type_group == "boolean" or details.get("low_cardinality") or details.get("accepted_values"):
                         rules.append(RuleSpec(
                             rule_id=f"{pair.pair_id}__distribution__{item['name']}", pair_id=pair.pair_id,
                             type="value_distribution", scope="target", category="profiling",
@@ -1987,6 +2368,28 @@ class DQWorkflow:
                             "column": column_name, "operator": operator, "value": details[boundary]
                         }},
                     ))
+        for definition in context.get("grouped_profiles", []) or []:
+            if pair.mode != "migration" or not definition.get("enabled", True):
+                continue
+            rules.append(RuleSpec(
+                rule_id=f"{pair.pair_id}__grouped__{definition['id']}", pair_id=pair.pair_id,
+                type="grouped_profile", scope="compare", category="business_rule",
+                parameters={
+                    "source_group_by": definition.get("source_group_by", []),
+                    "target_group_by": definition.get("target_group_by", []),
+                    "source_joins": definition.get("source_joins", []),
+                    "target_joins": definition.get("target_joins", []),
+                    "source_filters": definition.get("source_filters", []),
+                    "target_filters": definition.get("target_filters", []),
+                    "metrics": definition.get("metrics", []),
+                    "limit": min(
+                        int(definition.get("limit", self.config.project.query_limits.maximum_group_cardinality)),
+                        self.config.project.query_limits.maximum_group_cardinality,
+                    ),
+                },
+                tolerance=definition.get("tolerance", {}), origin="trusted_context",
+                description=definition.get("description"),
+            ))
         for relationship in relationships:
             if not relationship.get("enabled", True):
                 continue
@@ -2022,6 +2425,8 @@ class DQWorkflow:
                     ))
                 else:
                     rules.append(self._human_rule(test))
+        if extra_rules:
+            rules.extend(extra_rules)
         return rules
 
     def _validate_human_test(
@@ -2030,59 +2435,38 @@ class DQWorkflow:
         errors: list[str] = []
         if pair.mode == "bigquery_only" and test.scope in {"source", "both", "compare"}:
             errors.append("BigQuery-only tables cannot execute source-scoped tests")
-        for side, columns in (("source", test.source_columns), ("target", test.target_columns)):
+        for side in ("source", "target"):
+            columns = test.columns_for(side)
             if side == "source" and pair.mode != "migration":
                 continue
             available = {item["name"].lower() for item in metadata[side]}
             missing = [name for name in columns if name.lower() not in available]
             if missing:
                 errors.append(f"{side} columns do not exist: {missing}")
-        requires_column = test.type in {
-            "aggregate", "distinct_count", "domain", "freshness", "null_count",
-            "predicate", "uniqueness", "value_distribution",
-        }
+        requires_column = test.type not in {"row_count", "custom_sql"}
         if requires_column:
-            if test.scope in {"source", "both", "compare"} and pair.mode == "migration" and not test.source_columns:
-                errors.append("source_columns is required for the configured scope")
-            if test.scope in {"target", "both", "compare"} and not test.target_columns:
-                errors.append("target_columns is required for the configured scope")
-        if test.type == "predicate":
-            predicate_column = str(test.parameters.get("predicate", {}).get("column") or "")
+            if test.scope in {"source", "both", "compare"} and pair.mode == "migration" and not test.columns_for("source"):
+                errors.append("a source column is required for the configured scope")
+            if test.scope in {"target", "both", "compare"} and not test.columns_for("target"):
+                errors.append("a target column is required for the configured scope")
+        if test.type == "freshness_check":
             for side in ("source", "target"):
-                if side == "source" and (pair.mode != "migration" or test.scope not in {"source", "both", "compare"}):
-                    continue
-                if side == "target" and test.scope not in {"target", "both", "compare"}:
-                    continue
-                available = {item["name"].lower() for item in metadata[side]}
-                if predicate_column.lower() not in available:
-                    errors.append(f"predicate column does not exist on {side}: {predicate_column}")
-        if test.type == "freshness":
-            for side, columns in (("source", test.source_columns), ("target", test.target_columns)):
+                columns = test.columns_for(side)
                 if side == "source" and pair.mode != "migration":
                     continue
                 index = {item["name"].lower(): item for item in metadata[side]}
                 for name in columns:
                     if name.lower() in index and normalized_type(index[name.lower()]["data_type"]) not in {"date", "timestamp"}:
                         errors.append(f"freshness column is not date/timestamp on {side}: {name}")
-        if test.type == "relationship":
-            parent_table = str(test.parameters.get("referenced_table") or "")
-            parent = self._get_table_metadata("target", parent_table) if parent_table else {}
-            parent_columns = {str(item.get("name", "")).lower() for item in parent.get("columns", [])}
-            missing_parent = [
-                name for name in test.parameters.get("referenced_columns", [])
-                if str(name).lower() not in parent_columns
-            ]
-            if missing_parent:
-                errors.append(f"referenced relationship columns do not exist: {missing_parent}")
         return errors
 
     @staticmethod
     def _human_rule(test: HumanTest) -> RuleSpec:
         return RuleSpec(
-            rule_id=test.test_id, pair_id=test.pair_id, type=test.type, scope=test.scope,
-            category="human", source_columns=test.source_columns,
-            target_columns=test.target_columns, parameters=test.parameters,
-            tolerance=test.tolerance, severity=test.severity, origin="human",
+            rule_id=test.test_id, pair_id=test.pair_id, type=test.rule_type(), scope=test.scope,
+            category="human", source_columns=test.columns_for("source"),
+            target_columns=test.columns_for("target"), parameters=test.rule_parameters(),
+            tolerance=test.rule_tolerance(), severity=test.severity, origin="human",
             source_sql=test.source_sql, target_sql=test.target_sql, description=test.description,
         )
 
@@ -2161,7 +2545,7 @@ class DQWorkflow:
                     side, sql, allowed_tables_for_rule(rule, pair, side), table_dir,
                     f"{rule.rule_id}_{side}",
                 )
-                if rule.type in {"value_distribution", "key_buckets", "key_values"}:
+                if rule.type in {"value_distribution", "key_buckets", "key_values", "grouped_profile", "top_duplicates"}:
                     evidence[side] = [_jsonable(item) for item in result.to_dict("records")]
                 else:
                     evidence[side] = self._first_row(result)
@@ -2324,7 +2708,10 @@ class DQWorkflow:
             fields = {"uniqueness": "duplicate_groups", "relationship": "orphan_count"}
             field = fields.get(rule.type, "invalid_count")
             values = {side: float(data.get(field, 0) or 0) for side, data in evidence.items()}
-            return ("PASS" if all(value == 0 for value in values.values()) else "FAIL"), {"violations": values}
+            allowed = float(rule.parameters.get("allowed", 0) or 0) if rule.type == "uniqueness" else 0.0
+            return ("PASS" if all(value <= allowed for value in values.values()) else "FAIL"), {
+                "violations": values, "allowed": allowed,
+            }
         if rule.type == "key_values":
             limit = int(rule.parameters.get("limit", 10_000))
             totals = {
@@ -2385,7 +2772,7 @@ class DQWorkflow:
                 signed_lag = (target - reference).total_seconds() / 60
                 lagging_side = "target" if signed_lag < 0 else ("neither" if signed_lag == 0 else "source")
             lag = abs(signed_lag)
-            allowed = float(rule.tolerance.get("minutes", 0))
+            allowed = float(rule.tolerance.get("minutes", rule.parameters.get("minutes", 0)))
             return ("PASS" if lag <= allowed else "FAIL"), {
                 "source_timestamp": source_value.isoformat() if source_value is not None else None,
                 "target_timestamp": target.isoformat(),
@@ -2394,16 +2781,98 @@ class DQWorkflow:
                 "allowed_minutes": allowed, "lagging_side": lagging_side,
                 "reference_timestamp": reference.isoformat(),
             }
+        if rule.type == "date_coverage":
+            if "source" not in evidence or "target" not in evidence:
+                return "PASS", {"informational": True, "coverage": evidence}
+            details = {
+                field: {
+                    "source": evidence["source"].get(field),
+                    "target": evidence["target"].get(field),
+                }
+                for field in ("min_value", "max_value")
+            }
+            passed = all(str(item["source"]) == str(item["target"]) for item in details.values())
+            return ("PASS" if passed else "FAIL"), {"coverage": details}
         if rule.type == "column_profile":
-            return "PASS", {"informational": True, "profile": evidence}
+            if rule.scope != "compare" or "source" not in evidence or "target" not in evidence:
+                return "PASS", {"informational": True, "profile": evidence}
+            source_profile = evidence["source"]
+            target_profile = evidence["target"]
+            details: dict[str, Any] = {}
+            passed = True
+            metrics = rule.parameters.get("metrics") or sorted(set(source_profile) | set(target_profile))
+            for metric in metrics:
+                source_value = source_profile.get(metric)
+                target_value = target_profile.get(metric)
+                if metric in {"row_count", "null_count", "distinct_count"}:
+                    metric_passed = source_value == target_value
+                    detail = {"source": source_value, "target": target_value, "exact": True}
+                elif metric in {"average_value", "sum_value"}:
+                    tolerance = {
+                        "absolute": rule.tolerance.get("absolute", 0),
+                        "percentage": rule.tolerance.get("percentage", 0),
+                    }
+                    metric_passed, detail = self._within_tolerance(source_value, target_value, tolerance)
+                else:
+                    metric_passed = str(source_value) == str(target_value)
+                    detail = {"source": source_value, "target": target_value, "exact": True}
+                details[metric] = {**detail, "status": "PASS" if metric_passed else "FAIL"}
+                passed = passed and metric_passed
+            return ("PASS" if passed else "FAIL"), {"metrics": details}
+        if rule.type == "grouped_profile":
+            source_rows = evidence.get("source", [])
+            target_rows = evidence.get("target", [])
+            group_count = len(rule.parameters.get("source_group_by") or [])
+            metric_count = len(rule.parameters.get("metrics") or [])
+            def keyed(rows: list[dict[str, Any]]) -> dict[tuple[str, ...], dict[str, Any]]:
+                return {
+                    tuple(str(row.get(f"group_{index}")) for index in range(1, group_count + 1)): row
+                    for row in rows
+                }
+            source_map, target_map = keyed(source_rows), keyed(target_rows)
+            mismatches: list[dict[str, Any]] = []
+            for key in sorted(set(source_map) | set(target_map)):
+                source_row, target_row = source_map.get(key, {}), target_map.get(key, {})
+                for index in range(1, metric_count + 1):
+                    metric = rule.parameters["metrics"][index - 1]
+                    tolerance = {
+                        "absolute": metric.get("tolerance_absolute", rule.tolerance.get("absolute", 0)),
+                        "percentage": metric.get("tolerance_percentage", rule.tolerance.get("percentage", 0)),
+                    }
+                    metric_passed, detail = self._within_tolerance(
+                        source_row.get(f"metric_{index}"), target_row.get(f"metric_{index}"), tolerance
+                    )
+                    if not metric_passed:
+                        mismatches.append({
+                            "groups": key, "metric": metric.get("name", f"metric_{index}"), **detail,
+                        })
+            return ("PASS" if not mismatches else "FAIL"), {
+                "source_groups": len(source_map), "target_groups": len(target_map),
+                "mismatch_count": len(mismatches), "mismatches": mismatches[:50],
+            }
         if "expected_value" in rule.parameters:
             comparisons: dict[str, Any] = {}
             passed = True
             for side, data in evidence.items():
                 actual = next(iter(data.values()), None)
-                side_passed, detail = self._within_tolerance(
-                    actual, rule.parameters["expected_value"], rule.tolerance
-                )
+                expected = rule.parameters["expected_value"]
+                operator = rule.parameters.get("comparison", "eq")
+                if operator in {"gte", "lte"}:
+                    try:
+                        actual_number, expected_number = float(actual), float(expected)
+                        side_passed = (
+                            actual_number >= expected_number if operator == "gte"
+                            else actual_number <= expected_number
+                        )
+                        detail = {
+                            "actual": actual_number, "expected": expected_number,
+                            "comparison": operator,
+                        }
+                    except (TypeError, ValueError):
+                        side_passed = False
+                        detail = {"actual": actual, "expected": expected, "comparison": operator}
+                else:
+                    side_passed, detail = self._within_tolerance(actual, expected, rule.tolerance)
                 comparisons[side] = detail
                 passed = passed and side_passed
             return ("PASS" if passed else "FAIL"), {"expected_comparisons": comparisons}
@@ -2430,7 +2899,7 @@ class DQWorkflow:
             source_num, target_num = float(source), float(target)
             difference = abs(source_num - target_num)
             absolute = float(tolerance.get("absolute", 0))
-            percentage = float(tolerance.get("percentage", 0))
+            percentage = float(tolerance.get("percentage", 0)) / 100
             allowed = max(absolute, abs(source_num) * percentage)
             return difference <= allowed, {
                 "source": source_num, "target": target_num,
@@ -2447,104 +2916,261 @@ class DQWorkflow:
         audit: dict[str, str | None],
         filters: dict[str, list[dict[str, Any]]],
         table_dir: Path,
+        metadata: dict[str, Any],
+        context: dict[str, Any],
     ) -> list[dict[str, Any]]:
         rules_by_id = {rule.rule_id: rule for rule in rules}
         output: list[dict[str, Any]] = []
         for failure in failures:
             rule = rules_by_id[failure["rule_id"]]
-            diagnostics: list[dict[str, Any]] = []
-            if rule.category in {"reconciliation", "freshness"} and audit.get("target"):
-                diagnostic = RuleSpec(
-                    rule_id=f"{rule.rule_id}__rca_date_coverage", pair_id=pair.pair_id,
-                    type="date_coverage", scope="compare" if pair.mode == "migration" else "target",
-                    category="rca", source_columns=[audit["source"]] if audit.get("source") else [],
-                    target_columns=[audit["target"]], parameters={},
+            retrieval = self.context_retriever.context_package({
+                "pair_id": pair.pair_id, "source_table": pair.source_name,
+                "target_table": pair.target_name, "table_type": context.get("table_type"),
+                "business_entity": context.get("business_entity"),
+                "columns": [*rule.source_columns, *rule.target_columns],
+                "failure_type": rule.type, "description": rule.description,
+            })
+            evidence: list[dict[str, Any]] = [{
+                "evidence_id": "validation_failure", "kind": "validation_failure",
+                "payload": failure,
+            }]
+            seen_actions: set[str] = set()
+            final: InvestigationDecision | None = None
+            maximum_diagnostics = self.config.project.max_rca_rounds
+            maximum_calls = self.config.project.max_llm_calls_per_failure
+            for step in range(maximum_calls):
+                decision = self.llm.complete_structured(
+                    "Investigate this failed validation. Rank hypotheses and either conclude or select one safe diagnostic intent.",
+                    {
+                        "pair": pair.model_dump(), "rule": rule.model_dump(),
+                        "metadata": metadata, "filters": filters, "audit_columns": audit,
+                        "retrieved_context": retrieval["records"], "evidence_ledger": evidence,
+                        "step": step + 1, "maximum_llm_calls": maximum_calls,
+                        "allowed_intents": list(InvestigationAction.model_fields["intent"].annotation.__args__),
+                        "remaining_query_budget": maximum_diagnostics - len(seen_actions),
+                    },
+                    InvestigationDecision,
                 )
-                result = self._execute_rule(pair, diagnostic, {}, filters, table_dir)
-                diagnostics.append(result)
-            if rule.type == "uniqueness":
-                side = "source" if rule.scope == "source" else "target"
-                diagnostic = rule.model_copy(update={
-                    "rule_id": f"{rule.rule_id}__rca_top_duplicates",
-                    "type": "top_duplicates", "category": "rca", "parameters": {"limit": 200},
-                })
+                final = decision
+                action_signature = json.dumps(decision.next_action.model_dump(), sort_keys=True)
+                if decision.enough_evidence or decision.next_action.intent == "stop" or decision.human_review_required:
+                    break
+                if len(seen_actions) >= maximum_diagnostics:
+                    final.human_review_required = True
+                    final.classification = "undetermined"
+                    final.conclusion = "Diagnostic budget exhausted; the final reasoning call did not reach a supported conclusion."
+                    break
+                if action_signature in seen_actions:
+                    final.human_review_required = True
+                    final.classification = "undetermined"
+                    final.conclusion = "Investigation stopped because the model repeated a diagnostic action."
+                    break
+                seen_actions.add(action_signature)
                 try:
-                    dialect = "databricks" if side == "source" else "bigquery"
-                    sql = SQLCompiler(dialect).compile_rule(diagnostic, pair, side, filters.get(side, []))
-                    frame = self._controlled_execute(
-                        side, sql, allowed_tables_for_rule(diagnostic, pair, side), table_dir,
-                        f"{diagnostic.rule_id}_{side}",
+                    diagnostic = self._execute_agentic_diagnostic(
+                        pair, rule, decision.next_action, audit, filters, metadata, table_dir, step
                     )
-                    diagnostics.append({"side": side, "sample": frame.head(20).to_dict("records")})
                 except Exception as exc:
-                    diagnostics.append({"error": str(exc)})
-            if rule.type == "key_buckets":
-                mismatches = list(failure.get("comparison", {}).get("mismatches", {}))
-                selected_buckets = mismatches[:10]
-                if selected_buckets:
-                    key_sets: dict[str, set[str]] = {}
-                    for side in ["source", "target"]:
-                        try:
-                            dialect = "databricks" if side == "source" else "bigquery"
-                            qualified = pair.source_name if side == "source" else pair.target_name
-                            columns = rule.source_columns if side == "source" else rule.target_columns
-                            sql = SQLCompiler(dialect).key_hashes_for_buckets(
-                                qualified or "", columns, filters.get(side, []), selected_buckets,
-                                self.config.project.query_limits.evidence_rows,
-                            )
-                            frame = self._controlled_execute(
-                                side, sql, {qualified} if qualified else set(), table_dir,
-                                f"{rule.rule_id}__rca_mismatched_buckets_{side}",
-                            )
-                            key_sets[side] = set(frame.get("key_hash", pd.Series(dtype=str)).astype(str))
-                        except Exception as exc:
-                            diagnostics.append({"side": side, "error": str(exc)})
-                    if "source" in key_sets and "target" in key_sets:
-                        diagnostics.append({
-                            "mismatched_buckets": selected_buckets,
-                            "missing_key_hashes": sorted(key_sets["source"] - key_sets["target"])[:50],
-                            "extra_key_hashes": sorted(key_sets["target"] - key_sets["source"])[:50],
-                            "values_masked": True,
-                        })
-            conclusion = self._deterministic_rca(rule, failure, diagnostics)
-            if self.config.llm.enabled:
-                try:
-                    adapter = self.llm
-                    if adapter:
-                        response = adapter.complete_structured(
-                            "Explain the failed data-quality check using only the evidence.",
-                            {"rule": rule.model_dump(), "failure": failure, "diagnostics": diagnostics},
-                            RCAResponse,
-                        )
-                        conclusion = response.model_dump()
-                except Exception as exc:
-                    self._event("warning", "llm_rca_unavailable", pair_id=pair.pair_id, rule_id=rule.rule_id, error=str(exc))
+                    evidence.append({
+                        "evidence_id": f"guardrail_rejection_{step + 1}",
+                        "kind": "guardrail_rejection",
+                        "payload": {"intent": decision.next_action.intent, "reason": str(exc)},
+                    })
+                    final.human_review_required = True
+                    final.classification = "undetermined"
+                    final.conclusion = "The proposed diagnostic was rejected by deterministic safety controls."
+                    break
+                diagnostic["evidence_id"] = f"diagnostic_{step + 1}"
+                evidence.append(diagnostic)
+            if final is None:
+                continue
+            known_evidence_ids = {str(item["evidence_id"]) for item in evidence}
+            known_evidence_ids.update(str(item["record_id"]) for item in retrieval["records"])
+            final.supporting_evidence_ids = [
+                item for item in final.supporting_evidence_ids if item in known_evidence_ids
+            ]
+            final.contradicting_evidence_ids = [
+                item for item in final.contradicting_evidence_ids if item in known_evidence_ids
+            ]
+            if not final.enough_evidence and not final.human_review_required:
+                final.classification = "undetermined"
+                final.human_review_required = True
+                final.conclusion = final.conclusion or "Investigation limit reached without sufficient evidence."
+            if final.classification == "confirmed" and not final.supporting_evidence_ids:
+                final.classification = "possible"
+                final.human_review_required = True
+            conclusion = {
+                "classification": final.classification,
+                "conclusion": final.conclusion,
+                "confidence": final.confidence,
+                "hypotheses": final.hypotheses,
+                "rejected_hypotheses": final.rejected_hypotheses,
+                "supporting_evidence_ids": final.supporting_evidence_ids,
+                "contradicting_evidence_ids": final.contradicting_evidence_ids,
+                "human_review_required": final.human_review_required,
+            }
             output.append({
                 "pair_id": pair.pair_id, "rule_id": rule.rule_id,
-                "conclusion": conclusion, "diagnostics": diagnostics,
+                "conclusion": conclusion, "diagnostics": evidence,
+                "investigation_steps": len(evidence) - 1,
             })
+        self._tag_cascade_groups(output, failures)
         return _jsonable(output)
 
-    @staticmethod
-    def _deterministic_rca(
-        rule: RuleSpec, failure: dict[str, Any], diagnostics: list[dict[str, Any]]
+    def _execute_agentic_diagnostic(
+        self,
+        pair: TablePair,
+        failed_rule: RuleSpec,
+        action: InvestigationAction,
+        audit: dict[str, str | None],
+        filters: dict[str, list[dict[str, Any]]],
+        metadata: dict[str, Any],
+        table_dir: Path,
+        step: int,
     ) -> dict[str, Any]:
-        evidence = failure.get("evidence", {})
-        if rule.type == "row_count":
-            text = "Filtered source and target row counts differ. Review date coverage and applied filters."
-        elif rule.type == "freshness":
-            text = "The configured audit timestamps exceed the allowed freshness lag."
-        elif rule.type == "uniqueness":
-            text = "Duplicate groups exist for the configured or inferred key."
-        elif rule.type == "relationship":
-            text = "Target rows reference missing or inactive dimension records."
-        elif rule.type in {"null_count", "distinct_count", "aggregate"}:
-            text = "The mapped source and target metrics differ after configured filters and tolerances."
-        else:
-            text = "The rule failed; available evidence does not establish a unique root cause."
-        return {
-            "conclusion": text,
-            "confidence": 0.7 if diagnostics else 0.45,
-            "evidence_summary": [json.dumps(evidence, default=str), json.dumps(diagnostics, default=str)],
-            "inconclusive": not bool(diagnostics),
+        available = {
+            side: {str(item["name"]).lower() for item in metadata.get(side, [])}
+            for side in ("source", "target")
         }
+        if pair.mode == "bigquery_only" and action.side != "target":
+            raise ValueError("BigQuery-only RCA diagnostics must use the target side")
+        requested = action.columns or failed_rule.target_columns or failed_rule.source_columns
+        for column in requested:
+            if column.lower() not in available["target"] and column.lower() not in available["source"]:
+                raise ValueError(f"RCA requested unknown column: {column}")
+        scope = "compare" if pair.mode == "migration" and action.side == "both" else (
+            "source" if action.side == "source" else "target"
+        )
+        source_columns = list(failed_rule.source_columns)
+        target_columns = list(failed_rule.target_columns)
+        if action.columns:
+            source_columns, target_columns = [], []
+            target_to_source = {
+                target.lower(): source
+                for source, target in zip(failed_rule.source_columns, failed_rule.target_columns)
+            }
+            source_to_target = {
+                source.lower(): target
+                for source, target in zip(failed_rule.source_columns, failed_rule.target_columns)
+            }
+            for name in action.columns:
+                lowered = name.lower()
+                if lowered in available["source"]:
+                    source_columns.append(name)
+                elif lowered in target_to_source:
+                    source_columns.append(target_to_source[lowered])
+                if lowered in available["target"]:
+                    target_columns.append(name)
+                elif lowered in source_to_target:
+                    target_columns.append(source_to_target[lowered])
+        if action.intent == "date_coverage":
+            source_columns = [audit["source"]] if audit.get("source") else source_columns[:1]
+            target_columns = [audit["target"]] if audit.get("target") else target_columns[:1]
+            rule_type, parameters = "date_coverage", {}
+        elif action.intent == "null_distribution":
+            rule_type, parameters = "null_count", {}
+        elif action.intent == "duplicate_distribution":
+            rule_type, parameters = "top_duplicates", {"limit": min(50, self.config.project.query_limits.evidence_rows)}
+        elif action.intent == "value_distribution":
+            rule_type, parameters = "value_distribution", {"limit": self.config.project.profiling.top_values}
+        elif action.intent in {"missing_keys", "extra_keys", "masked_failed_samples"}:
+            rule_type, parameters = "key_values", {"limit": self.config.project.query_limits.evidence_rows}
+        elif action.intent == "column_profile":
+            rule_type, parameters = "column_profile", {
+                "metrics": ["row_count", "null_count", "distinct_count", "min_value", "max_value"]
+            }
+        elif action.intent == "relationship_gap" and failed_rule.type == "relationship":
+            diagnostic = failed_rule.model_copy(update={
+                "rule_id": f"{failed_rule.rule_id}__rca_{step}", "category": "rca",
+            })
+            return {"kind": action.intent, "result": self._execute_rule(pair, diagnostic, metadata, filters, table_dir)}
+        elif action.intent == "grouped_metric" and failed_rule.type in {"grouped_profile", "aggregate"}:
+            diagnostic = failed_rule.model_copy(update={
+                "rule_id": f"{failed_rule.rule_id}__rca_{step}", "category": "rca",
+            })
+            return {"kind": action.intent, "result": self._execute_rule(pair, diagnostic, metadata, filters, table_dir)}
+        elif action.intent == "inactive_members":
+            if not target_columns:
+                raise ValueError("inactive-members analysis requires verified key columns")
+            results: dict[str, Any] = {}
+            sides = ["source", "target"] if scope == "compare" else [scope]
+            for side in sides:
+                columns = source_columns if side == "source" else target_columns
+                if not columns:
+                    continue
+                diagnostic = RuleSpec(
+                    rule_id=f"{failed_rule.rule_id}__rca_inactive_{step}_{side}",
+                    pair_id=pair.pair_id, type="key_values", scope=side, category="rca",
+                    source_columns=columns if side == "source" else [],
+                    target_columns=columns if side == "target" else [],
+                    parameters={"limit": self.config.project.query_limits.evidence_rows},
+                )
+                compiler = SQLCompiler("databricks" if side == "source" else "bigquery")
+                configured = compiler.compile_rule(diagnostic, pair, side, filters.get(side, []))
+                unfiltered = compiler.compile_rule(diagnostic, pair, side, [])
+                allowed = allowed_tables_for_rule(diagnostic, pair, side)
+                active_frame = self._controlled_execute(
+                    side, configured, allowed, table_dir, f"{diagnostic.rule_id}_configured"
+                )
+                all_frame = self._controlled_execute(
+                    side, unfiltered, allowed, table_dir, f"{diagnostic.rule_id}_unfiltered"
+                )
+                results[side] = {
+                    "configured_rows": int(active_frame.iloc[0].get("total_rows") or 0) if not active_frame.empty else 0,
+                    "unfiltered_rows": int(all_frame.iloc[0].get("total_rows") or 0) if not all_frame.empty else 0,
+                    "values_masked": True,
+                }
+            return {"kind": action.intent, "result": results}
+        elif action.intent == "filter_impact":
+            results: dict[str, Any] = {}
+            sides = ["source", "target"] if scope == "compare" else [scope]
+            for side in sides:
+                diagnostic = RuleSpec(
+                    rule_id=f"{failed_rule.rule_id}__rca_filter_{step}_{side}", pair_id=pair.pair_id,
+                    type="row_count", scope=side, category="rca",
+                )
+                dialect = "databricks" if side == "source" else "bigquery"
+                compiler = SQLCompiler(dialect)
+                sql_filtered = compiler.compile_rule(diagnostic, pair, side, filters.get(side, []))
+                sql_unfiltered = compiler.compile_rule(diagnostic, pair, side, [])
+                allowed = allowed_tables_for_rule(diagnostic, pair, side)
+                filtered = self._controlled_execute(side, sql_filtered, allowed, table_dir, f"{diagnostic.rule_id}_filtered")
+                unfiltered = self._controlled_execute(side, sql_unfiltered, allowed, table_dir, f"{diagnostic.rule_id}_unfiltered")
+                results[side] = {"filtered": self._first_row(filtered), "unfiltered": self._first_row(unfiltered)}
+            return {"kind": action.intent, "result": results}
+        else:
+            return {
+                "kind": action.intent, "result": {"status": "REVIEW_REQUIRED"},
+                "reason": "The requested diagnostic needs an approved measure/grouping definition",
+            }
+        if scope in {"target", "compare"} and not target_columns:
+            raise ValueError(f"RCA intent {action.intent} requires a verified target column")
+        if scope == "source" and not source_columns:
+            raise ValueError(f"RCA intent {action.intent} requires a verified source column")
+        diagnostic = RuleSpec(
+            rule_id=f"{failed_rule.rule_id}__rca_{step}_{action.intent}", pair_id=pair.pair_id,
+            type=rule_type, scope=scope, category="rca", source_columns=source_columns,
+            target_columns=target_columns, parameters=parameters,
+        )
+        return {"kind": action.intent, "result": self._execute_rule(pair, diagnostic, metadata, filters, table_dir)}
+
+    @staticmethod
+    def _tag_cascade_groups(
+        rca_records: list[dict[str, Any]], failure_results: list[dict[str, Any]]
+    ) -> None:
+        if len(rca_records) < 2:
+            return
+        failure_by_rule = {str(row.get("rule_id")): row for row in failure_results}
+        primary_types = {"key_values", "key_buckets", "row_reconciliation", "row_count"}
+        cascade_types = {"distinct_count", "value_distribution", "column_profile"}
+        primary = next((
+            row for row in rca_records
+            if failure_by_rule.get(str(row.get("rule_id")), {}).get("type") in primary_types
+        ), None)
+        if not primary:
+            return
+        group = f"{primary.get('rule_id')}__cascade"
+        for row in rca_records:
+            failure_type = failure_by_rule.get(str(row.get("rule_id")), {}).get("type")
+            row["root_cause_group"] = group
+            row["is_cascade"] = failure_type in cascade_types
