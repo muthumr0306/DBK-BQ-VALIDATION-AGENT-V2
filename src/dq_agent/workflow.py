@@ -624,21 +624,26 @@ class DQWorkflow:
         ]
         source_names = {column.name.lower() for column in sources}
         target_names = {column.name.lower() for column in targets}
-        missing_sources = [item.source_column for item in selected_manual if item.source_column.lower() not in source_names]
-        missing_targets = [item.target_column for item in selected_manual if item.target_column.lower() not in target_names]
-        manual_targets = [item.target_column.lower() for item in selected_manual]
+        # Source-only entries (empty target_column) declare columns with no target equivalent
+        source_only_cols = {item.source_column.lower() for item in selected_manual if item.source_only}
+        selected_mapped = [m for m in selected_manual if not m.source_only]
+        missing_sources = [item.source_column for item in selected_mapped if item.source_column.lower() not in source_names]
+        missing_targets = [item.target_column for item in selected_mapped if item.target_column.lower() not in target_names]
+        manual_targets = [item.target_column.lower() for item in selected_mapped]
         if missing_sources or missing_targets or len(manual_targets) != len(set(manual_targets)):
             raise ValueError(
                 "Invalid manual column mappings; "
                 f"missing_source={missing_sources}, missing_target={missing_targets}, "
                 f"duplicate_target={len(manual_targets) != len(set(manual_targets))}"
             )
-        manual = {mapping.source_column.lower(): mapping for mapping in selected_manual}
+        manual = {mapping.source_column.lower(): mapping for mapping in selected_mapped}
         target_by_lower = {column.name.lower(): column for column in targets}
         used: set[str] = set()
         resolved: list[dict[str, Any]] = []
         reviews: list[dict[str, Any]] = []
         for source in sources:
+            if source.name.lower() in source_only_cols:
+                continue  # declared source-only: no target equivalent
             if source.name.lower() in manual:
                 mapping = manual[source.name.lower()]
                 if mapping.target_column.lower() not in target_by_lower:
@@ -841,9 +846,9 @@ class DQWorkflow:
                 raise ValueError(f"Configured target audit column does not exist: {target_name}")
             if normalized_type(target_index[target_name.lower()]["data_type"]) not in {"date", "timestamp"}:
                 raise ValueError(f"Configured target audit column is not date/timestamp: {target_name}")
-            if pair.mode == "migration":
-                if not source_name or source_name.lower() not in source_index:
-                    raise ValueError(f"Configured source audit column does not exist: {source_name or None}")
+            if pair.mode == "migration" and source_name:
+                if source_name.lower() not in source_index:
+                    raise ValueError(f"Configured source audit column does not exist: {source_name}")
                 if normalized_type(source_index[source_name.lower()]["data_type"]) not in {"date", "timestamp"}:
                     raise ValueError(f"Configured source audit column is not date/timestamp: {source_name}")
             self._event(
@@ -2145,11 +2150,13 @@ class DQWorkflow:
                         category="completeness", target_columns=[item["name"]],
                     ))
         if audit.get("target"):
+            has_source_audit_col = bool(audit.get("source"))
             rules.append(RuleSpec(
                 rule_id=f"{pair.pair_id}__freshness", pair_id=pair.pair_id,
-                type="freshness", scope="compare" if pair.mode == "migration" else "target",
+                type="freshness",
+                scope="compare" if (pair.mode == "migration" and has_source_audit_col) else "target",
                 category="freshness",
-                source_columns=[audit["source"]] if audit.get("source") else [],
+                source_columns=[audit["source"]] if has_source_audit_col else [],
                 target_columns=[audit["target"]],
                 tolerance={"minutes": context.get("freshness_sla_minutes", 1440)},
             ))
@@ -2830,10 +2837,12 @@ class DQWorkflow:
             rule = rules_by_id[failure["rule_id"]]
             diagnostics: list[dict[str, Any]] = []
             if rule.category in {"reconciliation", "freshness"} and audit.get("target"):
+                has_source_audit = bool(audit.get("source"))
                 diagnostic = RuleSpec(
                     rule_id=f"{rule.rule_id}__rca_date_coverage", pair_id=pair.pair_id,
-                    type="date_coverage", scope="compare" if pair.mode == "migration" else "target",
-                    category="rca", source_columns=[audit["source"]] if audit.get("source") else [],
+                    type="date_coverage",
+                    scope="compare" if (pair.mode == "migration" and has_source_audit) else "target",
+                    category="rca", source_columns=[audit["source"]] if has_source_audit else [],
                     target_columns=[audit["target"]], parameters={},
                 )
                 result = self._execute_rule(pair, diagnostic, {}, filters, table_dir)

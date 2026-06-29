@@ -1,0 +1,145 @@
+pair_id,rule_id,type,category,severity,origin,description,status,error,stack_trace
+gdp_inv_loc,gdp_inv_loc__inventory_management_closed_date_after_first_pick,predicate,llm_generated,error,llm_generated,Inventory management closed date should be after or on the first pick date.,ERROR,"Conversion Error: invalid date field format: ""first_pick_date"", expected format is (YYYY-MM-DD)
+
+LINE 1: ... SUM(CASE WHEN NOT (""inventory_management_closed_date"" < 'first_pick_date') THEN 1 ELSE 0 END) AS invalid_count FROM...
+                                                                    ^","Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2541, in _execute_rule
+    result = self._controlled_execute(
+        side, sql, allowed_tables_for_rule(rule, pair, side), table_dir,
+        f""{rule.rule_id}_{side}"",
+    )
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2683, in _controlled_execute
+    result = connector.execute(validated)
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\connectors.py"", line 378, in execute
+    frame = self._conn().execute(duckdb_sql).fetchdf()
+            ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+_duckdb.ConversionException: Conversion Error: invalid date field format: ""first_pick_date"", expected format is (YYYY-MM-DD)
+
+LINE 1: ... SUM(CASE WHEN NOT (""inventory_management_closed_date"" < 'first_pick_date') THEN 1 ELSE 0 END) AS invalid_count FROM...
+                                                                    ^
+"
+gdp_style,gdp_style__freshness,freshness,freshness,error,generated,,ERROR,list index out of range,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 186, in compile_rule
+    return f""SELECT MAX({columns[0]}) AS max_timestamp FROM {table}{where}""
+                         ~~~~~~~^^^
+IndexError: list index out of range
+"
+gdp_style,gdp_style__end_date_before_start_date,predicate,llm_generated,error,llm_generated,Ensure that the style end date is on or after the launch date.,ERROR,"Conversion Error: invalid date field format: ""style_launch_date"", expected format is (YYYY-MM-DD)
+
+LINE 1: SELECT SUM(CASE WHEN NOT (""style_end_date"" >= 'style_launch_date') THEN 1 ELSE 0 END) AS invalid_count...
+                                                      ^","Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2541, in _execute_rule
+    result = self._controlled_execute(
+        side, sql, allowed_tables_for_rule(rule, pair, side), table_dir,
+        f""{rule.rule_id}_{side}"",
+    )
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2683, in _controlled_execute
+    result = connector.execute(validated)
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\connectors.py"", line 378, in execute
+    frame = self._conn().execute(duckdb_sql).fetchdf()
+            ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+_duckdb.ConversionException: Conversion Error: invalid date field format: ""style_launch_date"", expected format is (YYYY-MM-DD)
+
+LINE 1: SELECT SUM(CASE WHEN NOT (""style_end_date"" >= 'style_launch_date') THEN 1 ELSE 0 END) AS invalid_count...
+                                                      ^
+"
+gdp_style,gdp_style__style_description_length,predicate,llm_generated,warning,llm_generated,Ensure that the length of style descriptions does not exceed 255 characters.,ERROR,Unsafe identifier: 'length(style_description)',"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 211, in compile_rule
+    predicate = self.predicate(rule.parameters[""predicate""])
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 126, in predicate
+    column = self.identifier(item[""column""])
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 95, in identifier
+    raise ValueError(f""Unsafe identifier: {name!r}"")
+ValueError: Unsafe identifier: 'length(style_description)'
+"
+gdp_fg_color,gdp_fg_color__freshness,freshness,freshness,error,generated,,ERROR,list index out of range,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 186, in compile_rule
+    return f""SELECT MAX({columns[0]}) AS max_timestamp FROM {table}{where}""
+                         ~~~~~~~^^^
+IndexError: list index out of range
+"
+gdp_fg_color,gdp_fg_color__color_palette_season_code_must_match_year,predicate,llm_generated,error,llm_generated,"The color palette season code should match the year format (e.g., 'Q12023').",ERROR,Unsupported filter operator: like,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 211, in compile_rule
+    predicate = self.predicate(rule.parameters[""predicate""])
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 131, in predicate
+    raise ValueError(f""Unsupported filter operator: {operator}"")
+ValueError: Unsupported filter operator: like
+"
+gdp_bmc,gdp_bmc__freshness,freshness,freshness,error,generated,,ERROR,list index out of range,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 186, in compile_rule
+    return f""SELECT MAX({columns[0]}) AS max_timestamp FROM {table}{where}""
+                         ~~~~~~~^^^
+IndexError: list index out of range
+"
+gdp_bmc,gdp_bmc__gdp_bmc_start_date_before_end_date,predicate,llm_generated,error,llm_generated,Effective start date must be before effective end date.,ERROR,"Conversion Error: invalid date field format: ""effective_end_date"", expected format is (YYYY-MM-DD)
+
+LINE 1: SELECT SUM(CASE WHEN NOT (""effective_start_date"" < 'effective_end_date') THEN 1 ELSE 0 END) AS invalid_count...
+                                                           ^","Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2541, in _execute_rule
+    result = self._controlled_execute(
+        side, sql, allowed_tables_for_rule(rule, pair, side), table_dir,
+        f""{rule.rule_id}_{side}"",
+    )
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2683, in _controlled_execute
+    result = connector.execute(validated)
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\connectors.py"", line 378, in execute
+    frame = self._conn().execute(duckdb_sql).fetchdf()
+            ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+_duckdb.ConversionException: Conversion Error: invalid date field format: ""effective_end_date"", expected format is (YYYY-MM-DD)
+
+LINE 1: SELECT SUM(CASE WHEN NOT (""effective_start_date"" < 'effective_end_date') THEN 1 ELSE 0 END) AS invalid_count...
+                                                           ^
+"
+gdp_size,gdp_size__freshness,freshness,freshness,error,generated,,ERROR,list index out of range,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 186, in compile_rule
+    return f""SELECT MAX({columns[0]}) AS max_timestamp FROM {table}{where}""
+                         ~~~~~~~^^^
+IndexError: list index out of range
+"
+gdp_size,gdp_size__effective_date_range,predicate,llm_generated,error,llm_generated,Ensure that the effective start date is less than or equal to the effective end date for each record.,ERROR,"Conversion Error: invalid date field format: ""effective_end_date"", expected format is (YYYY-MM-DD)
+
+LINE 1: SELECT SUM(CASE WHEN NOT (""effective_start_date"" <= 'effective_end_date') THEN 1 ELSE 0 END) AS invalid_count...
+                                                            ^","Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2541, in _execute_rule
+    result = self._controlled_execute(
+        side, sql, allowed_tables_for_rule(rule, pair, side), table_dir,
+        f""{rule.rule_id}_{side}"",
+    )
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2683, in _controlled_execute
+    result = connector.execute(validated)
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\connectors.py"", line 378, in execute
+    frame = self._conn().execute(duckdb_sql).fetchdf()
+            ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+_duckdb.ConversionException: Conversion Error: invalid date field format: ""effective_end_date"", expected format is (YYYY-MM-DD)
+
+LINE 1: SELECT SUM(CASE WHEN NOT (""effective_start_date"" <= 'effective_end_date') THEN 1 ELSE 0 END) AS invalid_count...
+                                                            ^
+"
+gdp_size,gdp_size__size_label_length,aggregate,llm_generated,warning,llm_generated,Ensure that the size label is not empty.,ERROR,"Unsupported aggregate: {'COLUMN': 'SIZE_LABEL', 'FUNCTION': 'LENGTH', 'OPERATOR': '>', 'VALUE': 0}","Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 190, in compile_rule
+    raise ValueError(f""Unsupported aggregate: {function}"")
+ValueError: Unsupported aggregate: {'COLUMN': 'SIZE_LABEL', 'FUNCTION': 'LENGTH', 'OPERATOR': '>', 'VALUE': 0}
+"
+ri1_cc_sku,ri1_cc_sku__cc_line_sku_consistency,predicate,llm_generated,error,llm_generated,CC lines with no corresponding SKU in the fact_dpo_line_sku table.,ERROR,not_in requires a non-empty list,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 211, in compile_rule
+    predicate = self.predicate(rule.parameters[""predicate""])
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 138, in predicate
+    raise ValueError(f""{operator} requires a non-empty list"")
+ValueError: not_in requires a non-empty list
+"

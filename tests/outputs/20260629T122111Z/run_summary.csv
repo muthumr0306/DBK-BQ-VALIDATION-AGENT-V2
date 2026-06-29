@@ -1,0 +1,2 @@
+run_id,run_timestamp,overall_verdict,tables_total,tables_go,tables_caveats,tables_nogo,total_rows_affected,total_value_at_risk,total_critical,total_warning,total_pending_approval,headline
+20260629T122111Z,2026-06-29T12:21:11.580770+00:00,FAIL,10,2,0,8,12643,0,159,97,8,"FAIL: 8 of 10 tables has critical failures. 12,643 rows affected. 8 tests pending review."

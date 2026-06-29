@@ -329,12 +329,30 @@ class LocalConnector(WarehouseConnector):
     def get_table_metadata(self, qualified_name: str) -> dict[str, Any]:
         duck = self._name_map.get(qualified_name)
         if not duck:
+            # Auto-load by last segment — enables relationship parent-table validation
+            table_name = qualified_name.split(".")[-1]
+            try:
+                self._load(table_name, qualified_name)
+                duck = self._name_map.get(qualified_name)
+            except Exception:
+                return {"table": qualified_name}
+        if not duck:
             return {"table": qualified_name}
         count = self._conn().execute(f"SELECT COUNT(*) FROM {duck}").fetchone()
+        col_rows = self._conn().execute(f"DESCRIBE {duck}").fetchall()
+        columns = [
+            {
+                "name": row[0],
+                "data_type": self._TYPE_MAP.get(str(row[1]).upper().split("(")[0], str(row[1])),
+                "nullable": row[2] != "NO",
+            }
+            for row in col_rows
+        ]
         return {
             "table": qualified_name,
             "num_rows": count[0] if count else None,
             "modified_at": datetime.now(timezone.utc).isoformat(),
+            "columns": columns,
         }
 
     def execute(self, sql: str) -> QueryResult:

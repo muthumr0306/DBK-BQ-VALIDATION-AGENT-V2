@@ -1,0 +1,262 @@
+{
+  "run_id": "20260629T105555Z",
+  "project": "mock_test",
+  "started_at": "2026-06-29T10:55:55.754630+00:00",
+  "requested_stop_after": "reports",
+  "status": "COMPLETED_WITH_ERRORS",
+  "tables": [
+    {
+      "pair_id": "gdp_inv_loc",
+      "mode": "migration",
+      "source_table": "local.source.inventory_managed_location",
+      "target_table": "local.target.dim_inventory_managed_location",
+      "status": "WAITING_FOR_REVIEW",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "inventory_managed_location_id"
+        ],
+        "target": [
+          "inventory_managed_location_id"
+        ]
+      },
+      "audit_columns": {
+        "source": "updated_on",
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 7,
+      "relationships_executable": 0,
+      "review_items": 14,
+      "non_blocking_reviews": 1,
+      "pending_decisions": 13
+    },
+    {
+      "pair_id": "gdp_mc_cc",
+      "mode": "migration",
+      "source_table": "local.source.market_channel_cc_flattened",
+      "target_table": "local.target.vw_mc_sku_flattened",
+      "status": "ERROR",
+      "last_stage": "metadata",
+      "error": "Configured target audit column does not exist: update_dttm",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 378, in _process_pair\n    audit, audit_reviews = self._resolve_audit_columns(pair, metadata, mappings, context, table_dir)\n                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 841, in _resolve_audit_columns\n    raise ValueError(f\"Configured target audit column does not exist: {target_name}\")\nValueError: Configured target audit column does not exist: update_dttm\n"
+    },
+    {
+      "pair_id": "gdp_mc_sku",
+      "mode": "migration",
+      "source_table": "local.source.market_channel_sku_flattened",
+      "target_table": "local.target.vw_mc_cc_flattened",
+      "status": "ERROR",
+      "last_stage": "metadata",
+      "error": "Invalid manual column mappings; missing_source=[], missing_target=[], duplicate_target=True",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 374, in _process_pair\n    mappings, mapping_reviews = self._resolve_mappings(pair, metadata)\n                                ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 631, in _resolve_mappings\n    raise ValueError(\n    ...<3 lines>...\n    )\nValueError: Invalid manual column mappings; missing_source=[], missing_target=[], duplicate_target=True\n"
+    },
+    {
+      "pair_id": "gdp_division",
+      "mode": "migration",
+      "source_table": "local.source.division",
+      "target_table": "local.target.dim_division",
+      "status": "ERROR",
+      "last_stage": "metadata",
+      "error": "Invalid manual column mappings; missing_source=[], missing_target=['hierarchy_id', 'corporation_company_id'], duplicate_target=False",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 374, in _process_pair\n    mappings, mapping_reviews = self._resolve_mappings(pair, metadata)\n                                ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 631, in _resolve_mappings\n    raise ValueError(\n    ...<3 lines>...\n    )\nValueError: Invalid manual column mappings; missing_source=[], missing_target=['hierarchy_id', 'corporation_company_id'], duplicate_target=False\n"
+    },
+    {
+      "pair_id": "gdp_style",
+      "mode": "migration",
+      "source_table": "local.source.style",
+      "target_table": "local.target.dim_style",
+      "status": "ERROR",
+      "last_stage": "metadata",
+      "error": "Configured source audit column is not date/timestamp: last_Modified_DateTime",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 378, in _process_pair\n    audit, audit_reviews = self._resolve_audit_columns(pair, metadata, mappings, context, table_dir)\n                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 848, in _resolve_audit_columns\n    raise ValueError(f\"Configured source audit column is not date/timestamp: {source_name}\")\nValueError: Configured source audit column is not date/timestamp: last_Modified_DateTime\n"
+    },
+    {
+      "pair_id": "gdp_daily_inv",
+      "mode": "migration",
+      "source_table": "local.source.daily_inventory_position",
+      "target_table": "local.target.fact_inventory_position",
+      "status": "WAITING_FOR_REVIEW",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "universal_sku_number",
+          "location",
+          "business_inventory_date",
+          "enterprise_channel_number"
+        ],
+        "target": [
+          "universal_sku_number",
+          "location_number",
+          "business_inventory_date",
+          "enterprise_channel_number"
+        ]
+      },
+      "audit_columns": {
+        "source": "source_last_update_timestamp",
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 6,
+      "relationships_executable": 0,
+      "review_items": 21,
+      "non_blocking_reviews": 2,
+      "pending_decisions": 19
+    },
+    {
+      "pair_id": "gdp_location",
+      "mode": "migration",
+      "source_table": "local.source.location",
+      "target_table": "local.target.dim_location",
+      "status": "ERROR",
+      "last_stage": "metadata",
+      "error": "Configured source audit column is not date/timestamp: last_update_date",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 378, in _process_pair\n    audit, audit_reviews = self._resolve_audit_columns(pair, metadata, mappings, context, table_dir)\n                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 848, in _resolve_audit_columns\n    raise ValueError(f\"Configured source audit column is not date/timestamp: {source_name}\")\nValueError: Configured source audit column is not date/timestamp: last_update_date\n"
+    },
+    {
+      "pair_id": "gdp_fg_color",
+      "mode": "migration",
+      "source_table": "local.source.finished_good_color",
+      "target_table": "local.target.dim_finished_good_color",
+      "status": "ERROR",
+      "last_stage": "metadata",
+      "error": "Configured source audit column is not date/timestamp: last_Modified_DateTime",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 378, in _process_pair\n    audit, audit_reviews = self._resolve_audit_columns(pair, metadata, mappings, context, table_dir)\n                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 848, in _resolve_audit_columns\n    raise ValueError(f\"Configured source audit column is not date/timestamp: {source_name}\")\nValueError: Configured source audit column is not date/timestamp: last_Modified_DateTime\n"
+    },
+    {
+      "pair_id": "gdp_bmc",
+      "mode": "migration",
+      "source_table": "local.source.brand_market_channel",
+      "target_table": "local.target.dim_brand_market_channel",
+      "status": "ERROR",
+      "last_stage": "metadata",
+      "error": "Configured source audit column is not date/timestamp: last_modified_datetime",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 378, in _process_pair\n    audit, audit_reviews = self._resolve_audit_columns(pair, metadata, mappings, context, table_dir)\n                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 848, in _resolve_audit_columns\n    raise ValueError(f\"Configured source audit column is not date/timestamp: {source_name}\")\nValueError: Configured source audit column is not date/timestamp: last_modified_datetime\n"
+    },
+    {
+      "pair_id": "gdp_size",
+      "mode": "migration",
+      "source_table": "local.source.size",
+      "target_table": "local.target.dim_size",
+      "status": "ERROR",
+      "last_stage": "metadata",
+      "error": "Configured source audit column is not date/timestamp: last_Modified_DateTime",
+      "stack_trace": "Traceback (most recent call last):\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 378, in _process_pair\n    audit, audit_reviews = self._resolve_audit_columns(pair, metadata, mappings, context, table_dir)\n                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\src\\dq_agent\\workflow.py\", line 848, in _resolve_audit_columns\n    raise ValueError(f\"Configured source audit column is not date/timestamp: {source_name}\")\nValueError: Configured source audit column is not date/timestamp: last_Modified_DateTime\n"
+    },
+    {
+      "pair_id": "ri1_cc_sku",
+      "mode": "bigquery_only",
+      "source_table": null,
+      "target_table": "local.target.fact_dpo_line_cc",
+      "status": "WAITING_FOR_REVIEW",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [],
+        "target": [
+          "destination_purchase_order_line_cc_id"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 1,
+      "relationships_executable": 0,
+      "review_items": 8,
+      "non_blocking_reviews": 0,
+      "pending_decisions": 8
+    },
+    {
+      "pair_id": "ri2_cc_fgcolor",
+      "mode": "bigquery_only",
+      "source_table": null,
+      "target_table": "local.target.dim_finished_good_color_ri",
+      "status": "FAIL",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [],
+        "target": [
+          "finished_good_color_sid"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 2,
+      "relationships_executable": 0,
+      "review_items": 1,
+      "non_blocking_reviews": 1,
+      "rule_count": 45,
+      "passed": 43,
+      "failed": 2,
+      "errors": 0,
+      "root_cause_count": 2,
+      "cascade_count": 0
+    },
+    {
+      "pair_id": "ri3_season",
+      "mode": "bigquery_only",
+      "source_table": null,
+      "target_table": "local.target.dim_customer_choice_ri3",
+      "status": "FAIL",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [],
+        "target": [
+          "customer_choice_sid"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 1,
+      "relationships_executable": 1,
+      "review_items": 1,
+      "non_blocking_reviews": 1,
+      "rule_count": 39,
+      "passed": 35,
+      "failed": 4,
+      "errors": 0,
+      "root_cause_count": 4,
+      "cascade_count": 0
+    }
+  ],
+  "approval_proposals": 127,
+  "approval_proposals_file": "C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\tests\\outputs\\20260629T105555Z\\approval_proposals.json",
+  "table_status_counts": {
+    "ERROR": 8,
+    "FAIL": 2,
+    "WAITING_FOR_REVIEW": 3
+  },
+  "completed_at": "2026-06-29T11:05:27.396041+00:00"
+}

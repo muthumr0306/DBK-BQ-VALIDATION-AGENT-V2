@@ -60,6 +60,38 @@ dimensions:
           - [channel_code]
 
 custom_relationships:
+  # RI1: every CC line must have at least one SKU child
+  # child = cc table, parent = sku table keyed by cc_id — catches 50 orphan CCs
+  - id: ri1_cc_has_sku_child
+    enabled: true
+    child_table: ri1_cc_sku
+    child_columns: [destination_purchase_order_line_cc_id]
+    parent_table: local.target.fact_dpo_line_sku
+    parent_columns: [destination_purchase_order_line_cc_id]
+    description: Every CC purchase order line must have at least one SKU child row.
+    publish_to_context: false
+
+  # RI2: every finished_good_color_sid must appear in dim_customer_choice
+  # child = dim_finished_good_color_ri, parent = dim_customer_choice (ri2 version)
+  - id: ri2_fgcolor_referenced_by_cc
+    enabled: true
+    child_table: ri2_cc_fgcolor
+    child_columns: [finished_good_color_sid]
+    parent_table: local.target.dim_customer_choice_ri2
+    parent_columns: [finished_good_color_sid]
+    description: Every finished_good_color_sid must be referenced by at least one customer_choice.
+    publish_to_context: false
+
+  # RI3: every season_sid in dim_customer_choice must exist in dim_season
+  - id: ri3_season_sid_exists
+    enabled: true
+    child_table: ri3_season
+    child_columns: [season_sid]
+    parent_table: local.target.dim_season
+    parent_columns: [season_sid]
+    description: Every season_sid referenced in dim_customer_choice must exist in dim_season.
+    publish_to_context: false
+
   - id: sales_market_override
     enabled: true
     child_table: sample_fact_sales

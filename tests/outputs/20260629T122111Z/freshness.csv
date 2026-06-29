@@ -1,0 +1,37 @@
+pair_id,rule_id,type,category,severity,origin,description,status,evidence.source.max_timestamp,evidence.target.max_timestamp,comparison.source_timestamp,comparison.target_timestamp,comparison.signed_lag_minutes,comparison.absolute_lag_minutes,comparison.allowed_minutes,comparison.lagging_side,comparison.reference_timestamp,error,stack_trace
+gdp_inv_loc,gdp_inv_loc__freshness,freshness,freshness,error,generated,,PASS,2026-12-28T10:00:00,2026-12-28T10:00:00,2026-12-28T10:00:00+00:00,2026-12-28T10:00:00+00:00,0.0,0.0,2880.0,neither,2026-12-28T10:00:00+00:00,,
+gdp_style,gdp_style__freshness,freshness,freshness,error,generated,,ERROR,,,,,,,,,,list index out of range,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 186, in compile_rule
+    return f""SELECT MAX({columns[0]}) AS max_timestamp FROM {table}{where}""
+                         ~~~~~~~^^^
+IndexError: list index out of range
+"
+gdp_fg_color,gdp_fg_color__freshness,freshness,freshness,error,generated,,ERROR,,,,,,,,,,list index out of range,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 186, in compile_rule
+    return f""SELECT MAX({columns[0]}) AS max_timestamp FROM {table}{where}""
+                         ~~~~~~~^^^
+IndexError: list index out of range
+"
+gdp_bmc,gdp_bmc__freshness,freshness,freshness,error,generated,,ERROR,,,,,,,,,,list index out of range,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 186, in compile_rule
+    return f""SELECT MAX({columns[0]}) AS max_timestamp FROM {table}{where}""
+                         ~~~~~~~^^^
+IndexError: list index out of range
+"
+gdp_size,gdp_size__freshness,freshness,freshness,error,generated,,ERROR,,,,,,,,,,list index out of range,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 186, in compile_rule
+    return f""SELECT MAX({columns[0]}) AS max_timestamp FROM {table}{where}""
+                         ~~~~~~~^^^
+IndexError: list index out of range
+"
+ri1_cc_sku,ri1_cc_sku__freshness,freshness,freshness,error,generated,,FAIL,,2026-12-28T10:00:00,,2026-12-28T10:00:00+00:00,261915.281,261915.281,1440.0,source,2026-06-29T12:44:43.133557+00:00,,
+ri2_cc_fgcolor,ri2_cc_fgcolor__freshness,freshness,freshness,error,generated,,FAIL,,2026-12-28T10:00:00,,2026-12-28T10:00:00+00:00,261914.903,261914.903,2880.0,source,2026-06-29T12:45:05.798495+00:00,,
+ri3_season,ri3_season__freshness,freshness,freshness,error,generated,,FAIL,,2026-12-28T10:00:00,,2026-12-28T10:00:00+00:00,261914.477,261914.477,2880.0,source,2026-06-29T12:45:31.388181+00:00,,

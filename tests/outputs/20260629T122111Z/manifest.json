@@ -1,0 +1,460 @@
+{
+  "run_id": "20260629T122111Z",
+  "project": "mock_test",
+  "started_at": "2026-06-29T12:21:11.580770+00:00",
+  "requested_stop_after": "reports",
+  "status": "COMPLETED_WITH_ERRORS",
+  "tables": [
+    {
+      "pair_id": "gdp_inv_loc",
+      "mode": "migration",
+      "source_table": "local.source.inventory_managed_location",
+      "target_table": "local.target.dim_inventory_managed_location",
+      "status": "ERROR",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [
+          "inventory_managed_location_id"
+        ],
+        "target": [
+          "inventory_managed_location_id"
+        ]
+      },
+      "audit_columns": {
+        "source": "updated_on",
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 7,
+      "relationships_executable": 0,
+      "review_items": 1,
+      "non_blocking_reviews": 1,
+      "rule_count": 120,
+      "passed": 65,
+      "failed": 83,
+      "errors": 1,
+      "root_cause_count": 27,
+      "cascade_count": 27
+    },
+    {
+      "pair_id": "gdp_mc_cc",
+      "mode": "migration",
+      "source_table": "local.source.market_channel_cc_flattened",
+      "target_table": "local.target.vw_mc_sku_flattened",
+      "status": "WAITING_FOR_REVIEW",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "market_channel_customer_choice_id"
+        ],
+        "target": [
+          "market_channel_sku_id"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": null,
+        "method": "table_metadata"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 3,
+      "relationships_executable": 0,
+      "review_items": 2,
+      "non_blocking_reviews": 0,
+      "pending_decisions": 2
+    },
+    {
+      "pair_id": "gdp_mc_sku",
+      "mode": "migration",
+      "source_table": "local.source.market_channel_sku_flattened",
+      "target_table": "local.target.vw_mc_cc_flattened",
+      "status": "WAITING_FOR_REVIEW",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "market_channel_sku_id"
+        ],
+        "target": [
+          "market_channel_customer_choice_id"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": null,
+        "method": "table_metadata"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 0,
+      "relationships_executable": 0,
+      "review_items": 34,
+      "non_blocking_reviews": 0,
+      "pending_decisions": 34
+    },
+    {
+      "pair_id": "gdp_division",
+      "mode": "migration",
+      "source_table": "local.source.division",
+      "target_table": "local.target.dim_division",
+      "status": "WAITING_FOR_REVIEW",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "division_id"
+        ],
+        "target": [
+          "division_sid"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 0,
+      "relationships_executable": 0,
+      "review_items": 34,
+      "non_blocking_reviews": 1,
+      "pending_decisions": 33
+    },
+    {
+      "pair_id": "gdp_style",
+      "mode": "migration",
+      "source_table": "local.source.style",
+      "target_table": "local.target.dim_style",
+      "status": "ERROR",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [
+          "style_id"
+        ],
+        "target": [
+          "style_id"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 1,
+      "relationships_executable": 0,
+      "review_items": 1,
+      "non_blocking_reviews": 1,
+      "rule_count": 26,
+      "passed": 16,
+      "failed": 58,
+      "errors": 3,
+      "root_cause_count": 7,
+      "cascade_count": 0
+    },
+    {
+      "pair_id": "gdp_daily_inv",
+      "mode": "migration",
+      "source_table": "local.source.daily_inventory_position",
+      "target_table": "local.target.fact_inventory_position",
+      "status": "WAITING_FOR_REVIEW",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "universal_sku_number",
+          "location",
+          "business_inventory_date",
+          "enterprise_channel_number"
+        ],
+        "target": [
+          "universal_sku_number",
+          "location_number",
+          "business_inventory_date",
+          "enterprise_channel_number"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 6,
+      "relationship_candidates": 6,
+      "relationships_executable": 0,
+      "review_items": 4,
+      "non_blocking_reviews": 2,
+      "pending_decisions": 2
+    },
+    {
+      "pair_id": "gdp_location",
+      "mode": "migration",
+      "source_table": "local.source.location",
+      "target_table": "local.target.dim_location",
+      "status": "WAITING_FOR_REVIEW",
+      "last_stage": "inference",
+      "primary_keys": {
+        "source": [
+          "location_number"
+        ],
+        "target": [
+          "location_number"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 0,
+      "relationships_executable": 0,
+      "review_items": 4,
+      "non_blocking_reviews": 0,
+      "pending_decisions": 4
+    },
+    {
+      "pair_id": "gdp_fg_color",
+      "mode": "migration",
+      "source_table": "local.source.finished_good_color",
+      "target_table": "local.target.dim_finished_good_color",
+      "status": "ERROR",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [
+          "finished_good_color_id"
+        ],
+        "target": [
+          "finished_good_color_id"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 1,
+      "relationships_executable": 0,
+      "review_items": 1,
+      "non_blocking_reviews": 1,
+      "rule_count": 62,
+      "passed": 33,
+      "failed": 49,
+      "errors": 2,
+      "root_cause_count": 15,
+      "cascade_count": 12
+    },
+    {
+      "pair_id": "gdp_bmc",
+      "mode": "migration",
+      "source_table": "local.source.brand_market_channel",
+      "target_table": "local.target.dim_brand_market_channel",
+      "status": "ERROR",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [
+          "brand_market_channel_id"
+        ],
+        "target": [
+          "brand_market_channel_id"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 7,
+      "relationships_executable": 0,
+      "review_items": 0,
+      "non_blocking_reviews": 0,
+      "rule_count": 108,
+      "passed": 68,
+      "failed": 56,
+      "errors": 2,
+      "root_cause_count": 20,
+      "cascade_count": 18
+    },
+    {
+      "pair_id": "gdp_size",
+      "mode": "migration",
+      "source_table": "local.source.size",
+      "target_table": "local.target.dim_size",
+      "status": "ERROR",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [
+          "size_id"
+        ],
+        "target": [
+          "size_id"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 0,
+      "relationships_executable": 0,
+      "review_items": 0,
+      "non_blocking_reviews": 0,
+      "rule_count": 28,
+      "passed": 13,
+      "failed": 33,
+      "errors": 3,
+      "root_cause_count": 8,
+      "cascade_count": 4
+    },
+    {
+      "pair_id": "ri1_cc_sku",
+      "mode": "bigquery_only",
+      "source_table": null,
+      "target_table": "local.target.fact_dpo_line_cc",
+      "status": "ERROR",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [],
+        "target": [
+          "destination_purchase_order_line_cc_id"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 1,
+      "relationships_executable": 0,
+      "review_items": 0,
+      "non_blocking_reviews": 0,
+      "rule_count": 89,
+      "passed": 86,
+      "failed": 2,
+      "errors": 1,
+      "root_cause_count": 2,
+      "cascade_count": 0
+    },
+    {
+      "pair_id": "ri2_cc_fgcolor",
+      "mode": "bigquery_only",
+      "source_table": null,
+      "target_table": "local.target.dim_finished_good_color_ri",
+      "status": "FAIL",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [],
+        "target": [
+          "finished_good_color_sid"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 2,
+      "relationships_executable": 0,
+      "review_items": 1,
+      "non_blocking_reviews": 1,
+      "rule_count": 46,
+      "passed": 43,
+      "failed": 3,
+      "errors": 0,
+      "root_cause_count": 3,
+      "cascade_count": 0
+    },
+    {
+      "pair_id": "ri3_season",
+      "mode": "bigquery_only",
+      "source_table": null,
+      "target_table": "local.target.dim_customer_choice_ri3",
+      "status": "FAIL",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [],
+        "target": [
+          "customer_choice_sid"
+        ]
+      },
+      "audit_columns": {
+        "source": null,
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 1,
+      "relationships_executable": 1,
+      "review_items": 1,
+      "non_blocking_reviews": 1,
+      "rule_count": 40,
+      "passed": 35,
+      "failed": 5,
+      "errors": 0,
+      "root_cause_count": 5,
+      "cascade_count": 0
+    }
+  ],
+  "approval_proposals": 83,
+  "approval_proposals_file": "C:\\Users\\saipr\\Documents\\DQ Agent\\DBK-BQ-VALIDATION-AGENT-V2\\tests\\outputs\\20260629T122111Z\\approval_proposals.json",
+  "table_status_counts": {
+    "ERROR": 6,
+    "FAIL": 2,
+    "WAITING_FOR_REVIEW": 5
+  },
+  "completed_at": "2026-06-29T12:46:05.083067+00:00"
+}

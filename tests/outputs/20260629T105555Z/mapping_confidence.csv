@@ -1,0 +1,394 @@
+pair_id,source_column,target_column,confidence,status,rationale
+gdp_inv_loc,inventory_managed_location_id,inventory_managed_location_id,1.0,MANUAL,natural key same on both sides
+gdp_inv_loc,brand_id,brand_id,1.0,MANUAL,direct match
+gdp_inv_loc,market_id,market_id,1.0,MANUAL,direct match
+gdp_inv_loc,channel_id,channel_id,1.0,MANUAL,direct match
+gdp_inv_loc,location_number,location_number,1.0,MANUAL,direct match
+gdp_inv_loc,location_type,location_type,1.0,MANUAL,direct match
+gdp_inv_loc,country,country,1.0,MANUAL,direct match
+gdp_inv_loc,alternative_location_id,alternative_location_id,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,value_type,value_type,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,ownership,ownership,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,economic_region,economic_region,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,pick_priority,pick_priority,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,default_supply_node,default_supply_node,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,accounts_payable_code,accounts_payable_code,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,first_pick_date,first_pick_date,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,temporary_closed_date,temporary_closed_date,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,inventory_management_closed_date,inventory_management_closed_date,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,reopened_date,reopened_date,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,walkthrough_id_1,walkthrough_id_1,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,walkthrough_id_2,walkthrough_id_2,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,minimum_inventory,minimum_inventory,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,maximum_inventory,maximum_inventory,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,maximum_shipment_cartons,maximum_shipment_cartons,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,updated_on,update_dttm,1.0,MANUAL,audit timestamp rename
+gdp_inv_loc,updated_by,updated_by,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,allocation_type,allocation_type,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,abbreviated_location_name,abbreviated_location_name,1.0,MANUAL,direct match
+gdp_inv_loc,real_estate_type,real_estate_type,1.0,MANUAL,auto:exact_name_match
+gdp_inv_loc,store_hold_pick_indicator,store_hold_pick_indicator,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,customer_choice_id,customer_choice_id,1.0,MANUAL,common column on both views
+gdp_mc_cc,universal_customer_choice_number,universal_customer_choice_number,1.0,MANUAL,direct match
+gdp_mc_cc,customer_choice_number,customer_choice_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,customer_choice_abbreviated_description,customer_choice_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,customer_choice_description,customer_choice_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,style_customer_choice_number,style_customer_choice_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,item_customer_choice_code,item_customer_choice_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,finished_goods_color_code,finished_goods_color_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,color_abbreviated_description,color_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,color_description,color_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,color_palette_season_code,color_palette_season_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,color_palette_season_year,color_palette_season_year,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,customer_choice_status_code,customer_choice_status_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,customer_choice_status_description,customer_choice_status_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_customer_choice_id,market_channel_customer_choice_id,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,brand_number,brand_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_number,market_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,channel_number,channel_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,brand_market_channel_id,brand_market_channel_id,1.0,MANUAL,direct match
+gdp_mc_cc,market_channel_cc_style_customer_choice_number,market_channel_cc_style_customer_choice_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_cc_description,market_channel_cc_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_cc_abbreviated_description,market_channel_cc_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_cc_finished_goods_color_code,market_channel_cc_finished_goods_color_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_cc_color_abbreviated_description,market_channel_cc_color_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_cc_color_description,market_channel_cc_color_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_cc_color_palette_season_code,market_channel_cc_color_palette_season_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_cc_color_palette_season_year,market_channel_cc_color_palette_season_year,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_cc_status_code,market_channel_cc_status_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_cc_status_description,market_channel_cc_status_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,selling_season_code,selling_season_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,selling_season_type_code,selling_season_type_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,selling_season_year,selling_season_year,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,program_number,program_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,program_description,program_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_customer_choice_country_price,market_channel_customer_choice_country_price,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,style_id,style_id,1.0,MANUAL,direct match
+gdp_mc_cc,universal_style_number,universal_style_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,style_description,style_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,style_abbreviated_description,style_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,style_status_code,style_status_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,style_status_description,style_status_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,global_assortment_item_number,global_assortment_item_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,style_type,style_type,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,division_id,division_id,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,division_number,division_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,division_description,division_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,division_abbreviated_description,division_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,department_id,department_id,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,department_number,department_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,department_description,department_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,department_abbreviated_description,department_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,class_id,class_id,1.0,MANUAL,null check target
+gdp_mc_cc,class_number,class_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,class_description,class_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,class_abbreviated_description,class_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,universal_subclass_id,universal_subclass_id,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,subclass_number,subclass_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,subclass_description,subclass_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,subclass_abbreviated_description,subclass_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_style_id,market_channel_style_id,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_style_description,market_channel_style_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_style_abbreviated_description,market_channel_style_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_style_status_code,market_channel_style_status_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_style_status_description,market_channel_style_status_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,corporation_number,corporation_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,company_number,company_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,alternate_style_number,alternate_style_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,vendor_style_code,vendor_style_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_division_id,legacy_division_id,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_division_number,legacy_division_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_division_description,legacy_division_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_division_abbreviated_description,legacy_division_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_department_id,legacy_department_id,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_department_number,legacy_department_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_department_description,legacy_department_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_department_abbreviated_description,legacy_department_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_class_id,legacy_class_id,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_class_number,legacy_class_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_class_description,legacy_class_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_class_abbreviated_description,legacy_class_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_subclass_id,legacy_subclass_id,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_subclass_number,legacy_subclass_number,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_subclass_description,legacy_subclass_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,legacy_subclass_abbreviated_description,legacy_subclass_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,garment_type_code,garment_type_code,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,garment_type_description,garment_type_description,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_style_ticket_type,market_channel_style_ticket_type,1.0,MANUAL,auto:exact_name_match
+gdp_mc_cc,market_channel_style_country_price,market_channel_style_country_price,1.0,MANUAL,auto:exact_name_match
+gdp_style,style_id,style_id,1.0,MANUAL,natural key same on both sides
+gdp_style,universal_style_number,universal_style_number,1.0,MANUAL,direct match
+gdp_style,style_number,style_number,1.0,MANUAL,direct match
+gdp_style,status_code,style_cc_status_sid,1.0,MANUAL,status code renamed
+gdp_daily_inv,universal_sku_number,universal_sku_number,1.0,MANUAL,direct match
+gdp_daily_inv,location,location_number,1.0,MANUAL,location renamed
+gdp_daily_inv,business_inventory_date,business_inventory_date,1.0,MANUAL,direct match
+gdp_daily_inv,brand_code,brand_code,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,market_code,market_code,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,channel_code,channel_code,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,currency_code,currency_code,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,location_type,location_type,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,unit_cost,unit_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,average_cost,average_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,action_type,action_type,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,legacy_item,legacy_item,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,item_parent,item_parent,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,item_grandparent,item_grandparent,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,isPrepack,isPrepack,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,stock_on_hand_qty,stock_on_hand_qty,1.0,MANUAL,direct match
+gdp_daily_inv,stock_on_hand_cost,stock_on_hand_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,stock_on_hand_retail,stock_on_hand_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_soh_qty,pack_comp_soh_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_soh_cost,pack_comp_soh_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_soh_retail,pack_comp_soh_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,reserved_qty,reserved_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,reserved_cost,reserved_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,reserved_retail,reserved_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_reserved_qty,pack_comp_reserved_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_reserved_cost,pack_comp_reserved_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_reserved_retail,pack_comp_reserved_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,expected_qty,expected_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,expected_cost,expected_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,expected_retail,expected_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_expected_qty,pack_comp_expected_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_expected_cost,pack_comp_expected_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_expected_retail,pack_comp_expected_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,in_transit_qty,in_transit_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,in_transit_cost,in_transit_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,in_transit_retail,in_transit_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_intransit_qty,pack_comp_intransit_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_intransit_cost,pack_comp_intransit_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_intransit_retail,pack_comp_intransit_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,non_sellable_qty,non_sellable_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,non_sellable_cost,non_sellable_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,non_sellable_retail,non_sellable_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_non_sell_qty,pack_comp_non_sell_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_non_sell_cost,pack_comp_non_sell_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_non_sell_retail,pack_comp_non_sell_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,customer_reserved_qty,customer_reserved_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,customer_reserved_cost,customer_reserved_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,customer_reserved_retail,customer_reserved_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_customer_reserved_qty,pack_comp_customer_reserved_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_customer_reserved_cost,pack_comp_customer_reserved_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,pack_comp_customer_reserved_retail,pack_comp_customer_reserved_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,return_to_vendor_qty,return_to_vendor_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,return_to_vendor_cost,return_to_vendor_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,return_to_vendor_retail,return_to_vendor_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,customer_backorder_qty,customer_backorder_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,customer_backorder_cost,customer_backorder_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,customer_backorder_retail,customer_backorder_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,in_progress_sale_qty,in_progress_sale_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,in_progress_sale_cost,in_progress_sale_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,in_progress_sale_retail,in_progress_sale_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,available_qty,available_qty,1.0,MANUAL,direct match
+gdp_daily_inv,available_cost,available_cost,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,available_retail,available_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,first_received_date,first_received_date,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,last_received_date,last_received_date,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,last_received_qty,last_received_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,first_sell_date,first_sell_date,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,last_sell_date,last_sell_date,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,last_sold_qty,last_sold_qty,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,finisher_average_retail,finisher_average_retail,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,finisher_units,finisher_units,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,source_soh_update_timestamp,source_soh_update_timestamp,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,source_create_timestamp,source_create_timestamp,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,source_last_update_timestamp,source_last_update_timestamp,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,ticket_price,ticket_price,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,effective_price,effective_price,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,effective_price_status,effective_price_status,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,current_price,current_price,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,price_status,price_status,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,country_code,country_code,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,enterprise_brand_number,enterprise_brand_number,1.0,MANUAL,direct match
+gdp_daily_inv,enterprise_market_number,enterprise_market_number,1.0,MANUAL,direct match
+gdp_daily_inv,enterprise_channel_number,enterprise_channel_number,1.0,MANUAL,direct match
+gdp_daily_inv,merchandise_channel_number,merchandise_channel_number,1.0,MANUAL,auto:exact_name_match
+gdp_daily_inv,inventory_update_date,inventory_update_date,1.0,MANUAL,auto:exact_name_match
+gdp_location,location_number,location_number,1.0,MANUAL,natural key
+gdp_location,location_name,location_name,1.0,MANUAL,direct match
+gdp_location,enterprise_brand_code,enterprise_brand_code,1.0,MANUAL,auto:exact_name_match
+gdp_location,enterprise_market_code,enterprise_market_code,1.0,MANUAL,auto:exact_name_match
+gdp_location,enterprise_channel_code,enterprise_channel_code,1.0,MANUAL,auto:exact_name_match
+gdp_location,merchandise_channel_code,merchandise_channel_code,1.0,MANUAL,auto:exact_name_match
+gdp_location,enterprise_brand_number,enterprise_brand_number,1.0,MANUAL,auto:exact_name_match
+gdp_location,enterprise_market_number,enterprise_market_number,1.0,MANUAL,auto:exact_name_match
+gdp_location,enterprise_channel_number,enterprise_channel_number,1.0,MANUAL,auto:exact_name_match
+gdp_location,merchandise_channel_number,merchandise_channel_number,1.0,MANUAL,auto:exact_name_match
+gdp_location,open_date,open_date,1.0,MANUAL,direct match
+gdp_location,close_date,close_date,1.0,MANUAL,direct match
+gdp_location,location_status_id,location_status_id,1.0,MANUAL,auto:exact_name_match
+gdp_location,location_purpose,location_purpose,1.0,MANUAL,auto:exact_name_match
+gdp_location,unit_of_measure_code,unit_of_measure_code,1.0,MANUAL,auto:exact_name_match
+gdp_location,unit_of_measure_description,unit_of_measure_description,1.0,MANUAL,auto:exact_name_match
+gdp_location,fitting_room_area,fitting_room_area,1.0,MANUAL,auto:exact_name_match
+gdp_location,other_improved_area,other_improved_area,1.0,MANUAL,auto:exact_name_match
+gdp_location,remote_stock_area,remote_stock_area,1.0,MANUAL,auto:exact_name_match
+gdp_location,sales_area,sales_area,1.0,MANUAL,auto:exact_name_match
+gdp_location,stock_area,stock_area,1.0,MANUAL,auto:exact_name_match
+gdp_location,total_improvable_area,total_improvable_area,1.0,MANUAL,auto:exact_name_match
+gdp_location,total_improved_area,total_improved_area,1.0,MANUAL,auto:exact_name_match
+gdp_location,total_unimproved_area,total_unimproved_area,1.0,MANUAL,auto:exact_name_match
+gdp_location,build_location_type,build_location_type,1.0,MANUAL,auto:exact_name_match
+gdp_location,format_type,format_type,1.0,MANUAL,auto:exact_name_match
+gdp_location,isOutlet,isOutlet,1.0,MANUAL,auto:exact_name_match
+gdp_location,isLifestyle,isLifestyle,1.0,MANUAL,auto:exact_name_match
+gdp_location,location_vintage,location_vintage,1.0,MANUAL,auto:exact_name_match
+gdp_location,legal_entity,legal_entity,1.0,MANUAL,auto:exact_name_match
+gdp_location,isExternalCount,isExternalCount,1.0,MANUAL,auto:exact_name_match
+gdp_location,department_reference_number,department_reference_number,1.0,MANUAL,auto:exact_name_match
+gdp_location,hr_location_code,hr_location_code,1.0,MANUAL,auto:exact_name_match
+gdp_location,store_level,store_level,1.0,MANUAL,auto:exact_name_match
+gdp_location,language_code,language_code,1.0,MANUAL,auto:exact_name_match
+gdp_location,latest_major_project_scope_description,latest_major_project_scope_description,1.0,MANUAL,auto:exact_name_match
+gdp_location,latest_major_project_date,latest_major_project_date,1.0,MANUAL,auto:exact_name_match
+gdp_location,walkthrough_group_id,walkthrough_group_id,1.0,MANUAL,auto:exact_name_match
+gdp_location,isOpenSunday,isOpenSunday,1.0,MANUAL,auto:exact_name_match
+gdp_location,open_sunday_effective_date,open_sunday_effective_date,1.0,MANUAL,auto:exact_name_match
+gdp_location,default_selling_division,default_selling_division,1.0,MANUAL,auto:exact_name_match
+gdp_location,isRevenueActualized,isRevenueActualized,1.0,MANUAL,auto:exact_name_match
+gdp_location,revenue_selling_divisions,revenue_selling_divisions,1.0,MANUAL,auto:exact_name_match
+gdp_location,location_purge_date,location_purge_date,1.0,MANUAL,auto:exact_name_match
+gdp_location,isLocationPurged,isLocationPurged,1.0,MANUAL,auto:exact_name_match
+gdp_location,timezone,timezone,1.0,MANUAL,auto:exact_name_match
+gdp_location,country_code,country_code,1.0,MANUAL,direct match
+gdp_location,currency_code,currency_code,1.0,MANUAL,direct match
+gdp_location,in_outlet_mall,in_outlet_mall,1.0,MANUAL,auto:exact_name_match
+gdp_fg_color,finished_good_color_id,finished_good_color_id,1.0,MANUAL,natural key
+gdp_fg_color,color_standard_number,color_standard_number,1.0,MANUAL,auto:exact_name_match
+gdp_fg_color,color_type,color_type,1.0,MANUAL,auto:exact_name_match
+gdp_fg_color,finished_good_color_number,finished_good_color_number,1.0,MANUAL,direct match
+gdp_fg_color,finished_good_color_code,finished_good_color_code,1.0,MANUAL,direct match
+gdp_fg_color,season_code,color_palette_season_code,1.0,MANUAL,renamed in GCP
+gdp_fg_color,season_year,color_palette_season_year,1.0,MANUAL,renamed in GCP
+gdp_fg_color,abbreviated_description,finished_good_color_description_abbreviated,1.0,MANUAL,renamed
+gdp_fg_color,isGlobal,is_global,0.85,AUTO,name/type/description score; second_best=0.373
+gdp_fg_color,color_palette_id,color_palette_id,1.0,MANUAL,direct match
+gdp_bmc,brand_market_channel_id,brand_market_channel_id,1.0,MANUAL,natural key
+gdp_bmc,channel_id,channel_id,1.0,MANUAL,direct match
+gdp_bmc,market_id,market_id,1.0,MANUAL,direct match
+gdp_bmc,brand_id,brand_id,1.0,MANUAL,direct match
+gdp_bmc,platform_abbreviated_description,platform_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,description,description,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,abbreviated_description,abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,corporation,corporation,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,company,company,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,corporation_company_id,corporation_company_id,1.0,MANUAL,direct match
+gdp_bmc,platform_description,platform_description,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,version,version,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,hierarchy_id,hierarchy_id,1.0,MANUAL,direct match
+gdp_bmc,hierarchy_description,hierarchy_description,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,brand_number,brand_number,1.0,MANUAL,direct match
+gdp_bmc,brand_code,brand_code,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,brand_description,brand_description,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,brand_abbreviated_description,brand_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,market_number,market_number,1.0,MANUAL,direct match
+gdp_bmc,market_code,market_code,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,market_description,market_description,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,market_abbreviated_description,market_abbreviated_description,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,channel_number,channel_number,1.0,MANUAL,direct match
+gdp_bmc,channel_code,channel_code,1.0,MANUAL,auto:exact_name_match
+gdp_bmc,channel_description,channel_description,1.0,MANUAL,auto:exact_name_match
+gdp_size,size_id,size_id,1.0,MANUAL,natural key
+gdp_size,size_code,size_code,1.0,MANUAL,direct match
+gdp_size,size_model_code,size_model_sid,1.0,MANUAL,model code renamed to sid
+gdp_size,size_label,size_label,1.0,MANUAL,direct match
+ri1_cc_sku,destination_purchase_order_line_cc_id,destination_purchase_order_line_cc_id,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,destination_purchase_order_line_style_id,destination_purchase_order_line_style_id,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,market_channel_customer_choice_id,market_channel_customer_choice_id,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,universal_customer_choice_id,universal_customer_choice_id,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,style_customer_choice_number,style_customer_choice_number,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,universal_customer_choice_number,universal_customer_choice_number,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,mc_customer_choice_sid,mc_customer_choice_sid,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,original_first_cost,original_first_cost,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,original_first_cost_currency,original_first_cost_currency,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,original_first_cost_currency_sid,original_first_cost_currency_sid,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,first_cost,first_cost,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,first_cost_currency,first_cost_currency,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,first_cost_currency_sid,first_cost_currency_sid,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,unit_of_measure,unit_of_measure,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,selling_season_code,selling_season_code,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,selling_season_year,selling_season_year,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,selling_season_sid,selling_season_sid,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,original_estimated_landed_cost,original_estimated_landed_cost,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,original_estimated_landed_cost_currency,original_estimated_landed_cost_currency,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,original_estimated_landed_cost_currency_sid,original_estimated_landed_cost_currency_sid,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,estimated_landed_cost,estimated_landed_cost,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,estimated_landed_cost_currency,estimated_landed_cost_currency,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,estimated_landed_cost_currency_sid,estimated_landed_cost_currency_sid,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,bom_cc_number,bom_cc_number,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,bom_number,bom_number,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,mill_id,mill_id,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,mill_name,mill_name,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,mill_country_of_origin,mill_country_of_origin,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,category,category,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,category_sid,category_sid,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,sub_category,sub_category,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,sub_category_sid,sub_category_sid,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,item_type,item_type,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,item_type_sid,item_type_sid,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,rd_number,rd_number,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,fabric_description,fabric_description,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,demand_identifier,demand_identifier,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,color_standard_number,color_standard_number,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,color_abbreviated_description,color_abbreviated_description,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,color_description,color_description,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,color_sequence_number,color_sequence_number,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,finished_good_color_sid,finished_good_color_sid,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,order_quantity,order_quantity,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,received_quantity,received_quantity,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,on_order_quantity,on_order_quantity,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,in_store_date,in_store_date,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,buying_track,buying_track,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,insert_date,insert_date,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,insert_dttm,insert_dttm,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,inserted_by,inserted_by,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,update_date,update_date,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,update_dttm,update_dttm,1.0,SELF,BigQuery-only mode
+ri1_cc_sku,updated_by,updated_by,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,finished_good_color_sid,finished_good_color_sid,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,finished_good_color_id,finished_good_color_id,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,finished_good_color_description,finished_good_color_description,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,finished_good_color_description_abbreviated,finished_good_color_description_abbreviated,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,color_family_sid,color_family_sid,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,brand_sid,brand_sid,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,is_global,is_global,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,active_indicator,active_indicator,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,effective_start_date,effective_start_date,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,effective_end_date,effective_end_date,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,color_standard_number,color_standard_number,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,color_type,color_type,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,finished_good_color_number,finished_good_color_number,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,finished_good_color_code,finished_good_color_code,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,color_palette_season_code,color_palette_season_code,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,color_palette_season_year,color_palette_season_year,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,color_palette_id,color_palette_id,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,source_system,source_system,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,insert_date,insert_date,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,insert_dttm,insert_dttm,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,inserted_by,inserted_by,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,update_date,update_date,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,update_dttm,update_dttm,1.0,SELF,BigQuery-only mode
+ri2_cc_fgcolor,updated_by,updated_by,1.0,SELF,BigQuery-only mode
+ri3_season,customer_choice_sid,customer_choice_sid,1.0,SELF,BigQuery-only mode
+ri3_season,customer_choice_id,customer_choice_id,1.0,SELF,BigQuery-only mode
+ri3_season,customer_choice_number,customer_choice_number,1.0,SELF,BigQuery-only mode
+ri3_season,universal_customer_choice_number,universal_customer_choice_number,1.0,SELF,BigQuery-only mode
+ri3_season,customer_choice_description,customer_choice_description,1.0,SELF,BigQuery-only mode
+ri3_season,customer_choice_description_abbreviated,customer_choice_description_abbreviated,1.0,SELF,BigQuery-only mode
+ri3_season,assorted,assorted,1.0,SELF,BigQuery-only mode
+ri3_season,status_code,status_code,1.0,SELF,BigQuery-only mode
+ri3_season,status_description,status_description,1.0,SELF,BigQuery-only mode
+ri3_season,style_sid,style_sid,1.0,SELF,BigQuery-only mode
+ri3_season,size_model_sid,size_model_sid,1.0,SELF,BigQuery-only mode
+ri3_season,finished_good_color_sid,finished_good_color_sid,1.0,SELF,BigQuery-only mode
+ri3_season,season_sid,season_sid,1.0,SELF,BigQuery-only mode
+ri3_season,active_indicator,active_indicator,1.0,SELF,BigQuery-only mode
+ri3_season,effective_start_date,effective_start_date,1.0,SELF,BigQuery-only mode
+ri3_season,effective_end_date,effective_end_date,1.0,SELF,BigQuery-only mode
+ri3_season,insert_date,insert_date,1.0,SELF,BigQuery-only mode
+ri3_season,insert_dttm,insert_dttm,1.0,SELF,BigQuery-only mode
+ri3_season,inserted_by,inserted_by,1.0,SELF,BigQuery-only mode
+ri3_season,update_date,update_date,1.0,SELF,BigQuery-only mode
+ri3_season,update_dttm,update_dttm,1.0,SELF,BigQuery-only mode
+ri3_season,updated_by,updated_by,1.0,SELF,BigQuery-only mode

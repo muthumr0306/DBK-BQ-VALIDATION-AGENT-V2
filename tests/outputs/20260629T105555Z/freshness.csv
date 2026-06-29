@@ -1,0 +1,3 @@
+pair_id,rule_id,type,category,severity,origin,description,status,evidence.target.max_timestamp,comparison.source_timestamp,comparison.target_timestamp,comparison.signed_lag_minutes,comparison.absolute_lag_minutes,comparison.allowed_minutes,comparison.lagging_side,comparison.reference_timestamp
+ri2_cc_fgcolor,ri2_cc_fgcolor__freshness,freshness,freshness,error,generated,,FAIL,2026-12-28T10:00:00,,2026-12-28T10:00:00+00:00,262015.15,262015.15,2880.0,source,2026-06-29T11:04:50.973143+00:00
+ri3_season,ri3_season__freshness,freshness,freshness,error,generated,,FAIL,2026-12-28T10:00:00,,2026-12-28T10:00:00+00:00,262014.761,262014.761,2880.0,source,2026-06-29T11:05:14.360196+00:00

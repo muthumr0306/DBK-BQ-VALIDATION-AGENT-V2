@@ -1,0 +1,2 @@
+run_id,run_timestamp,overall_verdict,tables_total,tables_go,tables_caveats,tables_nogo,total_rows_affected,total_value_at_risk,total_critical,total_warning,total_pending_approval,headline
+20260629T105555Z,2026-06-29T10:55:55.754630+00:00,FAIL,3,1,0,2,1481,0,2,4,3,"FAIL: 2 of 3 tables has critical failures. 1,481 rows affected. 3 tests pending review."

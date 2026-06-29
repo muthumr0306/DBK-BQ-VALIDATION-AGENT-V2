@@ -1,8 +1,8 @@
 enabled: true
 provider: openai
-model: gemma4:e4b
+model: qwen2.5:7b
 base_url: http://localhost:11434/v1
 temperature: 0.1
 max_output_tokens: 8192
-timeout_seconds: 90
+timeout_seconds: 180
 max_retries: 2

@@ -1,0 +1,40 @@
+pair_id,rule_id,type,category,severity,origin,description,status,error,stack_trace
+gdp_inv_loc,gdp_inv_loc__minimum_inventory_cannot_exceed_maximum,predicate,llm_generated,error,llm_generated,Minimum inventory cannot exceed maximum inventory.,ERROR,"Conversion Error: Could not convert string 'maximum_inventory' to INT64
+
+LINE 1: SELECT SUM(CASE WHEN NOT (""minimum_inventory"" <= 'maximum_inventory') THEN 1 ELSE 0 END) AS invalid_count...
+                                                         ^","Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2541, in _execute_rule
+    result = self._controlled_execute(
+        side, sql, allowed_tables_for_rule(rule, pair, side), table_dir,
+        f""{rule.rule_id}_{side}"",
+    )
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2683, in _controlled_execute
+    result = connector.execute(validated)
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\connectors.py"", line 378, in execute
+    frame = self._conn().execute(duckdb_sql).fetchdf()
+            ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+_duckdb.ConversionException: Conversion Error: Could not convert string 'maximum_inventory' to INT64
+
+LINE 1: SELECT SUM(CASE WHEN NOT (""minimum_inventory"" <= 'maximum_inventory') THEN 1 ELSE 0 END) AS invalid_count...
+                                                         ^
+"
+ri2_cc_fgcolor,ri2_cc_fgcolor__finished_good_color_sid_exists_in_customer_choice,predicate,llm_generated,error,llm_generated,Ensure that all finished good color SIDs in the target table exist in the customer choice dimension.,ERROR,in requires a non-empty list,"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 211, in compile_rule
+    predicate = self.predicate(rule.parameters[""predicate""])
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 138, in predicate
+    raise ValueError(f""{operator} requires a non-empty list"")
+ValueError: in requires a non-empty list
+"
+ri3_season,ri3_season__customer_choice_number_length,predicate,llm_generated,warning,llm_generated,Check that the customer_choice_number field is exactly 3 characters long.,ERROR,Unsafe identifier: 'length(customer_choice_number)',"Traceback (most recent call last):
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\workflow.py"", line 2540, in _execute_rule
+    sql = SQLCompiler(dialect).compile_rule(rule, pair, side, filters.get(side, []))
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 211, in compile_rule
+    predicate = self.predicate(rule.parameters[""predicate""])
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 126, in predicate
+    column = self.identifier(item[""column""])
+  File ""C:\Users\saipr\Documents\DQ Agent\DBK-BQ-VALIDATION-AGENT-V2\src\dq_agent\query_engine.py"", line 95, in identifier
+    raise ValueError(f""Unsafe identifier: {name!r}"")
+ValueError: Unsafe identifier: 'length(customer_choice_number)'
+"

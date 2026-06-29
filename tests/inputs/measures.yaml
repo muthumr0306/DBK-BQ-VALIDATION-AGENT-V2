@@ -61,7 +61,6 @@ measures:
   - measure_id: total_sales
     definition_type: measure
     pair_id: sample_fact_sales
-    # no source_table/target_table — matched by pair_id only so mock table names don't matter
     source_expression: sales_amount
     target_expression: sales_amount
     business_name: Total Sales
@@ -109,7 +108,311 @@ measures:
     approval_status: approved
     publish_to_context: false
 
+  # GDP daily inventory measures (auto-approved)
+  - measure_id: available_cost
+    definition_type: measure
+    pair_id: gdp_daily_inv
+    source_expression: available_cost
+    target_expression: available_cost
+    business_name: Available Cost
+    aggregation: sum
+    tolerance_absolute: 0.0
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: average_cost
+    definition_type: measure
+    pair_id: gdp_daily_inv
+    source_expression: average_cost
+    target_expression: average_cost
+    business_name: Average Cost
+    aggregation: avg
+    tolerance_absolute: 0.0
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: customer_backorder_cost
+    definition_type: measure
+    pair_id: gdp_daily_inv
+    source_expression: customer_backorder_cost
+    target_expression: customer_backorder_cost
+    business_name: Customer Backorder Cost
+    aggregation: sum
+    tolerance_absolute: 0.0
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: customer_reserved_cost
+    definition_type: measure
+    pair_id: gdp_daily_inv
+    source_expression: customer_reserved_cost
+    target_expression: customer_reserved_cost
+    business_name: Customer Reserved Cost
+    aggregation: sum
+    tolerance_absolute: 0.0
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: expected_cost
+    definition_type: measure
+    pair_id: gdp_daily_inv
+    source_expression: expected_cost
+    target_expression: expected_cost
+    business_name: Expected Cost
+    aggregation: sum
+    tolerance_absolute: 0.0
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: in_progress_sale_cost
+    definition_type: measure
+    pair_id: gdp_daily_inv
+    source_expression: in_progress_sale_cost
+    target_expression: in_progress_sale_cost
+    business_name: In Progress Sale Cost
+    aggregation: sum
+    tolerance_absolute: 0.0
+    tolerance_percentage: 0.5
+    enabled: true
+    severity: error
+    approval_status: approved
+    publish_to_context: false
+
+  # ri1_cc_sku inferred measures — pre-approved but disabled (bigquery_only has no source to compare)
+  - measure_id: estimated_landed_cost
+    definition_type: measure
+    pair_id: ri1_cc_sku
+    source_expression: estimated_landed_cost
+    target_expression: estimated_landed_cost
+    business_name: Estimated Landed Cost
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: first_cost
+    definition_type: measure
+    pair_id: ri1_cc_sku
+    source_expression: first_cost
+    target_expression: first_cost
+    business_name: First Cost
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: original_estimated_landed_cost
+    definition_type: measure
+    pair_id: ri1_cc_sku
+    source_expression: original_estimated_landed_cost
+    target_expression: original_estimated_landed_cost
+    business_name: Original Estimated Landed Cost
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: original_first_cost
+    definition_type: measure
+    pair_id: ri1_cc_sku
+    source_expression: original_first_cost
+    target_expression: original_first_cost
+    business_name: Original First Cost
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: estimated_landed_cost_currency_sid
+    definition_type: measure
+    pair_id: ri1_cc_sku
+    source_expression: estimated_landed_cost_currency_sid
+    target_expression: estimated_landed_cost_currency_sid
+    business_name: Estimated Landed Cost Currency Sid
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: first_cost_currency_sid
+    definition_type: measure
+    pair_id: ri1_cc_sku
+    source_expression: first_cost_currency_sid
+    target_expression: first_cost_currency_sid
+    business_name: First Cost Currency Sid
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: on_order_quantity
+    definition_type: measure
+    pair_id: ri1_cc_sku
+    source_expression: on_order_quantity
+    target_expression: on_order_quantity
+    business_name: On Order Quantity
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: order_quantity
+    definition_type: measure
+    pair_id: ri1_cc_sku
+    source_expression: order_quantity
+    target_expression: order_quantity
+    business_name: Order Quantity
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  # gdp_mc_cc & gdp_mc_sku price measures — pre-approved disabled (migration view comparison not meaningful)
+  - measure_id: market_channel_customer_choice_country_price
+    definition_type: measure
+    pair_id: gdp_mc_cc
+    source_expression: market_channel_customer_choice_country_price
+    target_expression: market_channel_customer_choice_country_price
+    business_name: Market Channel CC Country Price
+    aggregation: avg
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: market_channel_style_country_price
+    definition_type: measure
+    pair_id: gdp_mc_cc
+    source_expression: market_channel_style_country_price
+    target_expression: market_channel_style_country_price
+    business_name: Market Channel Style Country Price
+    aggregation: avg
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: market_channel_customer_choice_country_price
+    definition_type: measure
+    pair_id: gdp_mc_sku
+    source_expression: market_channel_customer_choice_country_price
+    target_expression: market_channel_customer_choice_country_price
+    business_name: Market Channel CC Country Price
+    aggregation: avg
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: market_channel_style_country_price
+    definition_type: measure
+    pair_id: gdp_mc_sku
+    source_expression: market_channel_style_country_price
+    target_expression: market_channel_style_country_price
+    business_name: Market Channel Style Country Price
+    aggregation: avg
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  # gdp_daily_inv inferred price measures — pre-approved disabled
+  - measure_id: current_price
+    definition_type: measure
+    pair_id: gdp_daily_inv
+    source_expression: current_price
+    target_expression: current_price
+    business_name: Current Price
+    aggregation: avg
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: effective_price
+    definition_type: measure
+    pair_id: gdp_daily_inv
+    source_expression: effective_price
+    target_expression: effective_price
+    business_name: Effective Price
+    aggregation: avg
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  # gdp_location area measures — pre-approved disabled
+  - measure_id: sales_area
+    definition_type: measure
+    pair_id: gdp_location
+    source_expression: sales_area
+    target_expression: sales_area
+    business_name: Sales Area
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: total_improvable_area
+    definition_type: measure
+    pair_id: gdp_location
+    source_expression: total_improvable_area
+    target_expression: total_improvable_area
+    business_name: Total Improvable Area
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: total_improved_area
+    definition_type: measure
+    pair_id: gdp_location
+    source_expression: total_improved_area
+    target_expression: total_improved_area
+    business_name: Total Improved Area
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
+  - measure_id: total_unimproved_area
+    definition_type: measure
+    pair_id: gdp_location
+    source_expression: total_unimproved_area
+    target_expression: total_unimproved_area
+    business_name: Total Unimproved Area
+    aggregation: sum
+    enabled: false
+    approval_status: approved
+    publish_to_context: false
+
 grain_checks:
+  - grain_id: by_date
+    pair_id: gdp_daily_inv
+    grain_columns:
+      source: [business_inventory_date]
+      target: [business_inventory_date]
+    distinct_columns:
+      source: [universal_sku_number, location, enterprise_channel_number]
+      target: [universal_sku_number, location_number, enterprise_channel_number]
+    date_column:
+      source: business_inventory_date
+      target: business_inventory_date
+    row_count_tolerance: 0
+    distinct_tolerance: 0
+    enabled: true
+    severity: error
+    approval_status: approved
+
   - grain_id: by_channel
     pair_id: shipping_segment_test
     grain_columns:

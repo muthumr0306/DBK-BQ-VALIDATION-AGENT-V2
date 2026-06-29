@@ -14,6 +14,12 @@ outputs/**
 !outputs/*/failed_measures.csv
 !outputs/*/human_test_results.csv
 !outputs/*/execution_errors.csv
+!outputs/*/schema_gaps.csv
+!outputs/*/grain_reconciliation.csv
+!outputs/*/check_results.csv
+!outputs/*/run_summary.csv
+!outputs/*/table_verdicts.csv
+!outputs/*/relationship_candidates.csv
 approvals/
 run_output.txt
 data/

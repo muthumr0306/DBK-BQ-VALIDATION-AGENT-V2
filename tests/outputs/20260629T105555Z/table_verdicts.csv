@@ -1,0 +1,4 @@
+run_id,table_pair_id,source_table,target_table,verdict,verdict_reason,rows_total,total_rows_affected,pct_rows_affected,total_value_at_risk,checks_total,checks_passed,checks_failed,checks_error,checks_pending_approval,critical_count,warning_count,info_count,structural_failure_count,recon_failed,business_rule_failed,llm_failed,worst_check_id
+20260629T105555Z,gdp_daily_inv,local.source.daily_inventory_position,local.target.fact_inventory_position,PASS,All tests passed.,0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,
+20260629T105555Z,ri2_cc_fgcolor,,local.target.dim_finished_good_color_ri,FAIL,Critical failure on ri2_cc_fgcolor__freshness (100.0% rows affected).,1,304,304,0,8,5,2,0,1,1,1,6,0,1,0,1,ri2_cc_fgcolor__freshness
+20260629T105555Z,ri3_season,,local.target.dim_customer_choice_ri3,FAIL,Critical failure on ri3_season__freshness (100.0% rows affected).,1,1177,1177,0,7,2,4,0,1,1,3,3,0,2,0,2,ri3_season__freshness

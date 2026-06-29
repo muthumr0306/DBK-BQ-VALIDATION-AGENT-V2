@@ -309,3 +309,239 @@ tables:
       target: []
     scd2:
       enabled: false
+
+  # --- GDP → GCP migration test cases ---
+
+  gdp_inv_loc:
+    publish_to_context: false
+    description: >
+      Inventory managed location dimension. GDP source has 1000 rows; GCP target has 960.
+      The column location_name exists in GDP but is absent from the GCP schema.
+      distinct(abbreviated_location_name) should match but is halved in GCP.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [inventory_managed_location_id]
+      target: [inventory_managed_location_id]
+    audit_columns:
+      source: updated_on
+      target: update_dttm
+    freshness_sla_minutes: 2880
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  gdp_mc_cc:
+    publish_to_context: false
+    description: >
+      Market-channel customer-choice flattened view (GDP) vs vw_mc_sku_flattened (GCP).
+      GDP 2000 rows / GCP 1850 rows. Distinct customer_choice_id, universal_customer_choice_number
+      collapse in GCP. class_id is 100% null in GCP.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [market_channel_customer_choice_id]
+      target: [market_channel_sku_id]
+    freshness_sla_minutes: 2880
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  gdp_mc_sku:
+    publish_to_context: false
+    description: >
+      Market-channel SKU flattened view (GDP) vs vw_mc_customer_choice_flattened (GCP).
+      Both 1500 rows. size_code present in GDP source but absent from GCP target schema.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [market_channel_sku_id]
+      target: [market_channel_customer_choice_id]
+    freshness_sla_minutes: 2880
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  gdp_division:
+    publish_to_context: false
+    description: >
+      Division dimension. GDP source 200 rows (clean). GCP target 203 rows with 3 duplicate
+      division_sid values (PK violation).
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [division_id]
+      target: [division_sid]
+    audit_columns:
+      target: update_dttm
+    freshness_sla_minutes: 2880
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  gdp_style:
+    publish_to_context: false
+    description: >
+      Style dimension. GDP source 1200 rows / GCP target 1200 rows.
+      Distinct style_id count is lower in GCP — some style_ids collapsed or duplicated.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [style_id]
+      target: [style_id]
+    audit_columns:
+      target: update_dttm
+    freshness_sla_minutes: 2880
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  gdp_daily_inv:
+    publish_to_context: false
+    description: >
+      Daily inventory position fact. GDP source 336 rows / GCP target 288 rows.
+      GCP is missing inventory records for the latest 2 business_inventory_dates.
+      Grain: universal_sku_number + location/location_number + business_inventory_date + enterprise_channel_number.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [universal_sku_number, location, business_inventory_date, enterprise_channel_number]
+      target: [universal_sku_number, location_number, business_inventory_date, enterprise_channel_number]
+    audit_columns:
+      target: update_dttm
+    freshness_sla_minutes: 1440
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  gdp_location:
+    publish_to_context: false
+    description: >
+      Store location dimension. GDP source 800 rows / GCP target 768 rows.
+      ~32 location_numbers present in GDP are absent from GCP.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [location_number]
+      target: [location_number]
+    audit_columns:
+      target: update_dttm
+    freshness_sla_minutes: 2880
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  gdp_fg_color:
+    publish_to_context: false
+    description: >
+      Finished good color dimension. GDP source 600 rows / GCP target 603 rows (3 extra orphan records).
+      GDP columns season_code and season_year are renamed to color_palette_season_code and
+      color_palette_season_year in GCP.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [finished_good_color_id]
+      target: [finished_good_color_id]
+    audit_columns:
+      target: update_dttm
+    freshness_sla_minutes: 2880
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  gdp_bmc:
+    publish_to_context: false
+    description: >
+      Brand-market-channel hierarchy. GDP source 192 rows / GCP target 165 rows.
+      Distinct brand_market_channel_id and hierarchy_id differ; distinct brand_id=8,
+      market_id=6, channel_id=4 MATCH (precision test — only mismatched metrics should be flagged).
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [brand_market_channel_id]
+      target: [brand_market_channel_id]
+    audit_columns:
+      target: update_dttm
+    freshness_sla_minutes: 2880
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  gdp_size:
+    publish_to_context: false
+    description: >
+      Size dimension. GDP source 400 rows / GCP target 370 rows. Distinct size_id reduced in GCP.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      source: [size_id]
+      target: [size_id]
+    audit_columns:
+      target: update_dttm
+    freshness_sla_minutes: 2880
+    filters:
+      source: []
+      target: []
+    scd2:
+      enabled: false
+
+  # --- Referential integrity (bigquery_only) ---
+
+  ri1_cc_sku:
+    publish_to_context: false
+    description: >
+      Purchase order CC line table (bigquery_only). 800 CC lines; relationship check verifies
+      every destination_purchase_order_line_cc_id appears in the SKU child table.
+      50 CC lines (ids 751..800) have no SKU child.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      target: [destination_purchase_order_line_cc_id]
+    audit_columns:
+      target: update_dttm
+    freshness_sla_minutes: 1440
+    filters:
+      target: []
+    scd2:
+      enabled: false
+
+  ri2_cc_fgcolor:
+    publish_to_context: false
+    description: >
+      Finished good color dimension (clean 600-row version, bigquery_only). Relationship check
+      verifies every finished_good_color_sid appears in dim_customer_choice. 40 sids (561..600)
+      are absent from customer_choice.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      target: [finished_good_color_sid]
+    audit_columns:
+      target: update_dttm
+    freshness_sla_minutes: 2880
+    filters:
+      target: []
+    scd2:
+      enabled: false
+
+  ri3_season:
+    publish_to_context: false
+    description: >
+      Customer choice dimension (bigquery_only). Relationship check verifies every season_sid
+      referenced in dim_customer_choice exists in dim_season. dim_season has sids 1..50;
+      dim_customer_choice references sids 1..60 — 10 missing.
+    allow_masked_samples_for_llm: false
+    primary_key:
+      target: [customer_choice_sid]
+    audit_columns:
+      target: update_dttm
+    freshness_sla_minutes: 2880
+    filters:
+      target: []
+    scd2:
+      enabled: false

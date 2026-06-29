@@ -1,0 +1,3 @@
+pair_id,rule_id,type,category,severity,origin,description,status,evidence.target.invalid_count,comparison.violations.target
+ri2_cc_fgcolor,ri2_cc_fgcolor__color_type_valid_values,domain,human,error,human,Validate that color_type is one of the allowed values.,FAIL,600.0,600.0
+ri3_season,ri3_season__status_code_validity,domain,human,error,human,Validate that status_code contains only valid alphabetic codes.,FAIL,1000.0,1000.0
