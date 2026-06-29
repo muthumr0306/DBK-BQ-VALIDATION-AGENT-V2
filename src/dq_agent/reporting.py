@@ -155,6 +155,8 @@ def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, A
     human_results = [row for row in results if row.get("origin") == "human"]
     measure_results = [row for row in results if row.get("type") == "measure_reconciliation"]
     failed_measures = [row for row in measure_results if row.get("status") == "FAIL"]
+    grain_results = [row for row in results if row.get("type") == "grain_reconciliation"]
+    schema_gaps = [row for row in results if row.get("type") == "schema_gap"]
     execution_errors = [row for row in results if row.get("status") == "ERROR"]
     workbook = output_dir / "consolidated_report.xlsx"
     with pd.ExcelWriter(workbook, engine="openpyxl") as writer:
@@ -170,6 +172,8 @@ def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, A
             "Human Tests": human_results,
             "Measure Reconciliation": measure_results,
             "Failed Measures": failed_measures,
+            "Grain Reconciliation": grain_results,
+            "Schema Gaps": schema_gaps,
             "Execution Errors": execution_errors,
             "RCA": rca,
         }.items():
@@ -192,6 +196,8 @@ def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, A
     _frame(row_reconciliation).to_csv(output_dir / "row_reconciliation.csv", index=False)
     _frame(measure_results).to_csv(output_dir / "measure_reconciliation.csv", index=False)
     _frame(failed_measures).to_csv(output_dir / "failed_measures.csv", index=False)
+    _frame(grain_results).to_csv(output_dir / "grain_reconciliation.csv", index=False)
+    _frame(schema_gaps).to_csv(output_dir / "schema_gaps.csv", index=False)
     _frame(execution_errors).to_csv(output_dir / "execution_errors.csv", index=False)
     write_json(output_dir / "generated_rules.json", rules)
 

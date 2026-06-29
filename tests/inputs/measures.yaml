@@ -108,3 +108,21 @@ measures:
     severity: error
     approval_status: approved
     publish_to_context: false
+
+grain_checks:
+  - grain_id: by_channel
+    pair_id: shipping_segment_test
+    grain_columns:
+      source: [fulfillment_channel]
+      target: [channel]
+    distinct_columns:
+      source: [order_id]
+      target: [order_key]
+    date_column:
+      source: order_ts
+      target: load_ts
+    row_count_tolerance: 0
+    distinct_tolerance: 0
+    enabled: true
+    severity: error
+    approval_status: approved

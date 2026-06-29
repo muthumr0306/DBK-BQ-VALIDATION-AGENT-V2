@@ -101,10 +101,40 @@ class MeasureDefinition(BaseModel):
         return self
 
 
+class GrainCheckDefinition(BaseModel):
+    """Per-grain reconciliation: compare row_count / distinct counts / min-max date
+    between source and target, grouped by a configurable grain."""
+    grain_id: str
+    pair_id: str
+    grain_columns: dict[str, list[str]] = Field(default_factory=dict)   # {"source":[...], "target":[...]}
+    distinct_columns: dict[str, list[str]] = Field(default_factory=dict)  # cols to COUNT(DISTINCT)
+    date_column: dict[str, str] = Field(default_factory=dict)           # optional min/max date col
+    row_count_tolerance: int = Field(default=0, ge=0)
+    distinct_tolerance: int = Field(default=0, ge=0)
+    enabled: bool = True
+    severity: str = "error"
+    approval_status: Literal["approved", "pending", "disabled"] = "approved"
+
+    @model_validator(mode="after")
+    def validate_grain(self) -> "GrainCheckDefinition":
+        source = self.grain_columns.get("source", [])
+        target = self.grain_columns.get("target", [])
+        if not source or not target:
+            raise ValueError(f"Grain check {self.grain_id} requires source and target grain_columns")
+        if len(source) != len(target):
+            raise ValueError(f"Grain check {self.grain_id} has different source/target grain widths")
+        d_source = self.distinct_columns.get("source", [])
+        d_target = self.distinct_columns.get("target", [])
+        if len(d_source) != len(d_target):
+            raise ValueError(f"Grain check {self.grain_id} has different source/target distinct widths")
+        return self
+
+
 class MeasureConfiguration(BaseModel):
     settings: MeasureSettings = Field(default_factory=MeasureSettings)
     diagnostics: DiagnosticSettings = Field(default_factory=DiagnosticSettings)
     measures: list[MeasureDefinition] = Field(default_factory=list)
+    grain_checks: list[GrainCheckDefinition] = Field(default_factory=list)
 
 
 class DiagnosticRequest(BaseModel):
@@ -483,6 +513,127 @@ def compare_reconciliation_results(
             "percentage_difference": round(percentage, 6),
             "tolerance_absolute": allowed_absolute, "tolerance_percentage": allowed_percentage,
             "status": "PASS" if passed else "FAIL",
+        })
+    return rows
+
+
+# ── grain reconciliation ──────────────────────────────────────────────────────
+
+def grain_reconciliation_sql(
+    grain: dict[str, Any],
+    pair: TablePair,
+    side: Literal["source", "target"],
+    base_filters: list[dict[str, Any]],
+    maximum_cardinality: int,
+) -> str:
+    """Group by the grain and emit row_count, COUNT(DISTINCT) per configured column,
+    and MIN/MAX of an optional date column, per group."""
+    dialect = "databricks" if side == "source" else "bigquery"
+    compiler = SQLCompiler(dialect)
+    table_name = pair.source_name if side == "source" else pair.target_name
+    if not table_name:
+        raise ValueError(f"Grain reconciliation requires a {side} table")
+
+    grain_columns = list((grain.get("grain_columns") or {}).get(side, []))
+    if not grain_columns:
+        raise ValueError(f"Grain check {grain.get('grain_id')} has no {side} grain columns")
+    group_expressions = [compiler.identifier(column) for column in grain_columns]
+    select_groups = ", ".join(
+        f"{expression} AS group_{index + 1}" for index, expression in enumerate(group_expressions)
+    )
+
+    metric_parts = ["COUNT(*) AS row_count"]
+    distinct_columns = list((grain.get("distinct_columns") or {}).get(side, []))
+    for index, column in enumerate(distinct_columns):
+        metric_parts.append(f"COUNT(DISTINCT {compiler.identifier(column)}) AS distinct_{index + 1}")
+    date_column = (grain.get("date_column") or {}).get(side)
+    if date_column:
+        rendered = compiler.identifier(date_column)
+        metric_parts.append(f"MIN({rendered}) AS min_date")
+        metric_parts.append(f"MAX({rendered}) AS max_date")
+
+    where = compiler.where(base_filters)
+    group_by = f" GROUP BY {', '.join(str(index + 1) for index in range(len(group_expressions)))}"
+    limit = f" LIMIT {maximum_cardinality + 1}"
+    return (
+        f"SELECT {select_groups}, {', '.join(metric_parts)} "
+        f"FROM {compiler.table(table_name)}{where}{group_by}{limit}"
+    )
+
+
+def compare_grain_results(
+    grain: dict[str, Any],
+    source: pd.DataFrame,
+    target: pd.DataFrame,
+) -> list[dict[str, Any]]:
+    """Outer-join source and target on the grain columns and flag per-group divergence
+    in row_count, distinct counts, and min/max date."""
+    group_columns = [column for column in source.columns if column.startswith("group_")]
+    if not group_columns:
+        return []
+    for frame in (source, target):
+        for column in group_columns:
+            if column not in frame:
+                frame[column] = None
+            frame[column] = frame[column].astype("string").fillna("<NULL>")
+    combined = source.merge(target, on=group_columns, how="outer", suffixes=("_source", "_target"))
+
+    row_tol = int(grain.get("row_count_tolerance") or 0)
+    distinct_tol = int(grain.get("distinct_tolerance") or 0)
+    n_distinct = len(list((grain.get("distinct_columns") or {}).get("source", [])))
+    has_date = bool((grain.get("date_column") or {}).get("source"))
+    distinct_names = list((grain.get("distinct_columns") or {}).get("target", [])) or \
+        list((grain.get("distinct_columns") or {}).get("source", []))
+
+    def _num(value: Any) -> float:
+        if value is None or (isinstance(value, float) and math.isnan(value)):
+            return 0.0
+        return float(value)
+
+    def _str(value: Any) -> str:
+        if value is None or (isinstance(value, float) and math.isnan(value)):
+            return ""
+        return str(value)
+
+    rows: list[dict[str, Any]] = []
+    for raw in combined.to_dict("records"):
+        diverged: list[str] = []
+
+        src_rows = int(_num(raw.get("row_count_source")))
+        tgt_rows = int(_num(raw.get("row_count_target")))
+        if abs(src_rows - tgt_rows) > row_tol:
+            diverged.append("row_count")
+
+        metrics: dict[str, Any] = {
+            "source_rows": src_rows, "target_rows": tgt_rows,
+        }
+        for index in range(n_distinct):
+            src_d = int(_num(raw.get(f"distinct_{index + 1}_source")))
+            tgt_d = int(_num(raw.get(f"distinct_{index + 1}_target")))
+            name = distinct_names[index] if index < len(distinct_names) else f"distinct_{index + 1}"
+            metrics[f"source_distinct_{name}"] = src_d
+            metrics[f"target_distinct_{name}"] = tgt_d
+            if abs(src_d - tgt_d) > distinct_tol:
+                diverged.append(f"distinct_{name}")
+
+        if has_date:
+            src_min, tgt_min = _str(raw.get("min_date_source")), _str(raw.get("min_date_target"))
+            src_max, tgt_max = _str(raw.get("max_date_source")), _str(raw.get("max_date_target"))
+            metrics.update({
+                "source_min_date": src_min, "target_min_date": tgt_min,
+                "source_max_date": src_max, "target_max_date": tgt_max,
+            })
+            if src_min != tgt_min:
+                diverged.append("min_date")
+            if src_max != tgt_max:
+                diverged.append("max_date")
+
+        rows.append({
+            "grain_id": grain.get("grain_id"),
+            "group_values": {column: raw.get(column) for column in group_columns},
+            **metrics,
+            "diverged_metrics": diverged,
+            "status": "FAIL" if diverged else "PASS",
         })
     return rows
 

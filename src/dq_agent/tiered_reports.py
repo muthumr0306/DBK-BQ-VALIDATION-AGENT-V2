@@ -224,6 +224,24 @@ def _extract_metrics(
         value_at_risk = abs(src_val - tgt_val)
         value_metric = result.get("measure_id", "")
 
+    elif rtype == "grain_reconciliation":
+        # Flat keys produced by compare_grain_results (no nested evidence)
+        src_n = _safe_int(result.get("source_rows"))
+        tgt_n = _safe_int(result.get("target_rows"))
+        rows_affected = abs(src_n - tgt_n)
+        rows_total = max(src_n, tgt_n)
+        group_values = result.get("group_values") or {}
+        if group_values:
+            key_examples = [", ".join(f"{k}={v}" for k, v in group_values.items())]
+
+    elif rtype == "schema_gap":
+        # One column present on one side, absent on the other
+        rows_affected = 1
+        rows_total = 1
+        col = (result.get("evidence") or {}).get("column", "")
+        if col:
+            key_examples = [str(col)]
+
     elif rtype in ("predicate", "domain", "context_domain", "context_minimum",
                    "context_maximum", "aggregate", "custom_sql"):
         side = tgt_ev or src_ev or evidence

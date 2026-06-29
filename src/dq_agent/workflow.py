@@ -30,10 +30,12 @@ from .connectors import ColumnMetadata, WarehouseConnector, make_connectors
 from .llm import LLMAdapter, make_llm_adapter
 from .measures import (
     DiagnosticRequest,
+    compare_grain_results,
     compare_reconciliation_results,
     default_diagnostic_requests,
     diagnostic_sql,
     evidence_based_rca,
+    grain_reconciliation_sql,
     infer_measure_candidates,
     load_measure_configuration,
     measure_profile_sql,
@@ -432,6 +434,8 @@ class DQWorkflow:
                 pair, measures, metadata, mappings, filters, table_dir
             )
             results.extend(measure_results)
+            results.extend(self._execute_grain_reconciliations(pair, filters, table_dir))
+            results.extend(self._detect_schema_gaps(pair, metadata, mappings, keys))
             summary["last_stage"] = "execution"
             summary["passed"] = sum(row["status"] == "PASS" for row in results)
             summary["failed"] = sum(row["status"] == "FAIL" for row in results)
@@ -449,7 +453,10 @@ class DQWorkflow:
                 return self._finalize_table(table_dir, summary, mappings, rules, results, rca, relationship_candidates), reviews
 
             failed = [row for row in results if row["status"] == "FAIL"]
-            standard_failures = [row for row in failed if row.get("type") != "measure_reconciliation"]
+            # grain_reconciliation and schema_gap are self-describing measure-style results,
+            # not RuleSpec-backed rules, so they bypass the rule-lookup RCA path.
+            _non_rule_rca_types = {"measure_reconciliation", "grain_reconciliation", "schema_gap"}
+            standard_failures = [row for row in failed if row.get("type") not in _non_rule_rca_types]
             measure_failures = [row for row in failed if row.get("type") == "measure_reconciliation"]
             rca = self._perform_rca(pair, standard_failures, rules, audit, filters, table_dir)
             if rca:
@@ -1696,6 +1703,156 @@ class DQWorkflow:
             table_dir / "measure_reconciliation_results.csv", index=False
         )
         return _jsonable(output), groupings_by_measure
+
+    def _execute_grain_reconciliations(
+        self,
+        pair: TablePair,
+        filters: dict[str, list[dict[str, Any]]],
+        table_dir: Path,
+    ) -> list[dict[str, Any]]:
+        """Run configured grain checks: compare row_count / distinct counts / min-max date
+        per grain group between source and target. One result row per grain group."""
+        grain_checks = [
+            g.model_dump() for g in self.measure_config.grain_checks
+            if g.enabled and g.approval_status == "approved" and g.pair_id == pair.pair_id
+        ]
+        if not grain_checks:
+            return []
+        settings = self.measure_config.settings
+        output: list[dict[str, Any]] = []
+        for grain in grain_checks:
+            grain_id = str(grain["grain_id"])
+            base_rule_id = f"{pair.pair_id}__grain__{grain_id}"
+            started_at = datetime.now(timezone.utc).isoformat()
+            self._event("info", "GRAIN_RECONCILIATION_STARTED", pair_id=pair.pair_id, grain_id=grain_id)
+            if pair.mode != "migration":
+                output.append({
+                    "pair_id": pair.pair_id, "rule_id": base_rule_id, "grain_id": grain_id,
+                    "type": "grain_reconciliation", "category": "grain_reconciliation",
+                    "status": "SKIP", "severity": grain.get("severity", "error"),
+                    "origin": "generated",
+                    "reason": "Grain reconciliation requires migration mode",
+                })
+                continue
+            try:
+                source_sql = grain_reconciliation_sql(
+                    grain, pair, "source", filters.get("source", []), settings.maximum_group_cardinality,
+                )
+                target_sql = grain_reconciliation_sql(
+                    grain, pair, "target", filters.get("target", []), settings.maximum_group_cardinality,
+                )
+                source_label = f"{base_rule_id}_source"
+                target_label = f"{base_rule_id}_target"
+                source_frame = self._controlled_execute(
+                    "source", source_sql, {pair.source_name or ""}, table_dir, source_label
+                )
+                target_frame = self._controlled_execute(
+                    "target", target_sql, {pair.target_name}, table_dir, target_label
+                )
+                if (len(source_frame) > settings.maximum_group_cardinality
+                        or len(target_frame) > settings.maximum_group_cardinality):
+                    raise ValueError(
+                        f"Grain cardinality exceeds {settings.maximum_group_cardinality} rows"
+                    )
+                compared = compare_grain_results(grain, source_frame, target_frame)
+                query_references = {
+                    "source": str(table_dir / "sql" / f"{source_label}.sql"),
+                    "target": str(table_dir / "sql" / f"{target_label}.sql"),
+                }
+                for index, row in enumerate(compared):
+                    group_hash = hashlib.sha1(
+                        json.dumps(row.get("group_values", {}), sort_keys=True, default=str).encode()
+                    ).hexdigest()[:10]
+                    diverged = row.get("diverged_metrics", [])
+                    group_label = ", ".join(
+                        f"{k}={v}" for k, v in (row.get("group_values") or {}).items()
+                    )
+                    output.append({
+                        **row, "pair_id": pair.pair_id,
+                        "rule_id": f"{base_rule_id}__{group_hash}",
+                        "type": "grain_reconciliation", "category": "grain_reconciliation",
+                        "severity": grain.get("severity", "error"), "origin": "generated",
+                        "grain_columns": grain.get("grain_columns", {}),
+                        "description": (
+                            f"Grain {grain_id} [{group_label}]: "
+                            + (f"diverged on {', '.join(diverged)}" if diverged else "aligned")
+                        ),
+                        "source_table": pair.source_name, "target_table": pair.target_name,
+                        "started_at": started_at,
+                        "completed_at": datetime.now(timezone.utc).isoformat(),
+                        "query_references": query_references,
+                    })
+                fail_count = sum(1 for r in compared if r.get("status") == "FAIL")
+                self._event(
+                    "info", "GRAIN_RECONCILIATION_COMPLETED", pair_id=pair.pair_id,
+                    grain_id=grain_id, groups=len(compared), diverged=fail_count,
+                )
+            except Exception as exc:
+                output.append({
+                    "pair_id": pair.pair_id, "rule_id": base_rule_id, "grain_id": grain_id,
+                    "type": "grain_reconciliation", "category": "grain_reconciliation",
+                    "status": "ERROR", "severity": grain.get("severity", "error"),
+                    "origin": "generated", "error": str(exc),
+                    "stack_trace": traceback.format_exc(),
+                    "started_at": started_at, "completed_at": datetime.now(timezone.utc).isoformat(),
+                })
+                self._event(
+                    "exception", "GRAIN_RECONCILIATION_FAILED", pair_id=pair.pair_id,
+                    grain_id=grain_id, error=str(exc),
+                )
+        return _jsonable(output)
+
+    def _detect_schema_gaps(
+        self,
+        pair: TablePair,
+        metadata: dict[str, Any],
+        mappings: list[dict[str, Any]],
+        keys: dict[str, list[str]],
+    ) -> list[dict[str, Any]]:
+        """Emit a finding for each column present on one side but absent on the other.
+        Migration mode only; uses the resolved column mappings to determine coverage."""
+        if pair.mode != "migration":
+            return []
+        source_cols = {str(item["name"]) for item in metadata.get("source", [])}
+        target_cols = {str(item["name"]) for item in metadata.get("target", [])}
+        mapped_source = {str(m["source_column"]).lower() for m in mappings if m.get("source_column")}
+        mapped_target = {str(m["target_column"]).lower() for m in mappings if m.get("target_column")}
+
+        pk_targets = {str(c).lower() for c in (keys or {}).get("target", [])}
+        pk_sources = {str(c).lower() for c in (keys or {}).get("source", [])}
+
+        findings: list[dict[str, Any]] = []
+        for col in sorted(source_cols):
+            if col.lower() not in mapped_source:
+                sev = "error" if col.lower() in pk_sources else "warning"
+                findings.append({
+                    "pair_id": pair.pair_id,
+                    "rule_id": f"{pair.pair_id}__schema_gap__source__{col}",
+                    "type": "schema_gap", "category": "schema", "severity": sev,
+                    "origin": "generated", "status": "FAIL",
+                    "description": f"Source column '{col}' has no matching target column",
+                    "source_columns": [col], "target_columns": [],
+                    "evidence": {"column": col, "present_in": "source", "absent_in": "target"},
+                    "comparison": {"mapped": False},
+                })
+        for col in sorted(target_cols):
+            if col.lower() not in mapped_target:
+                sev = "error" if col.lower() in pk_targets else "warning"
+                findings.append({
+                    "pair_id": pair.pair_id,
+                    "rule_id": f"{pair.pair_id}__schema_gap__target__{col}",
+                    "type": "schema_gap", "category": "schema", "severity": sev,
+                    "origin": "generated", "status": "FAIL",
+                    "description": f"Target column '{col}' has no matching source column",
+                    "source_columns": [], "target_columns": [col],
+                    "evidence": {"column": col, "present_in": "target", "absent_in": "source"},
+                    "comparison": {"mapped": False},
+                })
+        if findings:
+            self._event(
+                "info", "SCHEMA_GAPS_DETECTED", pair_id=pair.pair_id, count=len(findings),
+            )
+        return _jsonable(findings)
 
     def _plan_measure_diagnostics(
         self,

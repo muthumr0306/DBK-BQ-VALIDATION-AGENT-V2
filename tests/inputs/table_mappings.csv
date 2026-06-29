@@ -6,5 +6,5 @@ sample_bq_only_table,false,bigquery_only,,,,local,target,bq_only_table,low
 pass_test,false,migration,local,source,pass,local,target,pass,medium
 rowmismatch_test,false,migration,local,source,rowmismatch,local,target,rowmismatch,medium
 valuemismatch_test,false,migration,local,source,valuemismatch,local,target,valuemismatch,medium
-shipping_segment_test,false,migration,local,source,shipping_segment_test,local,target,shipping_segment_test,high
-paid_amt_test,true,migration,local,source,paid_amt_test,local,target,paid_amt_test,high
+shipping_segment_test,true,migration,local,source,shipping_segment_test,local,target,shipping_segment_test,high
+paid_amt_test,false,migration,local,source,paid_amt_test,local,target,paid_amt_test,high
