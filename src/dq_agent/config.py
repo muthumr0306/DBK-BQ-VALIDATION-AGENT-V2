@@ -201,18 +201,29 @@ class TablePair(BaseModel):
 class ColumnMapping(BaseModel):
     pair_id: str
     source_column: str
-    target_column: str
+    target_column: str | None = None  # None/empty = source-only column with no target equivalent
     status: str = "approved"
     cast_note: str | None = None
     comments: str | None = None
     publish_to_context: bool = False
 
-    @field_validator("source_column", "target_column")
+    @field_validator("source_column")
     @classmethod
-    def validate_column(cls, value: str) -> str:
+    def validate_source_column(cls, value: str) -> str:
         if not IDENTIFIER_RE.fullmatch(value):
             raise ValueError(f"Unsafe column identifier: {value!r}")
         return value
+
+    @field_validator("target_column")
+    @classmethod
+    def validate_target_column(cls, value: str | None) -> str | None:
+        if value and not IDENTIFIER_RE.fullmatch(value):
+            raise ValueError(f"Unsafe column identifier: {value!r}")
+        return value
+
+    @property
+    def source_only(self) -> bool:
+        return not self.target_column
 
 
 class HumanTest(BaseModel):

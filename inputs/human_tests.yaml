@@ -13,3 +13,27 @@ tests:
         value: 0
     severity: error
     description: Sales amount must not be negative.
+
+  - test_id: ri2_cc_fgcolor__color_type_valid_values
+    pair_id: ri2_cc_fgcolor
+    enabled: true
+    type: domain
+    scope: target
+    severity: error
+    target_columns: [color_type]
+    parameters:
+      values: ["primary", "secondary", "tertiary"]
+    description: "Validate that color_type is one of the allowed values."
+    publish_to_context: false
+
+  - test_id: ri3_season__status_code_validity
+    pair_id: ri3_season
+    enabled: true
+    type: domain
+    scope: target
+    severity: error
+    target_columns: [status_code]
+    parameters:
+      values: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+    description: "Validate that status_code contains only valid alphabetic codes."
+    publish_to_context: false
