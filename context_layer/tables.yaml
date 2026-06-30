@@ -1,8 +1,9 @@
 tables:
   sample_fact_sales:
-    publish_to_context: false
+    table_type: fact
+    business_entity: sales_transaction
+    aliases: [fact_sales]
     description: Sales transactions migrated from Databricks to BigQuery.
-    allow_masked_samples_for_llm: false
     primary_key:
       source: [sale_id]
       target: [sale_id]
@@ -34,17 +35,11 @@ tables:
       target: []
     scd2:
       enabled: false
-    measures:
-      - source_column: sales_amount
-        target_column: sales_amount
-        aggregate: sum
-        tolerance:
-          absolute: 0.01
-          percentage: 0.001
   sample_dim_brand_scd2:
-    publish_to_context: false
+    table_type: dimension
+    business_entity: brand
+    aliases: [dim_brand, brand_dimension]
     description: Brand dimension with current and historical versions.
-    allow_masked_samples_for_llm: false
     primary_key:
       source: [brand_sid]
       target: [brand_sid]
@@ -77,9 +72,10 @@ tables:
           - {column: active_indicator, operator: eq, value: true}
 
   sample_dim_market:
-    publish_to_context: false
+    table_type: dimension
+    business_entity: market
+    aliases: [dim_market, market_dimension]
     description: Simple market reference dimension.
-    allow_masked_samples_for_llm: false
     primary_key:
       source: [market_sid]
       target: [market_sid]
@@ -228,9 +224,10 @@ tables:
       enabled: false
 
   sample_bq_only_table:
-    publish_to_context: false
+    table_type: reference
+    business_entity: sample_record
+    aliases: [new_bigquery_table]
     description: Example standalone BigQuery data-quality target.
-    allow_masked_samples_for_llm: false
     primary_key:
       target: [record_id]
     audit_columns:

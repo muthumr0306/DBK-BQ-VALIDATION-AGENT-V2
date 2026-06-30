@@ -1,0 +1,10 @@
+column_roles:
+  identifier_suffixes: [id, sid, key, code, number, num]
+  measure_terms: [amount, quantity, revenue, cost, price, margin, balance, units]
+  audit_terms: [updated_at, update_date, last_modified, load_timestamp, ingestion_timestamp]
+scd2_patterns:
+  current_flags: [active_indicator, is_active, current_flag, is_current]
+  active_values: [true, 1, Y, ACTIVE, CURRENT]
+  end_dates: [effective_end_date, valid_to, expiration_date, end_date]
+common_filters: []
+accepted_value_patterns: []

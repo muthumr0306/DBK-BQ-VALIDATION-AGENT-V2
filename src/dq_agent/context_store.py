@@ -1,458 +1,554 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+import re
+import sqlite3
+from abc import ABC, abstractmethod
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import pandas as pd
+import yaml
 
-from .config import AppConfig, ContextStoreConfig
-from .context_utils import (
-    archive_approval_workbook,
-    canonical_json,
-    payload_hash,
-    read_approval_workbook,
-    stable_id,
-    utc_now,
-)
-from .reporting import write_json
+from .config import AppConfig, read_yaml
 
 
-TABLE_DDL = {
-    "context_records": """
-        record_id STRING NOT NULL,
-        context_key STRING NOT NULL,
-        context_type STRING NOT NULL,
-        subject_key STRING NOT NULL,
-        organization STRING NOT NULL,
-        environment STRING NOT NULL,
-        domain STRING NOT NULL,
-        pair_id STRING,
-        context_id STRING,
-        target_table STRING,
-        source_table STRING,
-        column_name STRING,
-        payload_json STRING NOT NULL,
-        content_hash STRING NOT NULL,
-        version INT64 NOT NULL,
-        status STRING NOT NULL,
-        origin STRING NOT NULL,
-        confidence FLOAT64,
-        source_file STRING,
-        run_id STRING,
-        proposal_id STRING,
-        approved_by STRING,
-        approved_at TIMESTAMP,
-        created_at TIMESTAMP NOT NULL,
-        provenance_json STRING
-    """,
-    "context_proposals": """
-        proposal_id STRING NOT NULL,
-        context_key STRING NOT NULL,
-        context_type STRING NOT NULL,
-        subject_key STRING NOT NULL,
-        organization STRING NOT NULL,
-        environment STRING NOT NULL,
-        domain STRING NOT NULL,
-        pair_id STRING,
-        context_id STRING,
-        target_table STRING,
-        source_table STRING,
-        column_name STRING,
-        action STRING NOT NULL,
-        base_record_id STRING,
-        base_version INT64,
-        current_payload_json STRING,
-        proposed_payload_json STRING NOT NULL,
-        content_hash STRING NOT NULL,
-        origin STRING NOT NULL,
-        confidence FLOAT64,
-        evidence_json STRING,
-        explanation STRING,
-        source_file STRING,
-        run_id STRING,
-        status STRING NOT NULL,
-        created_at TIMESTAMP NOT NULL,
-        processed_at TIMESTAMP
-    """,
-    "approval_decisions": """
-        decision_id STRING NOT NULL,
-        proposal_id STRING NOT NULL,
-        decision STRING NOT NULL,
-        override_payload_json STRING,
-        reviewer_comments STRING,
-        reviewed_by STRING NOT NULL,
-        reviewed_at TIMESTAMP NOT NULL,
-        imported_at TIMESTAMP NOT NULL,
-        resulting_record_id STRING,
-        resulting_version INT64,
-        content_hash STRING NOT NULL,
-        approval_file STRING,
-        organization STRING NOT NULL,
-        environment STRING NOT NULL,
-        domain STRING NOT NULL
-    """,
-}
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
-def _client(store: ContextStoreConfig) -> Any:
-    try:
-        from google.cloud import bigquery
-    except ImportError as exc:
-        raise RuntimeError("Install google-cloud-bigquery to use the context store") from exc
-    return bigquery.Client(project=store.project, location=store.location)
+def _json(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
 
 
-def _table(store: ContextStoreConfig, name: str) -> str:
-    return f"{store.project}.{store.dataset}.{name}"
+def _hash(value: Any) -> str:
+    return hashlib.sha256(_json(value).encode("utf-8")).hexdigest()
 
 
-def ensure_context_objects(config: AppConfig, logger: logging.Logger | None = None) -> dict[str, str]:
-    store = config.project.context_store
-    if not store.enabled:
-        raise RuntimeError("Context storage is disabled in config/project.yaml")
-    from google.cloud import bigquery
+def _tokens(value: Any) -> set[str]:
+    text = re.sub(r"([a-z])([A-Z])", r"\1 \2", str(value or ""))
+    return {token.lower() for token in re.split(r"[^A-Za-z0-9]+", text) if token}
 
-    client = _client(store)
-    dataset_id = f"{store.project}.{store.dataset}"
-    dataset = bigquery.Dataset(dataset_id)
-    dataset.location = store.location
-    client.create_dataset(dataset, exists_ok=True)
-    if logger:
-        logger.info("LOAD_CONFIGURATION BigQuery dataset=%s location=%s", dataset_id, store.location)
-    for name, columns in TABLE_DDL.items():
-        sql = f"CREATE TABLE IF NOT EXISTS `{_table(store, name)}` ({columns})"
-        client.query(sql).result()
-        if logger:
-            logger.info("WRITE_CONTEXT_STAGING ensured BigQuery table=%s", _table(store, name))
-    current_view = f"""
-        CREATE OR REPLACE VIEW `{_table(store, 'trusted_context_current')}` AS
-        SELECT * EXCEPT(row_number)
-        FROM (
-          SELECT r.*, ROW_NUMBER() OVER (
-            PARTITION BY organization, environment, domain, context_key
-            ORDER BY version DESC, created_at DESC
-          ) AS row_number
-          FROM `{_table(store, 'context_records')}` r
+
+def _search_text(*values: Any) -> str:
+    parts: list[str] = []
+    for value in values:
+        if isinstance(value, dict):
+            parts.extend(f"{key} {_search_text(item)}" for key, item in value.items())
+        elif isinstance(value, list):
+            parts.extend(_search_text(item) for item in value)
+        elif value is not None:
+            parts.append(str(value))
+    return " ".join(parts)
+
+
+class ContextRetriever(ABC):
+    """Small replaceable contract for local now and vector/GCP retrieval later."""
+
+    @abstractmethod
+    def sync(self) -> dict[str, int]: ...
+
+    @abstractmethod
+    def rebuild(self) -> dict[str, int]: ...
+
+    @abstractmethod
+    def get_exact(self, **selectors: Any) -> list[dict[str, Any]]: ...
+
+    @abstractmethod
+    def search(self, query: str | dict[str, Any], limit: int | None = None) -> list[dict[str, Any]]: ...
+
+    @abstractmethod
+    def context_package(self, query: dict[str, Any], limit: int | None = None) -> dict[str, Any]: ...
+
+    @abstractmethod
+    def upsert_approved(self, records: list[dict[str, Any]]) -> int: ...
+
+
+class LocalContextStore(ContextRetriever):
+    def __init__(self, config: AppConfig, logger: logging.Logger | None = None):
+        self.config = config
+        self.path = config.path(config.project.context_store.path)
+        self.logger = logger
+
+    def _connect(self) -> sqlite3.Connection:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        connection = sqlite3.connect(self.path)
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("PRAGMA foreign_keys=ON")
+        return connection
+
+    @staticmethod
+    def _schema(connection: sqlite3.Connection) -> None:
+        connection.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS context_records (
+                record_id TEXT PRIMARY KEY,
+                context_type TEXT NOT NULL,
+                subject_key TEXT NOT NULL,
+                pair_id TEXT,
+                target_table TEXT,
+                source_table TEXT,
+                column_name TEXT,
+                business_entity TEXT,
+                table_type TEXT,
+                payload_json TEXT NOT NULL,
+                search_text TEXT NOT NULL,
+                content_hash TEXT NOT NULL,
+                version INTEGER NOT NULL DEFAULT 1,
+                origin TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'ACTIVE',
+                confidence REAL NOT NULL DEFAULT 1.0,
+                provenance_json TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS uq_context_subject
+                ON context_records(context_type, subject_key, origin);
+            CREATE INDEX IF NOT EXISTS ix_context_pair ON context_records(pair_id);
+            CREATE INDEX IF NOT EXISTS ix_context_table ON context_records(target_table);
+            CREATE INDEX IF NOT EXISTS ix_context_column ON context_records(column_name);
+            CREATE INDEX IF NOT EXISTS ix_context_entity ON context_records(business_entity);
+            CREATE TABLE IF NOT EXISTS context_edges (
+                edge_id TEXT PRIMARY KEY,
+                source_key TEXT NOT NULL,
+                target_key TEXT NOT NULL,
+                edge_type TEXT NOT NULL,
+                payload_json TEXT NOT NULL
+            );
+            """
         )
-        WHERE row_number = 1 AND status = 'TRUSTED'
-    """
-    pending_view = f"""
-        CREATE OR REPLACE VIEW `{_table(store, 'pending_context_proposals')}` AS
-        SELECT * FROM `{_table(store, 'context_proposals')}` WHERE status = 'PENDING'
-    """
-    client.query(current_view).result()
-    client.query(pending_view).result()
-    if logger:
-        logger.info("WRITE_CONTEXT_STAGING ensured BigQuery views dataset=%s", dataset_id)
-    return {
-        "dataset": dataset_id,
-        "context_records": _table(store, "context_records"),
-        "context_proposals": _table(store, "context_proposals"),
-        "approval_decisions": _table(store, "approval_decisions"),
-        "trusted_context_current": _table(store, "trusted_context_current"),
-        "pending_context_proposals": _table(store, "pending_context_proposals"),
-    }
+        connection.execute(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS context_fts USING fts5(record_id UNINDEXED, search_text)"
+        )
+
+    def _source_files(self) -> list[tuple[str, Path]]:
+        project = self.config.project
+        return [
+            ("tables", self.config.path(project.context_tables)),
+            ("relationships", self.config.path(project.relationships)),
+            ("measures", self.config.path(project.measures)),
+            ("patterns", self.config.path(project.context_patterns)),
+            ("issue_patterns", self.config.path(project.issue_patterns)),
+            ("learned", self.config.path(project.learned_context)),
+        ]
+
+    def _record(
+        self,
+        context_type: str,
+        subject_key: str,
+        payload: dict[str, Any],
+        source: Path,
+        *,
+        pair_id: str | None = None,
+        target_table: str | None = None,
+        source_table: str | None = None,
+        column_name: str | None = None,
+        entity: str | None = None,
+        table_type: str | None = None,
+        origin: str = "DEVELOPER_CONTEXT",
+        confidence: float = 1.0,
+        version: int = 1,
+        reviewed_by: str | None = None,
+        reviewer_comments: str | None = None,
+    ) -> dict[str, Any]:
+        content_hash = _hash({
+            "payload": payload, "version": version, "reviewed_by": reviewed_by,
+            "reviewer_comments": reviewer_comments, "pair_id": pair_id,
+            "target_table": target_table, "source_table": source_table,
+            "column_name": column_name, "business_entity": entity,
+            "table_type": table_type, "origin": origin, "confidence": confidence,
+        })
+        record_id = hashlib.sha256(
+            f"{context_type}|{subject_key}|{origin}".encode("utf-8")
+        ).hexdigest()[:32]
+        provenance = {
+            "source_file": str(source), "reviewed_by": reviewed_by,
+            "reviewer_comments": reviewer_comments,
+        }
+        return {
+            "record_id": record_id, "context_type": context_type,
+            "subject_key": subject_key, "pair_id": pair_id,
+            "target_table": target_table, "source_table": source_table,
+            "column_name": column_name, "business_entity": entity,
+            "table_type": table_type, "payload_json": _json(payload),
+            "search_text": _search_text(subject_key, entity, table_type, payload),
+            "content_hash": content_hash, "version": int(version),
+            "origin": origin, "status": "ACTIVE", "confidence": float(confidence),
+            "provenance_json": _json(provenance), "updated_at": _now(),
+        }
+
+    def _records_from_files(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        records: list[dict[str, Any]] = []
+        edges: list[dict[str, Any]] = []
+        sources = dict(self._source_files())
+
+        tables = read_yaml(sources["tables"], default={"tables": {}})
+        for table_id, raw in (tables.get("tables") or {}).items():
+            payload = dict(raw or {})
+            target_table = payload.get("target_table")
+            source_table = payload.get("source_table")
+            entity = payload.get("business_entity")
+            table_type = payload.get("table_type")
+            records.append(self._record(
+                "table", str(table_id), payload, sources["tables"], pair_id=str(table_id),
+                target_table=target_table, source_table=source_table, entity=entity,
+                table_type=table_type,
+            ))
+            for column, details in (payload.get("columns") or {}).items():
+                column_payload = {"table_id": table_id, **dict(details or {})}
+                records.append(self._record(
+                    "column", f"{table_id}:{column}", column_payload, sources["tables"],
+                    pair_id=str(table_id), target_table=target_table,
+                    source_table=source_table, column_name=str(column), entity=entity,
+                    table_type=table_type,
+                ))
+
+        relationships = read_yaml(sources["relationships"], default={})
+        for dimension_id, raw in (relationships.get("dimensions") or {}).items():
+            payload = {"dimension_id": dimension_id, **dict(raw or {})}
+            records.append(self._record(
+                "dimension", str(dimension_id), payload, sources["relationships"],
+                target_table=payload.get("table"), entity=str(dimension_id), table_type="dimension",
+            ))
+        for raw in relationships.get("custom_relationships") or []:
+            payload = dict(raw or {})
+            relationship_id = str(payload.get("id") or _hash(payload)[:16])
+            records.append(self._record(
+                "relationship", relationship_id, payload, sources["relationships"],
+                pair_id=str(payload.get("child_table") or "") or None,
+                target_table=payload.get("parent_table"),
+            ))
+            edge_id = _hash([payload.get("child_table"), payload.get("parent_table"), relationship_id])[:32]
+            edges.append({
+                "edge_id": edge_id, "source_key": str(payload.get("child_table") or ""),
+                "target_key": str(payload.get("parent_table") or ""),
+                "edge_type": "relationship", "payload_json": _json(payload),
+            })
+
+        measures = read_yaml(sources["measures"], default={"measures": []})
+        for raw in measures.get("measures") or []:
+            payload = dict(raw or {})
+            measure_id = str(payload.get("measure_id") or _hash(payload)[:16])
+            records.append(self._record(
+                "measure", f"{payload.get('pair_id')}:{measure_id}", payload, sources["measures"],
+                pair_id=str(payload.get("pair_id") or "") or None,
+                target_table=payload.get("target_table"), source_table=payload.get("source_table"),
+                column_name=str(payload.get("target_expression") or "") or None,
+            ))
+
+        patterns = read_yaml(sources["patterns"], default={})
+        for group, value in patterns.items():
+            records.append(self._record("pattern", str(group), {group: value}, sources["patterns"]))
+        issue_patterns = read_yaml(sources["issue_patterns"], default={"patterns": []})
+        for raw in issue_patterns.get("patterns") or []:
+            payload = dict(raw or {})
+            records.append(self._record(
+                "issue_pattern", str(payload.get("id") or _hash(payload)[:16]),
+                payload, sources["issue_patterns"],
+            ))
+
+        learned = read_yaml(sources["learned"], default={"records": []})
+        for raw in learned.get("records") or []:
+            item = dict(raw or {})
+            payload = dict(item.get("payload") or {})
+            records.append(self._record(
+                str(item.get("context_type") or "learned"),
+                str(item.get("subject_key") or _hash(payload)[:16]), payload, sources["learned"],
+                pair_id=item.get("pair_id"), target_table=item.get("target_table"),
+                source_table=item.get("source_table"), column_name=item.get("column_name"),
+                entity=item.get("business_entity"), table_type=item.get("table_type"),
+                origin="APPROVED_LEARNING", confidence=float(item.get("confidence", 1.0)),
+                version=int(item.get("version", 1)), reviewed_by=item.get("reviewed_by"),
+                reviewer_comments=item.get("reviewer_comments"),
+            ))
+        return records, edges
+
+    def rebuild(self) -> dict[str, int]:
+        records, edges = self._records_from_files()
+        connection = self._connect()
+        try:
+            self._schema(connection)
+            connection.execute("DELETE FROM context_fts")
+            connection.execute("DELETE FROM context_edges")
+            connection.execute("DELETE FROM context_records")
+            self._insert(connection, records, edges)
+            connection.commit()
+        finally:
+            connection.close()
+        if self.logger:
+            self.logger.info("CONTEXT_REBUILD path=%s records=%s edges=%s", self.path, len(records), len(edges))
+        return {"records": len(records), "edges": len(edges)}
+
+    def sync(self) -> dict[str, int]:
+        records, edges = self._records_from_files()
+        connection = self._connect()
+        inserted = updated = unchanged = 0
+        try:
+            self._schema(connection)
+            existing = {
+                row["record_id"]: row["content_hash"]
+                for row in connection.execute("SELECT record_id, content_hash FROM context_records")
+            }
+            for record in records:
+                previous = existing.get(record["record_id"])
+                if previous == record["content_hash"]:
+                    unchanged += 1
+                    continue
+                if previous:
+                    updated += 1
+                else:
+                    inserted += 1
+                self._insert(connection, [record], [])
+            connection.execute("DELETE FROM context_edges")
+            self._insert(connection, [], edges)
+            active_ids = {record["record_id"] for record in records}
+            for record_id in set(existing) - active_ids:
+                connection.execute("DELETE FROM context_fts WHERE record_id=?", (record_id,))
+                connection.execute("DELETE FROM context_records WHERE record_id=?", (record_id,))
+            connection.commit()
+        finally:
+            connection.close()
+        result = {"inserted": inserted, "updated": updated, "unchanged": unchanged, "edges": len(edges)}
+        if self.logger:
+            self.logger.info("CONTEXT_SYNC path=%s result=%s", self.path, result)
+        return result
+
+    @staticmethod
+    def _insert(
+        connection: sqlite3.Connection,
+        records: Iterable[dict[str, Any]],
+        edges: Iterable[dict[str, Any]],
+    ) -> None:
+        columns = [
+            "record_id", "context_type", "subject_key", "pair_id", "target_table",
+            "source_table", "column_name", "business_entity", "table_type", "payload_json",
+            "search_text", "content_hash", "version", "origin", "status", "confidence",
+            "provenance_json", "updated_at",
+        ]
+        for record in records:
+            connection.execute(
+                f"INSERT OR REPLACE INTO context_records ({','.join(columns)}) VALUES ({','.join('?' for _ in columns)})",
+                [record[column] for column in columns],
+            )
+            connection.execute("DELETE FROM context_fts WHERE record_id=?", (record["record_id"],))
+            connection.execute(
+                "INSERT INTO context_fts(record_id, search_text) VALUES (?, ?)",
+                (record["record_id"], record["search_text"]),
+            )
+        for edge in edges:
+            connection.execute(
+                "INSERT OR REPLACE INTO context_edges(edge_id,source_key,target_key,edge_type,payload_json) VALUES (?,?,?,?,?)",
+                (edge["edge_id"], edge["source_key"], edge["target_key"], edge["edge_type"], edge["payload_json"]),
+            )
+
+    @staticmethod
+    def _decode(row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
+        output = dict(row)
+        output["payload"] = json.loads(output.pop("payload_json"))
+        output["provenance"] = json.loads(output.pop("provenance_json"))
+        return output
+
+    def get_exact(self, **selectors: Any) -> list[dict[str, Any]]:
+        allowed = {
+            "record_id", "context_type", "subject_key", "pair_id", "target_table",
+            "source_table", "column_name", "business_entity", "table_type", "origin", "status",
+        }
+        clauses: list[str] = ["status='ACTIVE'"]
+        values: list[Any] = []
+        for key, value in selectors.items():
+            if key not in allowed or value in (None, ""):
+                continue
+            clauses.append(f"{key}=?")
+            values.append(value)
+        connection = self._connect()
+        try:
+            self._schema(connection)
+            rows = connection.execute(
+                "SELECT * FROM context_records WHERE " + " AND ".join(clauses) + " ORDER BY confidence DESC, version DESC",
+                values,
+            ).fetchall()
+            return [self._decode(row) for row in rows]
+        finally:
+            connection.close()
+
+    def _related_keys(self, keys: set[str]) -> set[str]:
+        if not keys:
+            return set()
+        connection = self._connect()
+        try:
+            self._schema(connection)
+            placeholders = ",".join("?" for _ in keys)
+            rows = connection.execute(
+                f"SELECT source_key,target_key FROM context_edges WHERE source_key IN ({placeholders}) OR target_key IN ({placeholders})",
+                [*keys, *keys],
+            ).fetchall()
+            return {str(value) for row in rows for value in row if value}
+        finally:
+            connection.close()
+
+    def search(self, query: str | dict[str, Any], limit: int | None = None) -> list[dict[str, Any]]:
+        if isinstance(query, str):
+            query = {"description": query}
+        limit = limit or self.config.project.context_store.top_k
+        text = _search_text(query.get("pair_id"), query.get("target_table"), query.get("source_table"),
+                            query.get("business_entity"), query.get("table_type"), query.get("description"),
+                            query.get("columns"), query.get("failure_type"))
+        query_tokens = _tokens(text)
+        exact: dict[str, dict[str, Any]] = {}
+        for selector in (
+            {"pair_id": query.get("pair_id")}, {"target_table": query.get("target_table")},
+            {"source_table": query.get("source_table")}, {"business_entity": query.get("business_entity")},
+        ):
+            if not next(iter(selector.values())):
+                continue
+            for record in self.get_exact(**selector):
+                exact[record["record_id"]] = record
+
+        connection = self._connect()
+        candidates: dict[str, dict[str, Any]] = dict(exact)
+        bm25_by_id: dict[str, float] = {}
+        try:
+            self._schema(connection)
+            safe_terms = [token for token in query_tokens if len(token) > 1]
+            if safe_terms and self.config.project.context_store.fts_enabled:
+                expression = " OR ".join(f'"{term}"' for term in sorted(safe_terms))
+                rows = connection.execute(
+                    "SELECT r.*, bm25(context_fts) AS lexical_rank FROM context_fts "
+                    "JOIN context_records r ON r.record_id=context_fts.record_id "
+                    "WHERE context_fts MATCH ? AND r.status='ACTIVE' ORDER BY lexical_rank LIMIT ?",
+                    (expression, max(limit * 6, 30)),
+                ).fetchall()
+                for row in rows:
+                    decoded = self._decode(row)
+                    candidates[decoded["record_id"]] = decoded
+                    bm25_by_id[decoded["record_id"]] = float(row["lexical_rank"])
+        finally:
+            connection.close()
+
+        related = self._related_keys({str(query.get("pair_id") or ""), str(query.get("target_table") or "")})
+        query_columns = {str(item).lower() for item in query.get("columns", [])}
+        scored: list[dict[str, Any]] = []
+        for record in candidates.values():
+            payload = record["payload"]
+            record_tokens = _tokens(record.get("search_text") or _search_text(payload))
+            overlap = len(query_tokens & record_tokens) / max(1, len(query_tokens | record_tokens))
+            known_columns = {
+                str(value).lower() for key, value in payload.items()
+                if key.endswith("column") and isinstance(value, str)
+            }
+            if record.get("column_name"):
+                known_columns.add(str(record["column_name"]).lower())
+            for key, value in payload.items():
+                if key.endswith("columns") and isinstance(value, list):
+                    known_columns.update(str(item).lower() for item in value)
+            known_columns.update(str(item).lower() for item in (payload.get("columns") or {}) if isinstance(payload.get("columns"), dict))
+            column_overlap = len(query_columns & known_columns) / max(1, len(query_columns | known_columns)) if query_columns else 0.0
+            identity = 1.0 if record["record_id"] in exact else 0.0
+            relation = 1.0 if record.get("subject_key") in related or record.get("target_table") in related else 0.0
+            lexical = 1.0 / (1.0 + abs(bm25_by_id.get(record["record_id"], 50.0)))
+            trust = max(0.0, min(float(record.get("confidence", 0.0)), 1.0))
+            if record.get("origin") in {"DEVELOPER_CONTEXT", "APPROVED_LEARNING"}:
+                trust = 1.0
+            score = (
+                0.28 * identity + 0.15 * column_overlap + 0.20 * lexical
+                + 0.15 * relation + 0.12 * overlap + 0.10 * trust
+            )
+            scored.append({**record, "retrieval_score": round(min(score, 1.0), 4)})
+        scored.sort(key=lambda item: (item["retrieval_score"], item["confidence"], item["version"]), reverse=True)
+
+        balanced: list[dict[str, Any]] = []
+        per_type: dict[str, int] = {}
+        for item in scored:
+            context_type = str(item["context_type"])
+            if per_type.get(context_type, 0) >= 3:
+                continue
+            balanced.append(item)
+            per_type[context_type] = per_type.get(context_type, 0) + 1
+            if len(balanced) >= limit:
+                break
+        if self.logger:
+            self.logger.info("CONTEXT_RETRIEVAL query=%s returned=%s", query, len(balanced))
+        return balanced
+
+    def context_package(self, query: dict[str, Any], limit: int | None = None) -> dict[str, Any]:
+        records = self.search(query, limit=limit)
+        selected: list[dict[str, Any]] = []
+        character_count = 0
+        maximum = self.config.project.context_store.max_context_characters
+        for record in records:
+            item = {
+                "record_id": record["record_id"], "context_type": record["context_type"],
+                "subject_key": record["subject_key"], "payload": record["payload"],
+                "score": record["retrieval_score"], "origin": record["origin"],
+                "confidence": record["confidence"], "provenance": record["provenance"],
+            }
+            size = len(_json(item))
+            if selected and character_count + size > maximum:
+                break
+            if size > maximum:
+                item["payload"] = {"summary": record.get("search_text", "")[: maximum // 2], "truncated": True}
+                size = len(_json(item))
+            selected.append(item)
+            character_count += size
+        return {
+            "query": query,
+            "records": selected, "character_count": character_count,
+            "truncated": len(selected) < len(records),
+        }
+
+    def upsert_approved(self, records: list[dict[str, Any]]) -> int:
+        if not records:
+            return 0
+        path = self.config.path(self.config.project.learned_context)
+        document = read_yaml(path, default={"records": []})
+        existing = list(document.get("records") or [])
+        index = {
+            (str(row.get("context_type")), str(row.get("subject_key"))): position
+            for position, row in enumerate(existing)
+        }
+        for record in records:
+            item = dict(record)
+            key = (str(item.get("context_type") or "learned"), str(item.get("subject_key") or _hash(item)[:16]))
+            previous = existing[index[key]] if key in index else None
+            item["context_type"], item["subject_key"] = key
+            item["version"] = int(previous.get("version", 0) + 1) if previous else 1
+            item["approved_at"] = item.get("approved_at") or _now()
+            if previous:
+                existing[index[key]] = item
+            else:
+                index[key] = len(existing)
+                existing.append(item)
+        path.write_text(yaml.safe_dump({"records": existing}, sort_keys=False, allow_unicode=True), encoding="utf-8")
+        self.sync()
+        return len(records)
 
 
-def _namespace_query(config: AppConfig, source: str) -> tuple[str, list[Any]]:
-    from google.cloud import bigquery
-
-    store = config.project.context_store
-    sql = f"""
-        SELECT * FROM `{_table(store, source)}`
-        WHERE organization = @organization
-          AND environment = @environment
-          AND domain = @domain
-    """
-    parameters = [
-        bigquery.ScalarQueryParameter("organization", "STRING", store.organization),
-        bigquery.ScalarQueryParameter("environment", "STRING", store.environment),
-        bigquery.ScalarQueryParameter("domain", "STRING", store.domain),
-    ]
-    return sql, parameters
+def make_context_retriever(config: AppConfig, logger: logging.Logger | None = None) -> LocalContextStore:
+    return LocalContextStore(config, logger=logger)
 
 
-def read_context(config: AppConfig, source: str = "trusted_context_current", logger: logging.Logger | None = None) -> pd.DataFrame:
-    if not config.project.context_store.enabled:
-        return pd.DataFrame()
-    allowed_sources = {
-        "context_records", "context_proposals", "approval_decisions",
-        "trusted_context_current", "pending_context_proposals",
-    }
-    if source not in allowed_sources:
-        raise ValueError(f"Unsupported context source: {source}")
-    from google.cloud import bigquery
-
-    client = _client(config.project.context_store)
-    sql, parameters = _namespace_query(config, source)
-    job = client.query(sql, job_config=bigquery.QueryJobConfig(query_parameters=parameters))
-    rows = [dict(row.items()) for row in job.result()]
-    if logger:
-        logger.info("RETRIEVE_RELEVANT_CONTEXT table=%s records_read=%s", _table(config.project.context_store, source), len(rows))
-    return pd.DataFrame(rows)
+# Compatibility functions used by the exploratory notebooks.
+def ensure_context_objects(config: AppConfig, logger: logging.Logger | None = None) -> dict[str, Any]:
+    store = make_context_retriever(config, logger)
+    return {"database": str(store.path), **store.sync()}
 
 
-def write_context_proposals(config: AppConfig, proposals: pd.DataFrame, logger: logging.Logger | None = None) -> dict[str, int]:
-    if proposals.empty:
-        return {"accepted": 0, "existing": 0, "rejected": 0}
-    store = config.project.context_store
-    client = _client(store)
-    existing = read_context(config, "context_proposals")
-    existing_ids = set(existing.get("proposal_id", pd.Series(dtype=str)).astype(str))
-    rows = [
-        {key: _json_value(value) for key, value in row.items()}
-        for row in proposals.to_dict("records")
-        if str(row.get("proposal_id")) not in existing_ids
-    ]
-    errors = client.insert_rows_json(_table(store, "context_proposals"), rows) if rows else []
-    if errors:
-        raise RuntimeError(f"BigQuery rejected context proposals: {errors}")
-    counts = {"accepted": len(rows), "existing": len(proposals) - len(rows), "rejected": 0}
-    if logger:
-        logger.info("WRITE_CONTEXT_STAGING table=%s counts=%s", _table(store, "context_proposals"), counts)
-    return counts
-
-
-def _json_value(value: Any) -> Any:
-    if value is None or (isinstance(value, float) and pd.isna(value)):
-        return None
-    if hasattr(value, "isoformat"):
-        return value.isoformat()
-    if isinstance(value, (dict, list)):
-        return canonical_json(value)
-    if hasattr(value, "item"):
-        return value.item()
-    return value
-
-
-def _proposal_by_id(config: AppConfig, proposal_id: str) -> dict[str, Any] | None:
-    from google.cloud import bigquery
-
-    store = config.project.context_store
-    sql = f"""
-        SELECT * FROM `{_table(store, 'context_proposals')}`
-        WHERE proposal_id = @proposal_id
-          AND organization = @organization
-          AND environment = @environment
-          AND domain = @domain
-        ORDER BY created_at DESC LIMIT 1
-    """
-    params = [
-        bigquery.ScalarQueryParameter("proposal_id", "STRING", proposal_id),
-        bigquery.ScalarQueryParameter("organization", "STRING", store.organization),
-        bigquery.ScalarQueryParameter("environment", "STRING", store.environment),
-        bigquery.ScalarQueryParameter("domain", "STRING", store.domain),
-    ]
-    rows = list(_client(store).query(sql, job_config=bigquery.QueryJobConfig(query_parameters=params)).result())
-    return dict(rows[0].items()) if rows else None
-
-
-def _existing_decision(config: AppConfig, proposal_id: str) -> dict[str, Any] | None:
-    from google.cloud import bigquery
-
-    store = config.project.context_store
-    sql = f"""
-        SELECT * FROM `{_table(store, 'approval_decisions')}`
-        WHERE proposal_id = @proposal_id ORDER BY imported_at DESC LIMIT 1
-    """
-    params = [bigquery.ScalarQueryParameter("proposal_id", "STRING", proposal_id)]
-    rows = list(_client(store).query(sql, job_config=bigquery.QueryJobConfig(query_parameters=params)).result())
-    return dict(rows[0].items()) if rows else None
-
-
-def _current_record(config: AppConfig, context_key: str) -> dict[str, Any] | None:
-    from google.cloud import bigquery
-
-    store = config.project.context_store
-    sql = f"""
-        SELECT * FROM `{_table(store, 'trusted_context_current')}`
-        WHERE context_key = @context_key
-          AND organization = @organization
-          AND environment = @environment
-          AND domain = @domain
-        LIMIT 1
-    """
-    params = [
-        bigquery.ScalarQueryParameter("context_key", "STRING", context_key),
-        bigquery.ScalarQueryParameter("organization", "STRING", store.organization),
-        bigquery.ScalarQueryParameter("environment", "STRING", store.environment),
-        bigquery.ScalarQueryParameter("domain", "STRING", store.domain),
-    ]
-    rows = list(_client(store).query(sql, job_config=bigquery.QueryJobConfig(query_parameters=params)).result())
-    return dict(rows[0].items()) if rows else None
-
-
-def _update_proposal_status(config: AppConfig, proposal_id: str, status: str) -> None:
-    from google.cloud import bigquery
-
-    store = config.project.context_store
-    sql = f"""
-        UPDATE `{_table(store, 'context_proposals')}`
-        SET status = @status, processed_at = CURRENT_TIMESTAMP()
-        WHERE proposal_id = @proposal_id
-          AND organization = @organization
-          AND environment = @environment
-          AND domain = @domain
-    """
-    params = [
-        bigquery.ScalarQueryParameter("status", "STRING", status),
-        bigquery.ScalarQueryParameter("proposal_id", "STRING", proposal_id),
-        bigquery.ScalarQueryParameter("organization", "STRING", store.organization),
-        bigquery.ScalarQueryParameter("environment", "STRING", store.environment),
-        bigquery.ScalarQueryParameter("domain", "STRING", store.domain),
-    ]
-    _client(store).query(sql, job_config=bigquery.QueryJobConfig(query_parameters=params)).result()
+def read_context(config: AppConfig, source: str = "active", logger: logging.Logger | None = None) -> pd.DataFrame:
+    del source
+    store = make_context_retriever(config, logger)
+    store.sync()
+    return pd.DataFrame(store.get_exact())
 
 
 def import_approval_workbook(
-    config: AppConfig,
-    workbook_path: Path,
-    approval_paths: dict[str, Path],
-    logger: logging.Logger | None = None,
+    config: AppConfig, workbook_path: str | Path, logger: logging.Logger | None = None
 ) -> dict[str, Any]:
-    frame = read_approval_workbook(workbook_path)
-    if frame.empty:
-        raise ValueError("Approval workbook has no decisions")
-    pending = frame[frame["decision"] == "PENDING"]
-    if not pending.empty:
-        raise ValueError(f"Resolve all rows before import; {len(pending)} rows are still PENDING")
-    summary = {"approved": 0, "overridden": 0, "rejected": 0, "existing": 0}
-    receipts: list[dict[str, Any]] = []
-    try:
-        for row in frame.to_dict("records"):
-            proposal_id = str(row["proposal_id"]).strip()
-            decision = str(row["decision"]).strip().upper()
-            reviewer = str(row.get("reviewed_by") or "").strip()
-            if not reviewer:
-                raise ValueError(f"reviewed_by is required for proposal {proposal_id}")
-            existing_decision = _existing_decision(config, proposal_id)
-            if existing_decision:
-                prior_decision = str(existing_decision.get("decision") or "")
-                _update_proposal_status(config, proposal_id, "REJECTED" if prior_decision == "REJECT" else "IMPORTED")
-                summary["existing"] += 1
-                continue
-            proposal = _proposal_by_id(config, proposal_id)
-            if not proposal:
-                raise ValueError(f"Proposal does not exist in BigQuery: {proposal_id}")
-            if str(proposal.get("status")) != "PENDING":
-                raise ValueError(f"Proposal {proposal_id} is not pending: {proposal.get('status')}")
-            if str(row.get("content_hash")) != str(proposal.get("content_hash")):
-                raise ValueError(f"Proposal content changed after workbook creation: {proposal_id}")
+    from .context_utils import process_approval_workbook
 
-            current = _current_record(config, str(proposal["context_key"]))
-            expected_base = str(proposal.get("base_record_id") or "")
-            actual_base = str(current.get("record_id") if current else "")
-            already_published = bool(current and str(current.get("proposal_id") or "") == proposal_id)
-            if not already_published and expected_base != actual_base:
-                raise ValueError(f"Context version changed while proposal was pending: {proposal_id}")
-
-            reviewed_at = str(row.get("reviewed_at") or utc_now())
-            resulting_record_id = None
-            resulting_version = None
-            approved_payload = None
-            final_hash = str(proposal["content_hash"])
-            if decision in {"APPROVE", "OVERRIDE"}:
-                if decision == "OVERRIDE":
-                    override = str(row.get("override_value") or "").strip()
-                    if not override:
-                        raise ValueError(f"override_value is required for proposal {proposal_id}")
-                    approved_payload = json.loads(override)
-                    if not isinstance(approved_payload, dict):
-                        raise ValueError(f"override_value must be a JSON object for proposal {proposal_id}")
-                    final_hash = payload_hash(approved_payload)
-                else:
-                    approved_payload = json.loads(str(proposal["proposed_payload_json"]))
-                context_status = str(approved_payload.pop("_context_status", "TRUSTED")).upper()
-                if context_status not in {"TRUSTED", "RETIRED"}:
-                    raise ValueError(f"Invalid _context_status for proposal {proposal_id}: {context_status}")
-                final_hash = payload_hash(approved_payload)
-                if already_published:
-                    resulting_version = int(current["version"])
-                    resulting_record_id = str(current["record_id"])
-                else:
-                    resulting_version = int(current.get("version") or 0) + 1 if current else 1
-                    resulting_record_id = stable_id(proposal["context_key"], resulting_version, final_hash)
-                record = {
-                    "record_id": resulting_record_id,
-                    "context_key": proposal["context_key"],
-                    "context_type": proposal["context_type"],
-                    "subject_key": proposal["subject_key"],
-                    "organization": proposal["organization"],
-                    "environment": proposal["environment"],
-                    "domain": proposal["domain"],
-                    "pair_id": proposal.get("pair_id"),
-                    "context_id": proposal.get("context_id"),
-                    "target_table": proposal.get("target_table"),
-                    "source_table": proposal.get("source_table"),
-                    "column_name": proposal.get("column_name"),
-                    "payload_json": canonical_json(approved_payload),
-                    "content_hash": final_hash,
-                    "version": resulting_version,
-                    "status": context_status,
-                    "origin": f"{proposal.get('origin', 'UNKNOWN')}_HUMAN_APPROVED",
-                    "confidence": proposal.get("confidence"),
-                    "source_file": proposal.get("source_file"),
-                    "run_id": proposal.get("run_id"),
-                    "proposal_id": proposal_id,
-                    "approved_by": reviewer,
-                    "approved_at": reviewed_at,
-                    "created_at": utc_now(),
-                    "provenance_json": canonical_json({"proposal_id": proposal_id, "approval_file": str(workbook_path)}),
-                }
-                if not already_published:
-                    errors = _client(config.project.context_store).insert_rows_json(
-                        _table(config.project.context_store, "context_records"), [record]
-                    )
-                    if errors:
-                        raise RuntimeError(f"BigQuery rejected trusted context record: {errors}")
-                summary["approved" if decision == "APPROVE" else "overridden"] += 1
-            else:
-                summary["rejected"] += 1
-
-            decision_id = stable_id(proposal_id, decision, final_hash)
-            decision_row = {
-                "decision_id": decision_id,
-                "proposal_id": proposal_id,
-                "decision": decision,
-                "override_payload_json": canonical_json(approved_payload) if decision == "OVERRIDE" else None,
-                "reviewer_comments": str(row.get("reviewer_comments") or ""),
-                "reviewed_by": reviewer,
-                "reviewed_at": reviewed_at,
-                "imported_at": utc_now(),
-                "resulting_record_id": resulting_record_id,
-                "resulting_version": resulting_version,
-                "content_hash": final_hash,
-                "approval_file": str(workbook_path),
-                **config.project.context_store.namespace,
-            }
-            errors = _client(config.project.context_store).insert_rows_json(
-                _table(config.project.context_store, "approval_decisions"), [decision_row]
-            )
-            if errors:
-                raise RuntimeError(f"BigQuery rejected approval decision: {errors}")
-            _update_proposal_status(config, proposal_id, "REJECTED" if decision == "REJECT" else "IMPORTED")
-            receipt = {**decision_row, "context_type": proposal["context_type"], "subject_key": proposal["subject_key"]}
-            receipt_dir = approval_paths["rejected" if decision == "REJECT" else "approved"]
-            write_json(receipt_dir / f"{proposal_id}.json", receipt)
-            receipts.append(receipt)
-            if logger:
-                logger.info(
-                    "IMPORT_APPROVAL_RESULTS proposal_id=%s decision=%s context_key=%s version=%s",
-                    proposal_id, decision, proposal["context_key"], resulting_version,
-                )
-                if proposal["context_type"] == "relationship" and decision in {"APPROVE", "OVERRIDE"}:
-                    logger.info(
-                        "PUBLISH_APPROVED_RELATIONSHIP_CONTEXT proposal_id=%s relationship=%s version=%s",
-                        proposal_id, proposal["subject_key"], resulting_version,
-                    )
-    except Exception as exc:
-        write_json(approval_paths["errors"] / f"{workbook_path.stem}_error.json", {
-            "approval_file": str(workbook_path), "error": str(exc), "failed_at": utc_now(),
-        })
-        raise
-    archived = archive_approval_workbook(workbook_path, approval_paths["processed"])
+    result = process_approval_workbook(config, Path(workbook_path))
     if logger:
-        logger.info("PUBLISH_APPROVED_CONTEXT counts=%s archived_file=%s", summary, archived)
-    return {"summary": summary, "receipts": receipts, "archived_workbook": str(archived)}
+        logger.info("APPROVAL_PROCESSED result=%s", result)
+    return result

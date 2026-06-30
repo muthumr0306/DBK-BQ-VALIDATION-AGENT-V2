@@ -8,6 +8,9 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.chart import BarChart, Reference
+from openpyxl.styles import Alignment, Font, PatternFill
 
 
 def json_default(value: Any) -> Any:
@@ -15,8 +18,11 @@ def json_default(value: Any) -> Any:
         return value.isoformat()
     if hasattr(value, "item"):
         return value.item()
-    if pd.isna(value):
-        return None
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
     return str(value)
 
 
@@ -31,9 +37,9 @@ def append_jsonl(path: Path, payload: dict[str, Any]) -> None:
         handle.write(json.dumps(payload, default=json_default) + "\n")
 
 
-def configure_logging(output_dir: Path, level: str = "INFO") -> logging.Logger:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    logger = logging.getLogger(f"dq_agent.{output_dir.name}")
+def configure_logging(log_dir: Path, level: str = "INFO") -> logging.Logger:
+    log_dir.mkdir(parents=True, exist_ok=True)
+    logger = logging.getLogger(f"dq_agent.{log_dir.name}")
     logger.setLevel(getattr(logging, level.upper(), logging.INFO))
     logger.propagate = False
     if logger.handlers:
@@ -41,7 +47,7 @@ def configure_logging(output_dir: Path, level: str = "INFO") -> logging.Logger:
     formatter = logging.Formatter(
         "%(asctime)s | %(levelname)s | %(name)s | %(funcName)s:%(lineno)d | %(message)s"
     )
-    file_handler = logging.FileHandler(output_dir / "run.log", encoding="utf-8")
+    file_handler = logging.FileHandler(log_dir / "run.log", encoding="utf-8")
     file_handler.setFormatter(formatter)
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
@@ -66,56 +72,27 @@ def _safe_sheet(name: str) -> str:
     return re.sub(r"[\\/*?:\[\]]", "_", name)[:31] or "Sheet"
 
 
-def write_table_report(
-    table_dir: Path,
-    summary: dict[str, Any],
-    mappings: list[dict[str, Any]],
-    rules: list[dict[str, Any]],
-    results: list[dict[str, Any]],
-    rca: list[dict[str, Any]],
-    relationship_candidates: list[dict[str, Any]],
-) -> None:
-    table_dir.mkdir(parents=True, exist_ok=True)
-    workbook = table_dir / "validation_report.xlsx"
-    profiles = [
-        row for row in results
-        if row.get("type") in {"column_profile", "null_count", "distinct_count", "value_distribution", "aggregate", "uniqueness"}
-    ]
-    row_reconciliation = [row for row in results if row.get("type") == "row_reconciliation"]
-    human_results = [row for row in results if row.get("origin") == "human"]
-    measure_results = [row for row in results if row.get("type") == "measure_reconciliation"]
-    failed_measures = [row for row in measure_results if row.get("status") == "FAIL"]
-    execution_errors = [row for row in results if row.get("status") == "ERROR"]
-    with pd.ExcelWriter(workbook, engine="openpyxl") as writer:
-        for name, records in {
-            "Summary": [summary],
-            "Mappings": mappings,
-            "Rules": rules,
-            "Results": results,
-            "Profiles": profiles,
-            "Relationship Candidates": relationship_candidates,
-            "Row Reconciliation": row_reconciliation,
-            "Human Tests": human_results,
-            "Measure Reconciliation": measure_results,
-            "Failed Measures": failed_measures,
-            "Execution Errors": execution_errors,
-            "RCA": rca,
-        }.items():
-            _frame(records).to_excel(writer, index=False, sheet_name=_safe_sheet(name))
-    write_json(table_dir / "table_result.json", {
-        "summary": summary,
-        "mappings": mappings,
-        "rules": rules,
-        "results": results,
-        "rca": rca,
-        "relationship_candidates": relationship_candidates,
-    })
+def _failure_rows(results: list[dict[str, Any]], rca: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rca_by_rule = {str(row.get("rule_id")): row for row in rca if row.get("rule_id")}
+    output: list[dict[str, Any]] = []
+    for result in results:
+        if result.get("status") not in {"FAIL", "ERROR"}:
+            continue
+        row = dict(result)
+        investigation = rca_by_rule.get(str(result.get("rule_id")))
+        if investigation:
+            conclusion = investigation.get("conclusion", investigation)
+            row["rca_classification"] = conclusion.get("classification") if isinstance(conclusion, dict) else None
+            row["rca_conclusion"] = conclusion.get("conclusion") if isinstance(conclusion, dict) else conclusion
+            row["rca_confidence"] = conclusion.get("confidence") if isinstance(conclusion, dict) else None
+            row["rca_evidence"] = investigation.get("evidence_observed", investigation.get("diagnostics"))
+        output.append(row)
+    return output
 
 
 def _build_failures_with_rca(
     failures: list[dict[str, Any]], rca: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
-    """Merge each failure result with its RCA conclusion so readers get cause + evidence in one row."""
     rca_by_rule = {r["rule_id"]: r for r in rca if r.get("rule_id")}
     merged = []
     for failure in failures:
@@ -136,13 +113,21 @@ def _build_failures_with_rca(
     return merged
 
 
-def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, Any]]) -> None:
+def write_consolidated_reports(
+    output_dir: Path,
+    table_outputs: list[dict[str, Any]],
+    approval_items: list[dict[str, Any]] | None = None,
+    run_metadata: dict[str, Any] | None = None,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    approval_items = approval_items or []
+    run_metadata = run_metadata or {}
     summaries = [item["summary"] for item in table_outputs]
     mappings = [row for item in table_outputs for row in item.get("mappings", [])]
     rules = [row for item in table_outputs for row in item.get("rules", [])]
     results = [row for item in table_outputs for row in item.get("results", [])]
     rca = [row for item in table_outputs for row in item.get("rca", [])]
-    relationship_candidates = [
+    relationships = [
         row for item in table_outputs for row in item.get("relationship_candidates", [])
     ]
     failures = [row for row in results if row.get("status") in {"FAIL", "ERROR"}]
@@ -150,6 +135,7 @@ def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, A
     profiles = [
         row for row in results
         if row.get("type") in {"column_profile", "null_count", "distinct_count", "value_distribution", "aggregate", "uniqueness"}
+        or row.get("category") in {"profiling", "distribution", "completeness"}
     ]
     row_reconciliation = [row for row in results if row.get("type") == "row_reconciliation"]
     human_results = [row for row in results if row.get("origin") == "human"]
@@ -158,26 +144,87 @@ def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, A
     grain_results = [row for row in results if row.get("type") == "grain_reconciliation"]
     schema_gaps = [row for row in results if row.get("type") == "schema_gap"]
     execution_errors = [row for row in results if row.get("status") == "ERROR"]
-    workbook = output_dir / "consolidated_report.xlsx"
-    with pd.ExcelWriter(workbook, engine="openpyxl") as writer:
-        for name, records in {
-            "Summary": summaries,
-            "Failures": failures,
-            "Freshness": freshness,
-            "Mappings": mappings,
-            "Rules": rules,
-            "Profiles": profiles,
-            "Relationship Candidates": relationship_candidates,
-            "Row Reconciliation": row_reconciliation,
-            "Human Tests": human_results,
-            "Measure Reconciliation": measure_results,
-            "Failed Measures": failed_measures,
-            "Grain Reconciliation": grain_results,
-            "Schema Gaps": schema_gaps,
-            "Execution Errors": execution_errors,
-            "RCA": rca,
-        }.items():
-            _frame(records).to_excel(writer, index=False, sheet_name=_safe_sheet(name))
+
+    errors = list(execution_errors)
+    errors.extend({"scope": "table", **row} for row in summaries if row.get("status") == "ERROR")
+    if run_metadata.get("error"):
+        errors.append({"scope": "run", "error": run_metadata.get("error")})
+    run_summary = [{
+        "run_id": run_metadata.get("run_id"),
+        "project": run_metadata.get("project"),
+        "status": run_metadata.get("status", "RUNNING"),
+        "started_at": run_metadata.get("started_at"),
+        "completed_at": run_metadata.get("completed_at"),
+        "tables": len(summaries),
+        "passed_tables": sum(row.get("status") == "PASS" for row in summaries),
+        "failed_tables": sum(row.get("status") == "FAIL" for row in summaries),
+        "error_tables": sum(row.get("status") == "ERROR" for row in summaries),
+        "rules": len(results),
+        "passed_checks": sum(row.get("status") == "PASS" for row in results),
+        "failed_checks": sum(row.get("status") == "FAIL" for row in results),
+        "errors": sum(row.get("status") == "ERROR" for row in results),
+        "approval_items": len(approval_items),
+    }]
+
+    sheets: dict[str, list[dict[str, Any]]] = {
+        "Run Summary": run_summary,
+        "Tables": summaries,
+        "Mappings": mappings,
+        "Schema": [row for row in results if row.get("category") == "schema"] + schema_gaps,
+        "Row Counts": [row for row in results if row.get("type") in {"row_count", "key_values", "key_buckets", "row_reconciliation"}],
+        "Freshness": freshness,
+        "Profiles": profiles,
+        "Business Rules": [row for row in results if row.get("category") in {"business_rule", "llm_generated", "validity"}],
+        "Human Tests": human_results,
+        "Relationships": [*relationships, *[row for row in results if row.get("type") == "relationship"]],
+        "Measures": measure_results,
+        "Grain Reconciliation": grain_results,
+        "RCA": rca,
+        "Failures": _failure_rows(results, rca),
+        "Approvals": approval_items,
+        "Errors": errors,
+    }
+    workbook_path = output_dir / "dq_validation_report.xlsx"
+    with pd.ExcelWriter(workbook_path, engine="openpyxl") as writer:
+        for name, records in sheets.items():
+            frame = _frame(records)
+            if frame.empty:
+                frame = pd.DataFrame([{"message": "No records for this section"}])
+            frame.to_excel(writer, index=False, sheet_name=_safe_sheet(name))
+
+    workbook = load_workbook(workbook_path)
+    status_colors = {"PASS": "C6EFCE", "FAIL": "FFC7CE", "ERROR": "F4B183", "SKIP": "D9EAF7", "PENDING": "FFF2CC"}
+    for sheet in workbook.worksheets:
+        sheet.freeze_panes = "A2"
+        sheet.auto_filter.ref = sheet.dimensions
+        sheet.sheet_view.showGridLines = False
+        for cell in sheet[1]:
+            cell.fill = PatternFill("solid", fgColor="1F4E78")
+            cell.font = Font(color="FFFFFF", bold=True)
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        for column_cells in sheet.columns:
+            longest = max(len(str(cell.value or "")) for cell in list(column_cells)[:200])
+            sheet.column_dimensions[column_cells[0].column_letter].width = min(max(longest + 2, 12), 50)
+        for row in sheet.iter_rows(min_row=2):
+            for cell in row:
+                cell.alignment = Alignment(vertical="top", wrap_text=True)
+                value = str(cell.value or "").upper()
+                if value in status_colors:
+                    cell.fill = PatternFill("solid", fgColor=status_colors[value])
+    if "Run Summary" in workbook.sheetnames and workbook["Run Summary"].max_column >= 12:
+        summary_sheet = workbook["Run Summary"]
+        chart = BarChart()
+        chart.title = "Validation Check Status"
+        chart.y_axis.title = "Checks"
+        chart.x_axis.title = "Status"
+        data = Reference(summary_sheet, min_col=10, max_col=12, min_row=1, max_row=2)
+        chart.add_data(data, titles_from_data=True)
+        chart.height = 7
+        chart.width = 13
+        summary_sheet.add_chart(chart, "A5")
+    workbook.save(workbook_path)
+
+    # Write tracked CSV outputs
     _frame(failures).to_csv(output_dir / "failed_tests.csv", index=False)
     _frame(_build_failures_with_rca(failures, rca)).to_csv(output_dir / "failures_with_rca.csv", index=False)
     _frame(rca).to_csv(output_dir / "rca_report.csv", index=False)
@@ -186,13 +233,12 @@ def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, A
     profile_frame = _frame(profiles)
     profile_frame.to_csv(output_dir / "data_profiling.csv", index=False)
     if not profile_frame.empty:
-        # Cast object columns to string so pyarrow doesn't choke on mixed-type evidence values
         _pf = profile_frame.astype(
             {c: "string" for c in profile_frame.select_dtypes(include="object").columns}
         )
         _pf.to_parquet(output_dir / "data_profiling.parquet", index=False)
     _frame(human_results).to_csv(output_dir / "human_test_results.csv", index=False)
-    _frame(relationship_candidates).to_csv(output_dir / "relationship_candidates.csv", index=False)
+    _frame(relationships).to_csv(output_dir / "relationship_candidates.csv", index=False)
     _frame(row_reconciliation).to_csv(output_dir / "row_reconciliation.csv", index=False)
     _frame(measure_results).to_csv(output_dir / "measure_reconciliation.csv", index=False)
     _frame(failed_measures).to_csv(output_dir / "failed_measures.csv", index=False)
@@ -200,97 +246,31 @@ def write_consolidated_reports(output_dir: Path, table_outputs: list[dict[str, A
     _frame(schema_gaps).to_csv(output_dir / "schema_gaps.csv", index=False)
     _frame(execution_errors).to_csv(output_dir / "execution_errors.csv", index=False)
     write_json(output_dir / "generated_rules.json", rules)
+    return workbook_path
 
 
 def write_relationship_reports(
-    output_dir: Path,
-    candidates: list[dict[str, Any]],
-    results: list[dict[str, Any]],
+    output_dir: Path, candidates: list[dict[str, Any]], results: list[dict[str, Any]]
 ) -> dict[str, Path]:
-    """Write compact table-level and consolidated relationship reports."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    candidate_frame = _frame(candidates)
-    result_frame = _frame(results)
-    summary = [{
-        "candidate_count": len(candidates),
-        "executed_count": len(results),
-        "passed": sum(row.get("status") == "PASS" for row in results),
-        "failed": sum(row.get("status") == "FAIL" for row in results),
-        "errors": sum(row.get("status") == "ERROR" for row in results),
-        "orphan_count": sum(int(row.get("orphan_count") or 0) for row in results),
-    }]
-    workbook = output_dir / "referential_integrity_report.xlsx"
-    with pd.ExcelWriter(workbook, engine="openpyxl") as writer:
-        _frame(summary).to_excel(writer, index=False, sheet_name="Summary")
-        candidate_frame.to_excel(writer, index=False, sheet_name="Candidates")
-        result_frame.to_excel(writer, index=False, sheet_name="Results")
-    candidate_frame.to_csv(output_dir / "relationship_candidates.csv", index=False)
-    result_frame.to_csv(output_dir / "referential_integrity_results.csv", index=False)
-    write_json(output_dir / "referential_integrity_results.json", results)
-
-    for pair_id in sorted({str(row.get("pair_id")) for row in [*candidates, *results] if row.get("pair_id")}):
-        table_dir = output_dir / "tables" / pair_id
-        table_dir.mkdir(parents=True, exist_ok=True)
-        table_candidates = [row for row in candidates if str(row.get("pair_id")) == pair_id]
-        table_results = [row for row in results if str(row.get("pair_id")) == pair_id]
-        with pd.ExcelWriter(table_dir / "relationship_report.xlsx", engine="openpyxl") as writer:
-            _frame(table_candidates).to_excel(writer, index=False, sheet_name="Candidates")
-            _frame(table_results).to_excel(writer, index=False, sheet_name="Results")
-        write_json(table_dir / "relationship_results.json", table_results)
-    return {
-        "workbook": workbook,
-        "candidate_csv": output_dir / "relationship_candidates.csv",
-        "result_csv": output_dir / "referential_integrity_results.csv",
-    }
+    workbook = write_consolidated_reports(output_dir, [{
+        "summary": {"pair_id": "relationship_workflow", "status": "COMPLETED"},
+        "mappings": [], "rules": [], "results": results, "rca": [],
+        "relationship_candidates": candidates,
+    }])
+    return {"workbook": workbook}
 
 
 def write_measure_reports(
-    output_dir: Path,
-    measures: list[dict[str, Any]],
-    results: list[dict[str, Any]],
+    output_dir: Path, measures: list[dict[str, Any]], results: list[dict[str, Any]],
     rca: list[dict[str, Any]] | None = None,
 ) -> dict[str, Path]:
-    """Write inspectable measure, reconciliation, failure, and RCA reports."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    rca = rca or []
-    measure_frame = _frame(measures)
-    result_frame = _frame(results)
-    failed = [row for row in results if row.get("status") == "FAIL"]
-    errors = [row for row in results if row.get("status") == "ERROR"]
-    summary = [{
-        "measure_count": len(measures),
-        "reconciliation_rows": len(results),
-        "passed": sum(row.get("status") == "PASS" for row in results),
-        "failed": len(failed),
-        "errors": len(errors),
-        "rca_records": len(rca),
-    }]
-    workbook = output_dir / "measure_reconciliation_report.xlsx"
-    with pd.ExcelWriter(workbook, engine="openpyxl") as writer:
-        _frame(summary).to_excel(writer, index=False, sheet_name="Summary")
-        measure_frame.to_excel(writer, index=False, sheet_name="Measures")
-        result_frame.to_excel(writer, index=False, sheet_name="Reconciliation")
-        _frame(failed).to_excel(writer, index=False, sheet_name="Failed Measures")
-        _frame(errors).to_excel(writer, index=False, sheet_name="Execution Errors")
-        _frame(rca).to_excel(writer, index=False, sheet_name="RCA")
-    measure_frame.to_csv(output_dir / "resolved_measures.csv", index=False)
-    result_frame.to_csv(output_dir / "measure_reconciliation.csv", index=False)
-    _frame(failed).to_csv(output_dir / "failed_measures.csv", index=False)
-    _frame(errors).to_csv(output_dir / "execution_errors.csv", index=False)
-    _frame(rca).to_csv(output_dir / "measure_rca.csv", index=False)
-    write_json(output_dir / "measure_reconciliation.json", results)
-    write_json(output_dir / "measure_rca.json", rca)
-    for pair_id in sorted({str(row.get("pair_id")) for row in [*measures, *results] if row.get("pair_id")}):
-        table_dir = output_dir / "tables" / pair_id
-        table_dir.mkdir(parents=True, exist_ok=True)
-        write_json(table_dir / "measures.json", [row for row in measures if str(row.get("pair_id")) == pair_id])
-        write_json(table_dir / "reconciliation.json", [row for row in results if str(row.get("pair_id")) == pair_id])
-    return {
-        "workbook": workbook,
-        "result_csv": output_dir / "measure_reconciliation.csv",
-        "failed_csv": output_dir / "failed_measures.csv",
-        "rca_csv": output_dir / "measure_rca.csv",
-    }
+    del measures
+    workbook = write_consolidated_reports(output_dir, [{
+        "summary": {"pair_id": "measure_workflow", "status": "COMPLETED"},
+        "mappings": [], "rules": [], "results": results, "rca": rca or [],
+        "relationship_candidates": [],
+    }])
+    return {"workbook": workbook}
 
 
 def write_run_summary(

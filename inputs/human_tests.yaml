@@ -1,18 +1,16 @@
+# Optional business-user tests. See inputs/README.md for every field and example.
 tests:
-  - test_id: sample_sales_amount_non_negative
-    publish_to_context: false
+  - id: sample_sales_amount_non_negative
     pair_id: sample_fact_sales
     enabled: false
-    type: predicate
+    type: aggregate
     scope: target
-    target_columns: [sales_amount]
-    parameters:
-      predicate:
-        column: sales_amount
-        operator: gte
-        value: 0
+    column: sales_amount
+    aggregation: min
+    comparison: gte
+    expected_value: 0
     severity: error
-    description: Sales amount must not be negative.
+    description: The minimum sales amount must be zero or greater.
 
   - test_id: ri2_cc_fgcolor__color_type_valid_values
     pair_id: ri2_cc_fgcolor
@@ -21,10 +19,8 @@ tests:
     scope: target
     severity: error
     target_columns: [color_type]
-    parameters:
-      values: ["primary", "secondary", "tertiary"]
+    values: ["primary", "secondary", "tertiary"]
     description: "Validate that color_type is one of the allowed values."
-    publish_to_context: false
 
   - test_id: ri3_season__status_code_validity
     pair_id: ri3_season
@@ -33,7 +29,5 @@ tests:
     scope: target
     severity: error
     target_columns: [status_code]
-    parameters:
-      values: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+    values: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
     description: "Validate that status_code contains only valid alphabetic codes."
-    publish_to_context: false

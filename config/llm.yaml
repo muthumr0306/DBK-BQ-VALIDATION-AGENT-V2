@@ -1,7 +1,8 @@
-enabled: true
-provider: openai
+# LLM configuration is mandatory. Switching provider/model must only require edits here.
+backend: ollama
+api_family: openai_compatible
 model: qwen2.5:7b
-base_url: http://localhost:11434/v1
+endpoint: http://localhost:11434/v1
 temperature: 0.1
 max_output_tokens: 8192
 timeout_seconds: 180

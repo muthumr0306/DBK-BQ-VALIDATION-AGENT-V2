@@ -29,7 +29,10 @@ class RuleSpec(BaseModel):
 
 class DiagnosticIntent(BaseModel):
     intent: Literal[
-        "date_coverage", "key_buckets", "top_duplicates", "orphan_keys", "value_distribution"
+        "date_coverage", "null_distribution", "duplicate_distribution",
+        "value_distribution", "missing_keys", "extra_keys", "inactive_members",
+        "masked_failed_samples", "filter_impact", "column_profile",
+        "relationship_gap", "grouped_metric",
     ]
     side: Literal["source", "target"]
     columns: list[str] = Field(default_factory=list)
@@ -170,14 +173,23 @@ class SQLCompiler:
         if rule_type == "distinct_count":
             return f"SELECT COUNT(DISTINCT {columns[0]}) AS distinct_count FROM {table}{where}"
         if rule_type == "column_profile":
-            min_max = ""
-            if rule.parameters.get("include_min_max", False):
-                min_max = f", MIN({columns[0]}) AS min_value, MAX({columns[0]}) AS max_value"
-            return (
-                f"SELECT COUNT(*) AS row_count, "
-                f"SUM(CASE WHEN {columns[0]} IS NULL THEN 1 ELSE 0 END) AS null_count, "
-                f"COUNT(DISTINCT {columns[0]}) AS distinct_count{min_max} FROM {table}{where}"
-            )
+            metrics = set(rule.parameters.get("metrics") or [])
+            if rule.parameters.get("include_min_max"):
+                metrics.update({"min_value", "max_value"})
+            selected = [
+                "COUNT(*) AS row_count",
+                f"SUM(CASE WHEN {columns[0]} IS NULL THEN 1 ELSE 0 END) AS null_count",
+                f"COUNT(DISTINCT {columns[0]}) AS distinct_count",
+            ]
+            if "min_value" in metrics:
+                selected.append(f"MIN({columns[0]}) AS min_value")
+            if "max_value" in metrics:
+                selected.append(f"MAX({columns[0]}) AS max_value")
+            if "average_value" in metrics:
+                selected.append(f"AVG({columns[0]}) AS average_value")
+            if "sum_value" in metrics:
+                selected.append(f"SUM({columns[0]}) AS sum_value")
+            return f"SELECT {', '.join(selected)} FROM {table}{where}"
         if rule_type == "uniqueness":
             grouped = ", ".join(columns)
             inner = f"SELECT {grouped}, COUNT(*) AS n FROM {table}{where} GROUP BY {grouped} HAVING COUNT(*) > 1"
@@ -189,6 +201,57 @@ class SQLCompiler:
             if function not in {"SUM", "MIN", "MAX", "AVG"}:
                 raise ValueError(f"Unsupported aggregate: {function}")
             return f"SELECT {function}({columns[0]}) AS metric_value FROM {table}{where}"
+        if rule_type == "grouped_profile":
+            group_items = list(rule.parameters.get(f"{side}_group_by") or [])
+            metric_items = list(rule.parameters.get("metrics") or [])
+            joins = list(rule.parameters.get(f"{side}_joins") or [])
+            if not group_items or not metric_items:
+                raise ValueError("grouped_profile requires group-by columns and metrics")
+            from_sql = f"{table} b"
+            for index, join in enumerate(joins, 1):
+                alias = f"j{index}"
+                join_table = self.table(str(join["table"]))
+                local = list(join.get("local_columns") or [])
+                remote = list(join.get("remote_columns") or [])
+                if not local or len(local) != len(remote):
+                    raise ValueError("Approved grouped-profile joins require equal-width keys")
+                predicates = [
+                    f"b.{self.identifier(left)} = {alias}.{self.identifier(right)}"
+                    for left, right in zip(local, remote)
+                ]
+                predicates.extend(self.predicate(item, alias=alias) for item in join.get("filters", []))
+                from_sql += f" JOIN {join_table} {alias} ON " + " AND ".join(predicates)
+            selected_groups: list[str] = []
+            grouped_expressions: list[str] = []
+            for index, item in enumerate(group_items, 1):
+                if isinstance(item, dict):
+                    column = self.identifier(str(item["column"]))
+                    join_index = int(item.get("join_index", 0))
+                    expression = f"j{join_index}.{column}" if join_index else f"b.{column}"
+                else:
+                    expression = f"b.{self.identifier(str(item))}"
+                selected_groups.append(f"{expression} AS group_{index}")
+                grouped_expressions.append(expression)
+            selected_metrics: list[str] = []
+            for index, metric in enumerate(metric_items, 1):
+                function = str(metric.get("aggregation", "count")).lower()
+                column = metric.get(f"{side}_column") or metric.get("column")
+                if function == "count" and not column:
+                    expression = "COUNT(*)"
+                else:
+                    if function not in {"count", "distinct_count", "sum", "avg", "min", "max"}:
+                        raise ValueError(f"Unsupported grouped metric aggregation: {function}")
+                    rendered = f"b.{self.identifier(str(column))}"
+                    expression = f"COUNT(DISTINCT {rendered})" if function == "distinct_count" else f"{function.upper()}({rendered})"
+                selected_metrics.append(f"{expression} AS metric_{index}")
+            predicates = [self.predicate(item, alias="b") for item in (filters or [])]
+            predicates.extend(self.predicate(item, alias="b") for item in rule.parameters.get(f"{side}_filters", []))
+            grouped_where = " WHERE " + " AND ".join(predicates) if predicates else ""
+            return (
+                f"SELECT {', '.join([*selected_groups, *selected_metrics])} FROM {from_sql}"
+                f"{grouped_where} GROUP BY {', '.join(grouped_expressions)} "
+                f"ORDER BY {', '.join(grouped_expressions)} LIMIT {int(rule.parameters.get('limit', 500))}"
+            )
         if rule_type == "date_coverage":
             return f"SELECT MIN({columns[0]}) AS min_value, MAX({columns[0]}) AS max_value FROM {table}{where}"
         if rule_type == "value_distribution":
@@ -219,8 +282,8 @@ class SQLCompiler:
                 int(rule.parameters.get("limit", 10_000)),
             )
         if rule_type == "top_duplicates":
-            grouped = ", ".join(columns)
-            return f"SELECT {grouped}, COUNT(*) AS duplicate_count FROM {table}{where} GROUP BY {grouped} HAVING COUNT(*) > 1 ORDER BY duplicate_count DESC LIMIT {int(rule.parameters.get('limit', 200))}"
+            digest = self._key_digest([name.strip("`") for name in columns])
+            return f"SELECT {digest} AS key_hash, COUNT(*) AS duplicate_count FROM {table}{where} GROUP BY key_hash HAVING COUNT(*) > 1 ORDER BY duplicate_count DESC LIMIT {int(rule.parameters.get('limit', 200))}"
         if rule_type == "relationship":
             if side != "target":
                 raise ValueError("Relationship checks are target-side checks")
@@ -353,6 +416,8 @@ def allowed_tables_for_rule(rule: RuleSpec, pair: TablePair, side: str) -> set[s
     tables = {pair.source_name if side == "source" else pair.target_name}
     if rule.type == "relationship":
         tables.add(rule.parameters["referenced_table"])
+    if rule.type == "grouped_profile":
+        tables.update(str(item["table"]) for item in rule.parameters.get(f"{side}_joins", []))
     return {table for table in tables if table}
 
 

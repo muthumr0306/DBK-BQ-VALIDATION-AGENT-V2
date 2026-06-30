@@ -99,7 +99,6 @@ custom_relationships:
     parent_table: your-gcp-project.analytics.dim_market
     parent_columns: [market_sid]
     description: Explicit relationship that overrides the registry candidate for market_sid.
-    publish_to_context: false
 
   - id: sales_market_composite
     enabled: true
@@ -112,4 +111,3 @@ custom_relationships:
     parent_filters:
       - {column: active_indicator, operator: eq, value: true}
     description: Explicit composite relationship; overrides automatic candidates for these child columns.
-    publish_to_context: false

@@ -7,8 +7,8 @@ settings:
   maximum_group_cardinality: 500
 
 diagnostics:
-  maximum_steps_per_failure: 3
-  maximum_llm_calls_per_failure: 1
+  maximum_steps_per_failure: 4
+  maximum_llm_calls_per_failure: 4
   maximum_failed_samples: 50
   allowed_types:
     - date_distribution
@@ -42,7 +42,6 @@ measures:
     enabled: true
     severity: error
     approval_status: approved
-    publish_to_context: false
 
   - measure_id: gross_margin
     definition_type: kpi
@@ -61,4 +60,3 @@ measures:
       target: [source_system]
     enabled: false
     approval_status: disabled
-    publish_to_context: false

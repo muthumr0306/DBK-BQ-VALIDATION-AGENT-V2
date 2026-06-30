@@ -1,23 +1,28 @@
 project_name: dbx_bq_validation_poc
 default_mode: migration
+
+# Runtime input supplied for a validation run.
 table_mappings: inputs/table_mappings.xlsx
 column_mappings: inputs/column_mappings.xlsx
-business_context: inputs/business_context.yaml
+runtime_overrides: inputs/runtime_overrides.yaml
 human_tests: inputs/human_tests.yaml
-relationships: inputs/relationships.yaml
-measures: inputs/measures.yaml
-outputs_dir: outputs
 
-# Persistent context. Set enabled to true after replacing the sample
-# project/dataset values and configuring Google Application Default Credentials.
+# Developer/SME-managed reusable context.
+context_tables: context_layer/tables.yaml
+relationships: context_layer/relationships.yaml
+measures: context_layer/measures.yaml
+context_patterns: context_layer/patterns.yaml
+issue_patterns: context_layer/issue_patterns.yaml
+learned_context: context_layer/learned_context.yaml
+
+outputs_dir: outputs
+logs_dir: logs
+
 context_store:
-  enabled: false
-  project: your-governance-project
-  dataset: dq_agent_context
-  location: US
-  organization: example_org
-  environment: development
-  domain: sales
+  path: context_layer/context.db
+  top_k: 8
+  max_context_characters: 24000
+  fts_enabled: true
 
 approvals:
   root: approvals
@@ -26,6 +31,13 @@ confidence:
   auto_accept: 0.85
   review: 0.65
 
+profiling:
+  numeric_absolute_tolerance: 0.01
+  numeric_percentage_tolerance: 0.5
+  distribution_percentage_points: 1.0
+  low_cardinality_limit: 50
+  top_values: 20
+
 query_limits:
   max_result_rows: 10000
   small_table_row_limit: 10000
@@ -33,7 +45,9 @@ query_limits:
   timeout_seconds: 300
   key_hash_buckets: 256
   evidence_rows: 200
+  maximum_group_cardinality: 500
 
-max_rca_rounds: 2
+max_rca_rounds: 3
+max_llm_calls_per_failure: 4
 fail_fast: false
 log_level: INFO
