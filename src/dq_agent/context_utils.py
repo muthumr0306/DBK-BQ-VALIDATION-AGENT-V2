@@ -28,6 +28,7 @@ APPROVAL_COLUMNS = [
     "confidence", "user_action_required", "approval_status", "reviewer_comments",
     "reviewed_by", "reviewed_at",
 ]
+APPROVAL_STATUSES = {"PENDING", "APPROVE", "REJECT", "NEEDS_CHANGES", "OVERRIDE"}
 
 
 def utc_now() -> str:
@@ -258,7 +259,7 @@ def write_approval_workbook(path: Path, proposals: pd.DataFrame) -> Path:
     for row in sheet.iter_rows(min_row=2):
         for cell in row:
             cell.alignment = Alignment(vertical="top", wrap_text=True)
-    validation = DataValidation(type="list", formula1='"PENDING,APPROVE,REJECT,OVERRIDE"', allow_blank=False)
+    validation = DataValidation(type="list", formula1='"PENDING,APPROVE,REJECT,NEEDS_CHANGES,OVERRIDE"', allow_blank=False)
     sheet.add_data_validation(validation)
     validation.add(f"L2:L{max(sheet.max_row, 2)}")
     sheet.conditional_formatting.add(
@@ -277,7 +278,7 @@ def read_approval_workbook(path: Path) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Approval workbook is missing columns: {sorted(missing)}")
     frame["approval_status"] = frame["approval_status"].astype(str).str.strip().str.upper()
-    invalid = sorted(set(frame["approval_status"]) - {"PENDING", "APPROVE", "REJECT", "OVERRIDE"})
+    invalid = sorted(set(frame["approval_status"]) - APPROVAL_STATUSES)
     if invalid:
         raise ValueError(f"Approval workbook contains invalid statuses: {invalid}")
     return frame

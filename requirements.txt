@@ -10,3 +10,4 @@ google-genai>=1.0,<2
 openai>=1.50,<3
 anthropic>=0.34,<1
 ipykernel>=6.29,<8
+streamlit>=1.36,<2

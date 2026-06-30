@@ -48,6 +48,25 @@ pip install -r requirements.txt
 
 Copy `.env.example` to `.env` or set the referenced credential environment variables in your shell. The application never stores secret values in YAML.
 
+## Streamlit monitoring UI
+
+Run the centralized Data Quality Monitoring UI locally:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+The UI opens with four sections: `Dashboard`, `Configure & Run`, `Data Quality Report`, and `Context & Approvals`.
+
+- `Dashboard` shows executive run health, failed tables, issue categories, RCA status, approvals, and recent runs. If no real run exists yet, clearly labeled sample monitoring data is shown for demo readiness.
+- `Configure & Run` lets users import or edit table mappings, column mappings, runtime filters, SCD current filters, primary key and audit hints, human tests, and LLM run settings. UI-generated run inputs are written under `logs/<run_id>/ui_inputs/`; the canonical `inputs/` files are not overwritten.
+- `Data Quality Report` reads the latest report workbook and combines table summary, rule results, failures, RCA conclusions, evidence, and contextual approvals in one page.
+- `Context & Approvals` browses reusable context, publishes manually approved context, edits pending approval workbooks, and publishes approved or overridden items to `context_layer/learned_context.yaml`.
+
+Live validation still uses `DQWorkflow` and the existing read-only SQL guardrails. A run requires the configured LLM and warehouse credentials to be available. Detailed logs remain under `logs/`; reports remain under `outputs/`.
+
 ## Runtime inputs
 
 - `inputs/table_mappings.xlsx`: `pair_id`, `enabled`, `mode`, and source/target catalog coordinates. Modes are `migration` and `bigquery_only`.
