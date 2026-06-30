@@ -1,0 +1,1 @@
+run_id,table_pair_id,source_table,target_table,check_id,check_family,check_type,check_description,column_scope,status,severity,is_structural,rows_affected,rows_total,pct_rows_affected,value_at_risk,value_metric,impact_summary,rca_summary,is_llm_generated,llm_test_approved,affects_verdict,example_failing_keys,sql_source_path,sql_target_path

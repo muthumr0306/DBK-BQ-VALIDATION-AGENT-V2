@@ -1,0 +1,2 @@
+run_id,run_timestamp,overall_verdict,tables_total,tables_go,tables_caveats,tables_nogo,total_rows_affected,total_value_at_risk,total_critical,total_warning,total_pending_approval,headline
+20260630T102248Z,2026-06-30T10:22:48.267260+00:00,PASS,0,0,0,0,0,0,0,0,0,PASS: All 0 tables passed validation.

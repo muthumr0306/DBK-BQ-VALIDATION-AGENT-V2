@@ -1,0 +1,5 @@
+pair_id,source_column,target_column,confidence,status,rationale
+gdp_size,size_id,size_id,1.0,MANUAL,Approved manual mapping
+gdp_size,size_code,size_code,1.0,MANUAL,Approved manual mapping
+gdp_size,size_model_code,size_model_sid,1.0,MANUAL,Approved manual mapping
+gdp_size,size_label,size_label,1.0,MANUAL,Approved manual mapping

@@ -4,5 +4,42 @@
   "started_at": "2026-06-29T13:08:51.046450+00:00",
   "requested_stop_after": "reports",
   "status": "RUNNING",
-  "tables": []
+  "tables": [
+    {
+      "pair_id": "gdp_inv_loc",
+      "mode": "migration",
+      "source_table": "local.source.inventory_managed_location",
+      "target_table": "local.target.dim_inventory_managed_location",
+      "status": "ERROR",
+      "last_stage": "rca",
+      "primary_keys": {
+        "source": [
+          "inventory_managed_location_id"
+        ],
+        "target": [
+          "inventory_managed_location_id"
+        ]
+      },
+      "audit_columns": {
+        "source": "updated_on",
+        "target": "update_dttm",
+        "method": "configured_column"
+      },
+      "filters": {
+        "source": [],
+        "target": []
+      },
+      "measure_count": 0,
+      "relationship_candidates": 7,
+      "relationships_executable": 0,
+      "review_items": 2,
+      "non_blocking_reviews": 2,
+      "rule_count": 119,
+      "passed": 69,
+      "failed": 78,
+      "errors": 1,
+      "root_cause_count": 22,
+      "cascade_count": 27
+    }
+  ]
 }
