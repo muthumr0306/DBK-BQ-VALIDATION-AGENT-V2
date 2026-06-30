@@ -72,8 +72,9 @@ class LLMClient(ABC):
             if not response.ok:
                 raise RuntimeError("LLM health response did not confirm readiness")
             return LLMHealth(
-                self.config.backend, self.config.api_family, self.config.model, True,
-                "configuration, connection, model, and structured output succeeded",
+                backend=self.config.backend, api_family=self.config.api_family,
+                model=self.config.model, ok=True,
+                detail="configuration, connection, model, and structured output succeeded",
             )
         except Exception as exc:
             raise RuntimeError(
